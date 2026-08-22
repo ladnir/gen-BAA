@@ -1,12 +1,15 @@
-\documentclass[11pt]{article}
+\documentclass[runningheads]{llncs}
 
-\usepackage[margin=1in]{geometry}
-\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,mathtools}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{microtype}
-\usepackage{hyperref}
-\usepackage{cite}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  pdftitle={Block-Accumulate Codes Beyond Binary},
+  pdfauthor={Stanislav Peceny and Peter Rindal}
+}
 
 \newcommand{\F}{\mathbb F}
 \newcommand{\wt}{\operatorname{wt}}
@@ -18,55 +21,21 @@
 \newcommand{\cG}{\mathcal G}
 \newcommand{\cS}{\mathcal S}
 
-\newtheorem{theorem}{Theorem}
-\newtheorem{lemma}{Lemma}
-\newtheorem{proposition}{Proposition}
-\newtheorem{conjecture}{Conjecture}
-\newtheorem{remark}{Remark}
-
-\title{Generalized BAA Codes}
-\author{Stanislav Peceny, 
-Peter Rindal}
+\title{Block-Accumulate Codes Beyond Binary}
+\subtitle{Chosen Blocks and Large-Field Structural Obstructions}
+\titlerunning{Block-Accumulate Codes Beyond Binary}
+\author{Stanislav Peceny\inst{1} \and Peter Rindal\inst{2}}
+\authorrunning{S. Peceny and P. Rindal}
+\institute{Stealth Software Technologies, Inc. \and Category Labs}
 
 
 \begin{document}
 \maketitle
 
-\begin{abstract}
-Block--Accumulate--Accumulate (BAA) codes combine a block-diagonal outer code
-with two random interleavers and two prefix-sum accumulators.  We develop two
-extensions of the BAA framework.  First, over $\F_2$, we replace the sampled
-local matrices of the original construction by a fixed short code with a
-certified complete spectrum.  This removes local CodeGen uncertainty and turns
-the global distance calculation into an exact composition of the local weight
-enumerator with two binary accumulator transitions.  Concrete Golay,
-Reed--Muller, and BCH-subcode instantiations reach approximately $95.5\%$--
-$99.4\%$ of the binary Gilbert--Varshamov (GV) distance while retaining
-$O(N)$ encoding work.
+\input{abstract}
 
-Second, we develop a large-field version using random monomial interleavers.
-The ordinary expected weight enumerator is not a reliable CodeGen statistic in
-this regime because low-weight words cluster in large projective families.  We
-instead group words by exact support and shortening dimension, derive an exact
-zero-return trace kernel for the accumulator, and charge only cancellation
-constraints beyond the available projective dimension.  These ideas are
-inspired in part by weighted nonbinary repeat-multiple-accumulate codes and by
-recent large-field RAA analyses, but the block outer requires a new shortening-
-dimension interface.
-
-For $\operatorname{RS}[16,8,9]$ and $\operatorname{RS}[16,4,13]$, the resulting
-support/trace first moments have working transitions near $0.30528$ and
-$0.60441$.  We then quotient out trace multiplicity through a backward generic-
-rank formulation.  It yields coefficient-independent structural containers at
-approximately $0.30842$ and $0.60938$, respectively, caused by two-hop
-neighborhoods concentrating in saturated local MDS blocks.  These values remain
-far below the large-field GV benchmarks $0.49219$ and $0.74358$.  Thus the
-current evidence suggests that sharper analysis can recover only a small amount
-of slack: approaching full large-field GV likely requires a modified recursive
-architecture rather than a different proof of scalar BAA.  All quoted
-transitions are working numerical calculations, not interval-certified theorems
-or converses for the typical ensemble.
-\end{abstract}
+\keywords{Error-correcting codes \and pseudorandom correlation generators
+\and zero-knowledge proofs}
 
 
 \section{Introduction}
@@ -1538,6 +1507,9 @@ more complex linear-time recursion can retain the implementation advantages of
 BAA while shifting the generic-rank min-cut toward the $q$-ary GV/Singleton
 frontier.
 
+\bibliographystyle{splncs04}
+\bibliography{references}
+
 \appendix
 \section{Explicit binary $[32,8,12]$ subcode}
 \label{app:binary-generator}
@@ -1557,169 +1529,5 @@ $2^8$ words gives minimum distance $12$ and the exact spectrum
     1+48z^{12}+158z^{16}+48z^{20}+z^{32}.
 \]
 The code is a subcode of the extended primitive BCH code $[32,11,12]$.
-
-\begin{thebibliography}{99}
-
-\bibitem{baa26}
-Vladimir Kolesnikov, Stanislav Peceny, Rahul Rachuri, Srinivasan Raghuraman,
-Peter Rindal, and Harshal Shah.
-\newblock Block-Accumulate Codes: Accelerated Linear Codes for PCGs and ZK.
-\newblock In \emph{CRYPTO 2026, Part VIII}, LNCS 16807, pages 397--429, 2026.
-Also IACR ePrint 2025/1828.
-
-\bibitem{berrou93}
-Claude Berrou, Alain Glavieux, and Punya Thitimajshima.
-\newblock Near Shannon limit error-correcting coding and decoding: Turbo codes.
-\newblock In \emph{Proceedings of ICC '93}, pages 1064--1070, 1993.
-
-\bibitem{benedetto98}
-Sergio Benedetto, Dariush Divsalar, Guido Montorsi, and Fabrizio Pollara.
-\newblock Serial concatenation of interleaved codes: Performance analysis,
-design, and iterative decoding.
-\newblock \emph{IEEE Transactions on Information Theory}, 44(3):909--926, 1998.
-
-\bibitem{divsalar98}
-Dariush Divsalar, Hui Jin, and Robert J. McEliece.
-\newblock Coding theorems for ``turbo-like'' codes.
-\newblock In \emph{36th Allerton Conference on Communication, Control, and
-Computing}, pages 201--210, 1998.
-
-\bibitem{kahale98}
-Nabil Kahale and Ruediger Urbanke.
-\newblock On the minimum distance of parallel and serially concatenated codes.
-\newblock In \emph{IEEE International Symposium on Information Theory}, page
-31, 1998.
-
-\bibitem{bms09}
-Louay Bazzi, Mohammad Mahdian, and Daniel A. Spielman.
-\newblock The minimum distance of turbo-like codes.
-\newblock \emph{IEEE Transactions on Information Theory}, 55(1):6--15, 2009.
-
-\bibitem{kliewer08}
-Joerg Kliewer, Kamil S. Zigangirov, Christian Koller, and Daniel J. Costello, Jr.
-\newblock Coding theorems for repeat multiple accumulate codes.
-\newblock arXiv:0810.3422, 2008.
-
-\bibitem{yang04}
-Kyeongcheol Yang.
-\newblock Weighted nonbinary repeat-accumulate codes.
-\newblock \emph{IEEE Transactions on Information Theory}, 50(3):527--531,
-2004.
-
-\bibitem{rosnes11}
-Eirik Rosnes and Alexandre Graell i Amat.
-\newblock On the analysis of weighted nonbinary repeat multiple-accumulate
-codes.
-\newblock arXiv:1101.5966, 2011.
-
-\bibitem{akhiani26}
-Pariya Akhiani and Yupeng Zhang.
-\newblock Distance of RAA codes over large finite fields (with applications in
-zkSNARKs and PCGs).
-\newblock IACR ePrint 2026/524, 2026.
-
-\bibitem{khabbazian26}
-Majid Khabbazian.
-\newblock Asymptotically optimal distance-tail bounds for large-field RAA
-codes.
-\newblock IACR ePrint 2026/1075, 2026.
-
-\bibitem{bcgi18}
-Elette Boyle, Geoffroy Couteau, Niv Gilboa, and Yuval Ishai.
-\newblock Compressing vector OLE.
-\newblock In \emph{ACM CCS 2018}, pages 896--912, 2018.
-
-\bibitem{bcg19pcg}
-Elette Boyle, Geoffroy Couteau, Niv Gilboa, Yuval Ishai, Lisa Kohl, and Peter
-Scholl.
-\newblock Efficient pseudorandom correlation generators: Silent OT extension
-and more.
-\newblock In \emph{CRYPTO 2019, Part III}, LNCS 11694, pages 489--518, 2019.
-
-\bibitem{bcg20ring}
-Elette Boyle, Geoffroy Couteau, Niv Gilboa, Yuval Ishai, Lisa Kohl, and Peter
-Scholl.
-\newblock Efficient pseudorandom correlation generators from Ring-LPN.
-\newblock In \emph{CRYPTO 2020, Part II}, LNCS 12171, pages 387--416, 2020.
-
-\bibitem{silver21}
-Geoffroy Couteau, Peter Rindal, and Srinivasan Raghuraman.
-\newblock Silver: Silent VOLE and oblivious transfer from hardness of decoding
-structured LDPC codes.
-\newblock In \emph{CRYPTO 2021, Part III}, LNCS 12827, pages 502--534, 2021.
-
-\bibitem{ea22}
-Elette Boyle, Geoffroy Couteau, Niv Gilboa, Yuval Ishai, Lisa Kohl, Nicolas
-Resch, and Peter Scholl.
-\newblock Correlated pseudorandomness from Expand-Accumulate codes.
-\newblock In \emph{CRYPTO 2022, Part II}, LNCS 13508, pages 603--633, 2022.
-
-\bibitem{ec23}
-Srinivasan Raghuraman, Peter Rindal, and Titouan Tanguy.
-\newblock Expand-Convolute codes for pseudorandom correlation generators from
-LPN.
-\newblock In \emph{CRYPTO 2023, Part IV}, LNCS 14084, pages 602--632, 2023.
-
-\bibitem{stationary25}
-Vladimir Kolesnikov, Stanislav Peceny, Srinivasan Raghuraman, and Peter Rindal.
-\newblock Stationary syndrome decoding for improved PCGs.
-\newblock In \emph{CRYPTO 2025}, pages 284--317, 2025.  Also IACR ePrint
-2025/295.
-
-\bibitem{lxyy25}
-Zhe Li, Chaoping Xing, Yizhou Yao, and Chen Yuan.
-\newblock Efficient pseudorandom correlation generators for any finite field.
-\newblock IACR ePrint 2025/169, 2025.
-
-\bibitem{rr25}
-Noga Ron-Zewi and Ron D. Rothblum.
-\newblock Proving as fast as computing: Succinct arguments with constant prover
-overhead.
-\newblock \emph{Journal of the ACM}, 72(2):15:1--15:54, 2025.
-DOI 10.1145/3721477.
-
-\bibitem{orion22}
-Tiancheng Xie, Yupeng Zhang, and Dawn Song.
-\newblock Orion: Zero knowledge proof with linear prover time.
-\newblock In \emph{CRYPTO 2022}, pages 299--328, 2022.  Also IACR ePrint
-2022/1010.
-
-\bibitem{brakedown23}
-Alexander Golovnev, Jonathan Lee, Srinath Setty, Justin Thaler, and Riad S.
-Wahby.
-\newblock Brakedown: Linear-time and field-agnostic SNARKs for R1CS.
-\newblock In \emph{CRYPTO 2023, Part II}, LNCS 14082, pages 193--226, 2023.
-
-\bibitem{fieldEA24}
-Alexander R. Block, Zhiyong Fang, Jonathan Katz, Justin Thaler, Hendrik Waldner,
-and Yupeng Zhang.
-\newblock Field-agnostic SNARKs from Expand-Accumulate codes.
-\newblock In \emph{CRYPTO 2024}, LNCS 14929, pages 276--307, 2024.
-
-\bibitem{blaze25}
-Martijn Brehm, Binyi Chen, Ben Fisch, Nicolas Resch, Ron D. Rothblum, and Hadas
-Zeilberger.
-\newblock Blaze: Fast SNARKs from interleaved RAA codes.
-\newblock In \emph{EUROCRYPT 2025}, pages 123--152, 2025.  Also IACR ePrint
-2024/1609.
-
-\bibitem{bolt26}
-Kobi Gurkan, Andrija Novakovic, and Ron D. Rothblum.
-\newblock Bolt: Faster SNARKs from sketched codes.
-\newblock In \emph{CRYPTO 2026, Part IX}, pages 362--395, 2026.  Also IACR
-ePrint 2026/310.
-
-\bibitem{pipfri26}
-Weihan Li, Zongyang Zhang, Sherman S. M. Chow, Yanpei Guo, Boyuan Gao, Xuyang
-Song, Yi Deng, and Jianwei Liu.
-\newblock Shred-to-shine metamorphosis of (distributed) polynomial commitments.
-\newblock In \emph{USENIX Security 2026}, 2026.
-
-\bibitem{macwilliams}
-F. J. MacWilliams and N. J. A. Sloane.
-\newblock \emph{The Theory of Error-Correcting Codes}.
-\newblock North-Holland, 1977.
-
-\end{thebibliography}
 
 \end{document}

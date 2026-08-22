@@ -1,0 +1,41 @@
+\begin{abstract}
+Block--Accumulate--Accumulate (BAA) codes, introduced by Kolesnikov et al.
+(CRYPTO 2026), combine a block-diagonal outer code with two random interleavers
+and two prefix-sum accumulators.  We develop two
+extensions of the BAA framework.
+
+\noindent\quad First, over $\F_2$, we replace the sampled
+block matrices of the original construction by a fixed, constant-length
+constituent code with an exhaustively verified weight distribution.  This
+eliminates uncertainty from sampling the constituent code and turns the global
+distance calculation into an exact composition of its weight enumerator with
+two binary accumulator
+transitions.  Concrete Golay,
+Reed--Muller, and BCH-subcode instantiations reach approximately $95.5\%$--
+$99.4\%$ of the binary Gilbert--Varshamov (GV) distance while retaining
+$O(N)$ encoding work.
+
+\noindent\quad Second, we develop a large-field version using random monomial
+interleavers.
+In this regime, the ordinary expected weight enumerator poorly reflects the
+probability that a sampled code contains a low-weight word, because such words
+cluster in large projective families.  We instead group words by exact support
+and shortening dimension, derive an exact
+zero-return trace kernel for the accumulator, and charge only cancellation
+constraints beyond the available projective dimension.  These ideas are
+inspired in part by weighted nonbinary repeat-multiple-accumulate codes and by
+recent large-field RAA analyses, but the block outer requires a new shortening-
+dimension interface.
+For $\operatorname{RS}[16,8,9]$ and $\operatorname{RS}[16,4,13]$, the resulting
+support/trace first moments have working transitions near $0.30528$ and
+$0.60441$.  We then quotient out trace multiplicity through a backward generic-
+rank formulation.  It yields coefficient-independent structural containers at
+approximately $0.30842$ and $0.60938$, respectively, caused by two-hop
+neighborhoods concentrating in saturated constituent MDS blocks.  These values
+remain far below the large-field GV benchmarks $0.49219$ and $0.74358$.  Thus the
+current evidence suggests that sharper analysis can recover only a small amount
+of slack: approaching full large-field GV likely requires a modified recursive
+architecture rather than a different proof of scalar BAA.  All quoted
+transitions are working numerical calculations, not interval-certified theorems
+or converses for the typical ensemble.
+\end{abstract}

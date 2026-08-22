@@ -1,0 +1,382 @@
+AI WRITING RULES FOR AN IACR FLAGSHIP-CONFERENCE PAPER
+(CRYPTO / EUROCRYPT style)
+
+PURPOSE
+
+Use these rules whenever drafting, revising, or reviewing this paper. The target
+voice is the one common to strong papers at flagship cryptography conferences:
+precise, theorem-driven, economical, self-critical, and easy to audit. Prefer
+clarity and correctness over sounding sophisticated.
+
+These are writing rules, not the venue's formatting instructions. Check the
+current call for papers and author instructions separately before submission.
+
+
+1. NON-NEGOTIABLE PRINCIPLES
+
+1. State only what the manuscript actually establishes. Never turn a conjecture,
+   heuristic, numerical transition, first-moment calculation, or empirical
+   observation into a theorem-level claim.
+
+2. Label the status of every important statement clearly. Use words such as
+   "we prove," "we show under Assumption X," "we compute," "our experiments
+   suggest," "we conjecture," or "it remains open." Do not blur these categories.
+
+3. Put the main result, its assumptions, and its limitations where readers can
+   find them quickly: the abstract, introduction, and formal theorem statement.
+
+4. Optimize for a skeptical expert reader. Make definitions complete, expose
+   parameter dependencies, identify failure cases, and explain why each proof
+   step is valid.
+
+5. Do not imitate prestige with inflated language. A top-paper voice is confident
+   because the statements are specific and supported, not because it uses words
+   such as "groundbreaking," "remarkable," "obviously," or "clearly."
+
+6. Never invent citations, theorem names, historical claims, performance data,
+   security reductions, parameter values, or comparisons. Mark missing evidence
+   with a visible TODO rather than filling the gap speculatively.
+
+
+2. THE DEFAULT VOICE
+
+- Write in direct, formal English.
+- Use active voice when it identifies responsibility: "We prove Lemma 4" and
+  "Algorithm A samples the permutation."
+- Use the present tense for facts in the paper: "Theorem 2 bounds the distance."
+- Use the past tense only for actions completed in an experiment or prior work.
+- Prefer short declarative sentences, especially around definitions and claims.
+- Put the main point of a paragraph in its first sentence.
+- Keep one logical purpose per paragraph.
+- Prefer concrete nouns and verbs to abstract filler.
+- Use "we" for author actions; do not use "I" or address the reader as "you."
+- Use "the adversary" or a named algorithm, not anthropomorphic phrasing.
+- Use "simple" or "immediate" only when the supporting step is genuinely routine
+  for the expected audience; otherwise give the argument.
+
+Preferred:
+  "For every fixed rate R < 1/2, the ensemble has relative distance at least
+  delta(R) with probability 1 - o(1)."
+
+Avoid:
+  "It is easy to see that our powerful framework achieves excellent distance."
+
+
+3. ABSTRACT: A FIVE-PART CONTRACT WITH THE READER
+
+Write the abstract as a compact sequence containing all of the following:
+
+1. Context and problem: one or two sentences explaining the exact problem and
+   why it matters to cryptography.
+2. Gap: what was not known or what obstacle prevented a satisfactory result.
+3. Result: the strongest proved claim, including the relevant asymptotic regime,
+   assumptions, security notion, or parameter restrictions.
+4. Technique: the main new construction, proof idea, or analytical device.
+5. Consequence and limitation: what the result enables, plus an important caveat
+   if the theorem is conditional, partial, or does not cover a desired regime.
+
+Abstract rules:
+
+- Do not begin with generic claims such as "Cryptography is important."
+- Do not include a literature survey.
+- Do not cite unless a citation is essential to identify a specific prior result.
+- Do not advertise a broader result than the formal theorems support.
+- Distinguish asymptotic results from concrete parameters.
+- If evidence is numerical rather than proved, say so explicitly.
+
+
+4. INTRODUCTION: TELL A TECHNICAL STORY
+
+The introduction should answer, in this order:
+
+1. What exact problem is being solved?
+2. Why does a cryptographer care?
+3. Why is the problem technically difficult?
+4. What was known before this work?
+5. What does this paper prove?
+6. What is genuinely new in the construction or proof?
+7. What remains unresolved?
+
+Use the following structure unless the paper strongly demands another one:
+
+- Motivation and problem statement.
+- Technical obstacle or failure of the natural approach.
+- Informal description of the construction/result.
+- Contributions, as a short numbered list.
+- Technical overview of the proof.
+- Limitations and scope.
+- Organization of the paper, only if it helps navigation.
+
+Each contribution bullet must contain:
+
+- a precise object or setting;
+- an action verb such as "construct," "prove," "reduce," "characterize," or
+  "evaluate";
+- the quantitative or qualitative guarantee;
+- the assumptions or regime; and
+- a pointer to the corresponding theorem or section when practical.
+
+Do not list routine exposition, standard definitions, or ordinary implementation
+work as a primary contribution. Do not claim "the first" or "state of the art"
+without a careful and supportable comparison.
+
+
+5. RELATED WORK: COMPARE, DO NOT CATALOGUE
+
+- Organize prior work by the technical question it addresses, not chronologically.
+- State what each cited line of work achieves and under which model or parameters.
+- Explain the exact difference from this paper: construction, assumption,
+  security notion, rate, field size, distance, complexity, or proof technique.
+- Give credit generously and neutrally.
+- Compare like with like. Do not compare an asymptotic theorem with a concrete
+  benchmark, or a heuristic estimate with a proved bound, without flagging the
+  distinction.
+- Avoid vague dismissal: never write "prior work is inefficient" without naming
+  the metric, regime, and evidence.
+- Prefer a compact comparison table when several works differ along the same
+  three or more dimensions.
+- Cite primary sources for technical results. Use surveys for orientation, not as
+  a substitute when attributing a theorem.
+
+
+6. DEFINITIONS, MODELS, AND NOTATION
+
+- Define every nonstandard object before first substantive use.
+- State probability spaces explicitly: what is sampled, in what order, and which
+  quantities are fixed.
+- State all quantifiers. Distinguish "for every code," "with high probability over
+  the ensemble," and "there exists a code."
+- Define the asymptotic variable and what remains fixed as it grows.
+- State the base of logarithms and conventions for entropy, statistical distance,
+  negligible functions, and field/vector notation.
+- Give dimensions and domains for maps, matrices, codes, and random variables.
+- Use one symbol for one concept and one concept for one symbol.
+- Do not overload n, k, q, R, or lambda across incompatible roles.
+- Include a notation table if the notation cannot be recalled locally.
+- Identify boundary cases: zero weight, empty support, degenerate rate, small
+  block count, and field-characteristic restrictions.
+
+For coding claims used in cryptography, state at least:
+
+- alphabet/field and linearity assumptions;
+- block length, dimension, rate, and distance notion;
+- whether parameters are exact, asymptotic, expected, or experimental;
+- the code ensemble and its randomness;
+- encoding/decoding complexity when relevant; and
+- the precise cryptographic property the coding result is intended to support.
+
+
+7. THEOREMS, LEMMAS, AND CLAIMS
+
+Every major theorem should be understandable in isolation. Its statement must
+include or point unambiguously to:
+
+- the construction or algorithm;
+- assumptions and parameter range;
+- all randomness and quantifiers;
+- the guarantee, with explicit dependence on parameters;
+- the success/failure probability;
+- the security or complexity model, if applicable; and
+- asymptotic qualifiers.
+
+Rules for formal claims:
+
+- Put the strongest clean theorem early, then refine it later if necessary.
+- Separate correctness, security, efficiency, and parameter claims when their
+  proofs or assumptions differ.
+- Do not hide a decisive restriction only in the proof.
+- Do not use undefined phrases such as "good code," "efficient," "large field,"
+  or "high probability" in a formal statement.
+- If a constant can be computed but is omitted, say why. If it cannot currently
+  be made explicit, do not imply otherwise.
+- Name assumptions consistently and discuss their plausibility and provenance.
+- Follow each central theorem with a short plain-language interpretation that
+  does not strengthen the formal statement.
+
+
+8. PROOFS: MAKE THE ARGUMENT AUDITABLE
+
+Begin a long proof with a roadmap that identifies the main steps and the new idea.
+Then write the proof so that each paragraph performs one inferential step.
+
+- State which randomness is fixed and which is averaged over.
+- Name the event being bounded.
+- Justify changes in the order of sums, expectations, limits, and maxima.
+- Track parameter dependencies throughout big-O, little-o, and negligible terms.
+- State when constants depend on rate, field size, block size, or security
+  parameter.
+- Check uniformity before using an asymptotic estimate inside a union bound.
+- Distinguish equality, inequality, approximation, and heuristic equivalence.
+- Cite the exact lemma when applying a nontrivial fact.
+- Explain why each lemma's hypotheses hold in the current setting.
+- Treat edge cases explicitly rather than relying on a generic argument that
+  silently excludes them.
+- End a proof by connecting the derived bound to the theorem's exact conclusion.
+
+Move only genuinely routine algebra to an appendix. Keep the central proof idea
+and the step that controls the dominant error term in the main body.
+
+
+9. SECURITY ARGUMENTS AND REDUCTIONS
+
+When the paper makes a cryptographic claim:
+
+- State the security game or ideal functionality before the theorem.
+- Specify adversary capabilities, corruption model, setup, and trust assumptions.
+- Distinguish computational, statistical, and perfect security.
+- State whether security is selective/adaptive, static/dynamic, and
+  stand-alone/composable when those distinctions apply.
+- Give the reduction's running time, query complexity, and advantage loss.
+- Account for abort probabilities and bad events explicitly.
+- Use hybrid arguments with named hybrids and one change per transition.
+- State which assumption justifies each indistinguishability step.
+- Do not call an assumption "standard" unless that characterization is well
+  supported; name it precisely either way.
+- Separate functional correctness from security.
+
+
+10. NUMERICAL AND EXPERIMENTAL EVIDENCE
+
+- State the purpose of each computation: validation, exploration, parameter
+  selection, or performance measurement.
+- Give enough information to reproduce it: algorithm, parameter grid, precision,
+  software/version, hardware when relevant, and stopping criteria.
+- Report units and define every axis and column.
+- State whether a number is exact, rounded, estimated, or simulated.
+- Include uncertainty or numerical error when meaningful.
+- Do not infer a universal asymptotic theorem from finitely many plotted points.
+- Use numerical evidence to motivate a conjecture, choose parameters, or confirm
+  a proved expression—not to disguise a missing proof.
+- Discuss parameter sets that fail or underperform, not only favorable examples.
+- If concrete security is claimed, include every significant cost and loss.
+
+
+11. FIGURES, TABLES, AND ALGORITHMS
+
+- Every figure and table must make a claim or comparison easier to verify.
+- Captions should be self-contained: state what is shown, the regime, and the
+  principal takeaway without forcing the reader to search the main text.
+- Define all symbols, colors, line styles, and normalization choices.
+- Do not encode essential distinctions by color alone.
+- Use tables for exact comparisons and plots for trends.
+- Use pseudocode when implementation order, state, or sampling matters.
+- Specify input, output, randomness, and failure behavior for each algorithm.
+
+
+12. LANGUAGE THAT CALIBRATES CLAIMS
+
+Use verbs according to the evidence:
+
+- Formal proof: "prove," "establish," "derive," "show."
+- Exact computation: "compute," "enumerate," "evaluate exactly."
+- Numerical evidence: "observe numerically," "estimate," "the data suggest."
+- Heuristic reasoning: "argue heuristically," "expect," "motivate."
+- Open statement: "conjecture," "leave open," "do not know whether."
+
+Avoid or replace:
+
+- "Clearly/obviously/trivially" -> give the one-line reason.
+- "It is well known" -> cite a source or state the fact precisely.
+- "Significant" -> quantify the improvement or use statistical meaning correctly.
+- "Optimal" -> specify the comparison class and matching lower bound.
+- "Practical" -> provide a cost model and concrete measurements.
+- "Secure" -> name the security definition and assumptions.
+- "Negligible" -> identify the security parameter and bound.
+- "With high probability" -> state the probability or define the convention.
+- "Large/small" -> give a threshold or asymptotic relation.
+- "Novel/new" -> describe the technical difference instead.
+- "We believe" -> state whether the sentence is a conjecture or interpretation.
+
+
+13. LATEX AND MATHEMATICAL PRESENTATION
+
+- Introduce notation immediately before it becomes useful.
+- Punctuate displayed equations as parts of sentences.
+- Give equation numbers only to expressions referenced later.
+- Use semantic macros for recurring objects and operators.
+- Use consistent delimiters, transpose notation, vector style, and probability
+  notation throughout.
+- Break long derivations at meaningful logical steps and annotate the non-obvious
+  transitions.
+- Do not use raw Unicode mathematical symbols in LaTeX source when a stable LaTeX
+  command is appropriate.
+- Keep theorem names descriptive and consistent.
+- Resolve every warning about undefined references or citations before submission.
+- Use nonbreaking spaces for references such as "Theorem~3" and "Section~4."
+
+
+14. SPECIAL RULES FOR THIS PAPER'S LIKELY CLAIM TYPES
+
+For ensemble and distance results:
+
+- Distinguish the expected weight enumerator from the probability that a random
+  code has a low-weight codeword.
+- Show how the first-moment or union bound yields the claimed probability result.
+- Separate sparse-weight, linear-weight, and boundary regimes.
+- State whether estimates are uniform over all weights in the summed range.
+- Do not infer minimum distance merely from a numerical exponent unless all
+  finite-length, discretization, and tail terms are controlled.
+
+For accumulator and block-code constructions:
+
+- Specify the permutation/interleaver distribution.
+- Specify termination, boundary state, and zero-symbol conventions.
+- Separate support evolution from value cancellation over larger fields.
+- State when an argument is binary-only and what fails over general fields.
+- Explain how local block properties combine with the global accumulator analysis.
+
+For cryptographic motivation:
+
+- State exactly where the code is used in the protocol or primitive.
+- Explain which code property is required and whether the paper proves it.
+- Do not imply a complete protocol result from an isolated coding theorem.
+- If the application remains prospective, describe it as motivation, not as an
+  achieved cryptographic construction.
+
+
+15. EDITING RULES FOR AN AI
+
+When asked to revise text:
+
+1. Preserve mathematical meaning unless explicitly asked to change the result.
+2. Never silently strengthen a claim.
+3. Flag a claim whose support cannot be located in the manuscript.
+4. Flag inconsistent notation rather than guessing which version is intended.
+5. Keep citations attached to the claims they support.
+6. Remove repetition, throat-clearing, meta-commentary, and promotional language.
+7. Prefer a precise sentence over a longer sentence with more qualifications.
+8. Split sentences containing multiple independent claims.
+9. Maintain consistent terminology across abstract, introduction, theorem
+   statements, captions, and conclusion.
+10. When compressing, retain assumptions, quantifiers, parameter regimes, and
+    negative results.
+11. Do not rewrite a proof until its logical dependencies are understood.
+12. If a passage mixes theorem, evidence, and conjecture, separate them visibly.
+
+
+16. FINAL PAPER CHECKLIST
+
+Before treating a draft as submission-ready, verify:
+
+[ ] The abstract's strongest claim matches a formal theorem.
+[ ] Every contribution points to evidence in the paper.
+[ ] All assumptions and models are stated before they are used.
+[ ] Quantifiers, probability spaces, and asymptotic variables are explicit.
+[ ] Security claims name the definition, adversary model, and assumptions.
+[ ] Numerical claims are reproducible and are not presented as proofs.
+[ ] Comparisons use compatible models, parameters, and cost measures.
+[ ] Limitations and unresolved cases are stated candidly.
+[ ] The central proof idea appears in the main body.
+[ ] Notation is consistent and all symbols are defined.
+[ ] No citation, cross-reference, figure, table, or TODO is unresolved.
+[ ] The conclusion summarizes established results rather than adding new claims.
+[ ] The title is specific and supported by the paper's actual scope.
+[ ] The paper complies with the current venue's page, formatting, anonymity,
+    artifact, ethics, and submission requirements.
+
+
+ONE-SENTENCE STANDARD
+
+Write so that a skeptical cryptography expert can identify the exact claim, its
+assumptions, its evidence, its novelty relative to prior work, and its limitations
+without having to infer any of them.
