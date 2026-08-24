@@ -16,8 +16,10 @@ struct Config {
     primes: Vec<u64>,
     seed: u64,
     include_rationals: bool,
+    distance_only: bool,
     max_n: usize,
     max_rank_evals: u64,
+    max_codewords: u64,
     output: Option<PathBuf>,
 }
 
@@ -33,8 +35,10 @@ impl Default for Config {
             primes: vec![3, 5],
             seed: 1,
             include_rationals: true,
+            distance_only: false,
             max_n: 22,
             max_rank_evals: 50_000_000,
+            max_codewords: 100_000_000,
             output: None,
         }
     }
@@ -86,8 +90,10 @@ OPTIONS:\n\
   --primes P,Q,...        Odd prime characteristics [default: 3,5]\n\
   --seed N                Reproducible master seed [default: 1]\n\
   --no-rational           Skip the exact characteristic-zero profile\n\
+  --distance-only         Enumerate messages; requires --no-rational\n\
   --max-n N               Refuse exhaustive profiles above N [default: 22]\n\
   --max-rank-evals N      Work-budget guard [default: 50000000]\n\
+  --max-codewords N       Message-enumeration guard [default: 100000000]\n\
   --output PATH           Write CSV to PATH instead of stdout\n\
   -h, --help              Show this help\n"
 }
@@ -143,9 +149,13 @@ fn parse_config() -> Result<Option<Config>, String> {
             }
             "--seed" => config.seed = parse_u64("--seed", arguments.next())?,
             "--no-rational" => config.include_rationals = false,
+            "--distance-only" => config.distance_only = true,
             "--max-n" => config.max_n = parse_usize("--max-n", arguments.next())?,
             "--max-rank-evals" => {
                 config.max_rank_evals = parse_u64("--max-rank-evals", arguments.next())?
+            }
+            "--max-codewords" => {
+                config.max_codewords = parse_u64("--max-codewords", arguments.next())?
             }
             "--output" => {
                 config.output = Some(PathBuf::from(
@@ -167,6 +177,9 @@ fn validate_config(config: &Config) -> Result<(), String> {
     }
     if config.samples == 0 {
         return Err("--samples must be positive".to_owned());
+    }
+    if config.distance_only && config.include_rationals {
+        return Err("--distance-only requires --no-rational".to_owned());
     }
     if config.schedule.is_empty()
         || !config
@@ -548,18 +561,27 @@ fn rank_rational_mask(matrix: &IntegerMatrix, retained_mask: u64) -> Result<usiz
     workspace.rank(matrix, retained_mask)
 }
 
-fn profile_mod(matrix: &IntegerMatrix, prime: u64) -> Vec<usize> {
+fn profile_mod_with_masks(matrix: &IntegerMatrix, prime: u64) -> (Vec<usize>, Vec<u64>) {
     let length = matrix[0].len();
     let subset_count = 1_u64 << length;
     let full_mask = subset_count - 1;
     let mut profile = vec![matrix.len(); length + 1];
+    let mut minimizing_masks = vec![u64::MAX; length + 1];
     let mut workspace = ModRankWorkspace::new(matrix.len(), length);
     for deleted_mask in 0..subset_count {
         let deleted = deleted_mask.count_ones() as usize;
         let rank = workspace.rank(matrix, full_mask ^ deleted_mask, prime);
-        profile[deleted] = profile[deleted].min(rank);
+        if minimizing_masks[deleted] == u64::MAX || rank < profile[deleted] {
+            profile[deleted] = rank;
+            minimizing_masks[deleted] = deleted_mask;
+        }
     }
-    profile
+    (profile, minimizing_masks)
+}
+
+#[cfg(test)]
+fn profile_mod(matrix: &IntegerMatrix, prime: u64) -> Vec<usize> {
+    profile_mod_with_masks(matrix, prime).0
 }
 
 fn profile_rational(matrix: &IntegerMatrix) -> Result<Vec<usize>, String> {
@@ -581,6 +603,205 @@ fn distance_from_profile(profile: &[usize], dimension: usize) -> usize {
         .iter()
         .position(|&rank| rank < dimension)
         .expect("deleting every column has rank zero")
+}
+
+struct ModularWitness {
+    deleted_mask: u64,
+    message: Vec<u64>,
+    codeword: Vec<u64>,
+}
+
+fn modular_left_kernel_vector(matrix: &IntegerMatrix, retained_mask: u64, prime: u64) -> Vec<u64> {
+    let variables = matrix.len();
+    let equations = retained_mask.count_ones() as usize;
+    let mut work = vec![0_u64; equations * variables];
+    let mut remaining = retained_mask;
+    let mut equation = 0;
+    while remaining != 0 {
+        let column = remaining.trailing_zeros() as usize;
+        for variable in 0..variables {
+            work[equation * variables + variable] = integer_mod(matrix[variable][column], prime);
+        }
+        equation += 1;
+        remaining &= remaining - 1;
+    }
+
+    let mut rank = 0;
+    let mut pivot_columns = Vec::with_capacity(variables);
+    for variable in 0..variables {
+        let Some(pivot) = (rank..equations).find(|&row| work[row * variables + variable] != 0)
+        else {
+            continue;
+        };
+        if pivot != rank {
+            for column in 0..variables {
+                work.swap(rank * variables + column, pivot * variables + column);
+            }
+        }
+        let inverse = modular_power(work[rank * variables + variable], prime - 2, prime);
+        for column in variable..variables {
+            let index = rank * variables + column;
+            work[index] = modular_multiply(work[index], inverse, prime);
+        }
+        for row in 0..equations {
+            if row == rank {
+                continue;
+            }
+            let factor = work[row * variables + variable];
+            if factor == 0 {
+                continue;
+            }
+            for column in variable..variables {
+                let index = row * variables + column;
+                let product = modular_multiply(factor, work[rank * variables + column], prime);
+                let entry = work[index];
+                work[index] = if entry >= product {
+                    entry - product
+                } else {
+                    prime - (product - entry)
+                };
+            }
+        }
+        pivot_columns.push(variable);
+        rank += 1;
+        if rank == equations {
+            break;
+        }
+    }
+    assert!(
+        rank < variables,
+        "retained columns must have deficient row rank"
+    );
+
+    let mut is_pivot = vec![false; variables];
+    for &pivot in &pivot_columns {
+        is_pivot[pivot] = true;
+    }
+    let free = (0..variables)
+        .find(|&variable| !is_pivot[variable])
+        .expect("rank deficiency supplies a free variable");
+    let mut message = vec![0_u64; variables];
+    message[free] = 1;
+    for (row, &pivot) in pivot_columns.iter().enumerate() {
+        let coefficient = work[row * variables + free];
+        message[pivot] = if coefficient == 0 {
+            0
+        } else {
+            prime - coefficient
+        };
+    }
+    message
+}
+
+fn modular_codeword(matrix: &IntegerMatrix, message: &[u64], prime: u64) -> Vec<u64> {
+    (0..matrix[0].len())
+        .map(|column| {
+            matrix
+                .iter()
+                .zip(message)
+                .fold(0_u64, |sum, (row, &coefficient)| {
+                    let term =
+                        modular_multiply(coefficient, integer_mod(row[column], prime), prime);
+                    ((sum as u128 + term as u128) % prime as u128) as u64
+                })
+        })
+        .collect()
+}
+
+fn modular_witness(matrix: &IntegerMatrix, prime: u64, deleted_mask: u64) -> ModularWitness {
+    let full_mask = (1_u64 << matrix[0].len()) - 1;
+    let message = modular_left_kernel_vector(matrix, full_mask ^ deleted_mask, prime);
+    let codeword = modular_codeword(matrix, &message, prime);
+    debug_assert_eq!(
+        codeword.iter().filter(|&&symbol| symbol != 0).count(),
+        deleted_mask.count_ones() as usize
+    );
+    ModularWitness {
+        deleted_mask,
+        message,
+        codeword,
+    }
+}
+
+fn checked_power(base: u64, exponent: usize) -> Option<u64> {
+    (0..exponent).try_fold(1_u64, |value, _| value.checked_mul(base))
+}
+
+fn minimum_distance_by_messages(
+    matrix: &IntegerMatrix,
+    prime: u64,
+) -> Result<(usize, ModularWitness), String> {
+    let dimension = matrix.len();
+    let length = matrix[0].len();
+    let codeword_count = checked_power(prime, dimension)
+        .ok_or_else(|| format!("{prime}^{dimension} codewords do not fit in u64"))?;
+    debug_assert!(prime <= i64::MAX as u64);
+    let mut reduced = Vec::with_capacity(dimension * length);
+    for row in matrix {
+        reduced.extend(row.iter().map(|&entry| integer_mod(entry, prime)));
+    }
+    let mut message = vec![0_u64; dimension];
+    let mut codeword = vec![0_u64; length];
+    let mut best_distance = length + 1;
+    let mut best_message = Vec::new();
+    let mut best_codeword = Vec::new();
+
+    for _ in 1..codeword_count {
+        let mut digit = 0;
+        loop {
+            let row = &reduced[(digit * length)..((digit + 1) * length)];
+            for (symbol, &term) in codeword.iter_mut().zip(row) {
+                let sum = *symbol + term;
+                *symbol = if sum >= prime { sum - prime } else { sum };
+            }
+            message[digit] += 1;
+            if message[digit] != prime {
+                break;
+            }
+            message[digit] = 0;
+            digit += 1;
+        }
+
+        let mut weight = 0;
+        for &symbol in &codeword {
+            if symbol != 0 {
+                weight += 1;
+                if weight >= best_distance {
+                    break;
+                }
+            }
+        }
+        if weight < best_distance {
+            best_distance = weight;
+            best_message.clone_from(&message);
+            best_codeword.clone_from(&codeword);
+            if best_distance <= 1 {
+                break;
+            }
+        }
+    }
+    if best_message.is_empty() {
+        return Err("message enumeration found no nonzero codeword".to_owned());
+    }
+    let deleted_mask =
+        best_codeword
+            .iter()
+            .enumerate()
+            .fold(0_u64, |mask, (coordinate, &symbol)| {
+                if symbol == 0 {
+                    mask
+                } else {
+                    mask | (1_u64 << coordinate)
+                }
+            });
+    Ok((
+        best_distance,
+        ModularWitness {
+            deleted_mask,
+            message: best_message,
+            codeword: best_codeword,
+        },
+    ))
 }
 
 fn profile_text(profile: &[usize]) -> String {
@@ -605,6 +826,22 @@ fn permutations_text(permutations: &[Vec<usize>]) -> String {
         .join("|")
 }
 
+fn vector_text(vector: &[u64]) -> String {
+    vector
+        .iter()
+        .map(u64::to_string)
+        .collect::<Vec<_>>()
+        .join(";")
+}
+
+fn deleted_coordinates_text(mask: u64) -> String {
+    (0..64)
+        .filter(|&coordinate| mask & (1_u64 << coordinate) != 0)
+        .map(|coordinate| coordinate.to_string())
+        .collect::<Vec<_>>()
+        .join(";")
+}
+
 struct CsvSample<'a> {
     sample: usize,
     length: usize,
@@ -618,16 +855,27 @@ fn append_result(
     csv: &mut String,
     context: &CsvSample<'_>,
     field: &str,
+    distance: usize,
     profile: &[usize],
     binary_distance: usize,
+    witness: Option<&ModularWitness>,
 ) {
-    let distance = distance_from_profile(profile, context.dimension);
     let relative = distance as f64 / context.length as f64;
     let distance_gap = distance as i64 - binary_distance as i64;
     let normalized_gap = distance_gap as f64 / context.length as f64;
+    let (deleted_coordinates, message, codeword) = witness.map_or_else(
+        || (String::new(), String::new(), String::new()),
+        |witness| {
+            (
+                deleted_coordinates_text(witness.deleted_mask),
+                vector_text(&witness.message),
+                vector_text(&witness.codeword),
+            )
+        },
+    );
     writeln!(
         csv,
-        "{sample},{field},{length},{dimension},{schedule},{seed},{distance},{relative:.12},{binary_distance},{distance_gap},{normalized_gap:.12},\"{profile}\",\"{permutations}\"",
+        "{sample},{field},{length},{dimension},{schedule},{seed},{distance},{relative:.12},{binary_distance},{distance_gap},{normalized_gap:.12},\"{profile}\",\"{deleted_coordinates}\",\"{message}\",\"{codeword}\",\"{permutations}\"",
         sample = context.sample,
         length = context.length,
         dimension = context.dimension,
@@ -657,28 +905,47 @@ fn run(config: &Config) -> Result<String, String> {
         .ok_or_else(|| "global dimension overflow".to_owned())?;
     if length > config.max_n {
         return Err(format!(
-            "global length {length} exceeds --max-n {}; exact profiles require 2^N subsets",
+            "global length {length} exceeds --max-n {}",
             config.max_n
         ));
     }
     if length >= 63 {
         return Err("global length must be below 63 for exhaustive subset masks".to_owned());
     }
-    let fields_per_sample =
-        1_u64 + config.primes.len() as u64 + u64::from(config.include_rationals);
-    let rank_evals = (1_u64 << length)
-        .checked_mul(config.samples as u64)
-        .and_then(|count| count.checked_mul(fields_per_sample))
-        .ok_or_else(|| "rank-evaluation count overflow".to_owned())?;
-    if rank_evals > config.max_rank_evals {
-        return Err(format!(
-            "requested {rank_evals} rank evaluations, exceeding --max-rank-evals {}",
-            config.max_rank_evals
-        ));
+    if config.distance_only {
+        let codewords_per_sample = std::iter::once(2_u64)
+            .chain(config.primes.iter().copied())
+            .try_fold(0_u64, |total, prime| {
+                checked_power(prime, dimension)
+                    .and_then(|count| total.checked_add(count.saturating_sub(1)))
+            })
+            .ok_or_else(|| "codeword-enumeration count overflow".to_owned())?;
+        let codewords = codewords_per_sample
+            .checked_mul(config.samples as u64)
+            .ok_or_else(|| "codeword-enumeration count overflow".to_owned())?;
+        if codewords > config.max_codewords {
+            return Err(format!(
+                "requested {codewords} nonzero codewords, exceeding --max-codewords {}",
+                config.max_codewords
+            ));
+        }
+    } else {
+        let fields_per_sample =
+            1_u64 + config.primes.len() as u64 + u64::from(config.include_rationals);
+        let rank_evals = (1_u64 << length)
+            .checked_mul(config.samples as u64)
+            .and_then(|count| count.checked_mul(fields_per_sample))
+            .ok_or_else(|| "rank-evaluation count overflow".to_owned())?;
+        if rank_evals > config.max_rank_evals {
+            return Err(format!(
+                "requested {rank_evals} rank evaluations, exceeding --max-rank-evals {}",
+                config.max_rank_evals
+            ));
+        }
     }
 
     let mut csv = String::from(
-        "sample,field,n,k,schedule,sample_seed,distance,relative_distance,binary_distance,distance_gap,normalized_gap,profile,permutations\n",
+        "sample,field,n,k,schedule,sample_seed,distance,relative_distance,binary_distance,distance_gap,normalized_gap,profile,deleted_coordinates,message,codeword,permutations\n",
     );
     for sample in 0..config.samples {
         let seed = sample_seed(config.seed, sample);
@@ -691,30 +958,71 @@ fn run(config: &Config) -> Result<String, String> {
             seed,
             permutations: &permutations,
         };
-        let binary_profile = profile_mod(&encoder, 2);
-        let binary_distance = distance_from_profile(&binary_profile, dimension);
-        append_result(
-            &mut csv,
-            &csv_sample,
-            "F2",
-            &binary_profile,
-            binary_distance,
-        );
-        for &prime in &config.primes {
-            let profile = profile_mod(&encoder, prime);
+        if config.distance_only {
+            let (binary_distance, binary_witness) = minimum_distance_by_messages(&encoder, 2)?;
             append_result(
                 &mut csv,
                 &csv_sample,
-                &format!("F{prime}"),
-                &profile,
+                "F2",
                 binary_distance,
+                &[],
+                binary_distance,
+                Some(&binary_witness),
             );
-        }
-        if config.include_rationals {
-            let profile = profile_rational(&encoder).map_err(|error| {
-                format!("sample {sample}: {error}; use a smaller instance or --no-rational")
-            })?;
-            append_result(&mut csv, &csv_sample, "Q", &profile, binary_distance);
+            for &prime in &config.primes {
+                let (distance, witness) = minimum_distance_by_messages(&encoder, prime)?;
+                append_result(
+                    &mut csv,
+                    &csv_sample,
+                    &format!("F{prime}"),
+                    distance,
+                    &[],
+                    binary_distance,
+                    Some(&witness),
+                );
+            }
+        } else {
+            let (binary_profile, binary_masks) = profile_mod_with_masks(&encoder, 2);
+            let binary_distance = distance_from_profile(&binary_profile, dimension);
+            let binary_witness = modular_witness(&encoder, 2, binary_masks[binary_distance]);
+            append_result(
+                &mut csv,
+                &csv_sample,
+                "F2",
+                binary_distance,
+                &binary_profile,
+                binary_distance,
+                Some(&binary_witness),
+            );
+            for &prime in &config.primes {
+                let (profile, masks) = profile_mod_with_masks(&encoder, prime);
+                let distance = distance_from_profile(&profile, dimension);
+                let witness = modular_witness(&encoder, prime, masks[distance]);
+                append_result(
+                    &mut csv,
+                    &csv_sample,
+                    &format!("F{prime}"),
+                    distance,
+                    &profile,
+                    binary_distance,
+                    Some(&witness),
+                );
+            }
+            if config.include_rationals {
+                let profile = profile_rational(&encoder).map_err(|error| {
+                    format!("sample {sample}: {error}; use a smaller instance or --no-rational")
+                })?;
+                let distance = distance_from_profile(&profile, dimension);
+                append_result(
+                    &mut csv,
+                    &csv_sample,
+                    "Q",
+                    distance,
+                    &profile,
+                    binary_distance,
+                    None,
+                );
+            }
         }
     }
     Ok(csv)
@@ -792,6 +1100,60 @@ mod tests {
         let determinant_five = vec![vec![1, 1], vec![1, 6]];
         assert_eq!(rank_rational_mask(&determinant_five, full_mask).unwrap(), 2);
         assert_eq!(rank_mod_mask(&determinant_five, full_mask, 5), 1);
+    }
+
+    #[test]
+    fn modular_witness_realizes_the_minimum_support() {
+        let encoder = vec![vec![1, 3, 6]];
+        for prime in [2, 3, 5] {
+            let (profile, masks) = profile_mod_with_masks(&encoder, prime);
+            let distance = distance_from_profile(&profile, 1);
+            let witness = modular_witness(&encoder, prime, masks[distance]);
+            assert_eq!(
+                witness
+                    .codeword
+                    .iter()
+                    .filter(|&&symbol| symbol != 0)
+                    .count(),
+                distance
+            );
+            assert!(witness.message.iter().any(|&symbol| symbol != 0));
+        }
+    }
+
+    #[test]
+    fn message_enumeration_matches_rank_profiles() {
+        let encoder = vec![vec![1, 3, 6], vec![0, 1, 4]];
+        for prime in [2, 3, 5, 7] {
+            let profile_distance =
+                distance_from_profile(&profile_mod_with_masks(&encoder, prime).0, 2);
+            let (enumerated_distance, witness) =
+                minimum_distance_by_messages(&encoder, prime).unwrap();
+            assert_eq!(enumerated_distance, profile_distance);
+            assert_eq!(
+                witness
+                    .codeword
+                    .iter()
+                    .filter(|&&symbol| symbol != 0)
+                    .count(),
+                enumerated_distance
+            );
+        }
+    }
+
+    #[test]
+    fn determinant_three_matrix_breaks_field_monotonicity() {
+        let generator = vec![
+            vec![0, 1, 1, 1, 1],
+            vec![1, 0, 1, 1, 1],
+            vec![1, 1, 0, 1, 1],
+            vec![1, 1, 1, 0, 1],
+        ];
+        let full_mask = 0b1_1111;
+        assert_eq!(rank_mod_mask(&generator, full_mask, 2), 4);
+        assert_eq!(rank_mod_mask(&generator, full_mask, 3), 4);
+        assert_eq!(minimum_distance_by_messages(&generator, 2).unwrap().0, 2);
+        assert_eq!(minimum_distance_by_messages(&generator, 3).unwrap().0, 1);
     }
 
     #[test]

@@ -174,9 +174,27 @@ cargo run --release -- \
   --output results/repetition3-apap.csv
 ```
 
+For larger lengths and small prime fields, enumerate all field-valued messages
+instead of all coordinate-deletion sets:
+
+```text
+cargo run --release -- \
+  --local examples/repetition3.matrix \
+  --blocks 12 \
+  --schedule PAPA \
+  --samples 100 \
+  --primes 3 \
+  --distance-only \
+  --no-rational \
+  --max-n 60 \
+  --output results/rep3-papa-b12-s100-distance.csv
+```
+
 Each CSV row records the field, exact distance, normalized distance, binary
 baseline, signed distance gap, normalized gap, complete deletion-rank profile,
-sample seed, and every permutation. The modular and rational rank routines
-reuse flat row-major workspaces throughout the exhaustive subset loop. The
-rational routine uses checked fraction-free elimination. If an intermediate
-exceeds `i128`, the program stops instead of returning an uncertified result.
+minimum message, minimum codeword, sample seed, and every permutation. The
+profile column is empty in distance-only mode. The modular and rational rank
+routines reuse flat row-major workspaces throughout the exhaustive subset
+loop. The rational routine uses checked fraction-free elimination. If an
+intermediate exceeds `i128`, the program stops instead of returning an
+uncertified result.
