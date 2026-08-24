@@ -5,10 +5,14 @@ import math
 import unittest
 
 from sparse_spacing_bound import (
+    accumulate,
     conditional_weight_histogram,
+    hamming_weight,
     hypergeometric_tail_count,
     laplace_polynomial,
     laplace_upper_bound,
+    ladder_integer_check,
+    least_ladder_denominator_root,
     nonzero_interval_count,
     spacing_tail_count,
     spacing_weight_count,
@@ -16,6 +20,15 @@ from sparse_spacing_bound import (
 
 
 class SparseSpacingTests(unittest.TestCase):
+    def test_accumulator_loses_at_most_half_the_weight(self) -> None:
+        for prime in (2, 3, 5, 7):
+            for length in range(1, 6):
+                for word in itertools.product(range(prime), repeat=length):
+                    self.assertLessEqual(
+                        hamming_weight(word),
+                        2 * hamming_weight(accumulate(word, prime)),
+                    )
+
     def test_spacing_tail_is_hypergeometric_tail(self) -> None:
         for length in range(2, 11):
             for transitions in range(1, length + 1):
@@ -74,6 +87,26 @@ class SparseSpacingTests(unittest.TestCase):
             25 * ratio**2 * 22**3,
             (ratio - 3) ** 3,
         )
+
+    def test_quinary_sparse_constant_at_larger_cutoff(self) -> None:
+        self.assertLess(19, 5**2)
+        self.assertLess(3, 29_997)
+        ratio = 30_000
+        self.assertLess(
+            400 * ratio**2 * 3**3,
+            (ratio - 3) ** 3,
+        )
+
+    def test_quinary_sparse_constant_at_deterministic_cutoff(self) -> None:
+        self.assertTrue(ladder_integer_check(5, 7))
+        self.assertEqual(least_ladder_denominator_root(5), 7)
+
+    def test_prime_ladder(self) -> None:
+        expected = {2: 5, 3: 6, 5: 7, 7: 8, 11: 10, 13: 10, 101: 21}
+        for prime, root in expected.items():
+            self.assertEqual(least_ladder_denominator_root(prime), root)
+            self.assertTrue(ladder_integer_check(prime, root))
+            self.assertFalse(ladder_integer_check(prime, root - 1))
 
 
 if __name__ == "__main__":

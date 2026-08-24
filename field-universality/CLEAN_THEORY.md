@@ -15,18 +15,21 @@ Most successful samples contain such torsion above the binary minimum. The
 desired theorem must instead exclude torsion below a certified binary linear
 threshold.
 
-This note develops six ingredients:
+This note develops seven ingredients:
 
 1. a vector-composition enumerator for the complete addition-only ensemble;
 2. an exact embedding count for the dominant repetition-three trap;
 3. an algebraic classification of every sampled odd-field minimum witness;
 4. an exact sign-symmetrization theorem for the ternary bulk exponent;
 5. a uniform random-spacing bound for sparse messages; and
-6. two interval implementations for the remaining symmetric optimization.
+6. a deterministic weight floor for two accumulators; and
+7. two interval implementations for the remaining symmetric optimization.
 
 For ternary repetition-three codes, the sparse and bulk bounds prove relative
-distance `0.196`. Other primes still require both symmetry analysis and bulk
-certification.
+distance `0.196`. The spacing bound and deterministic floor also prove a
+positive relative distance over every fixed prime, without a bulk entropy
+certificate. Strong bounds for primes beyond three still require the full
+composition analysis.
 
 ## 2. Ensemble and probability space
 
@@ -588,7 +591,7 @@ on each of the following domains:
 domain. The supporting-hyperplane bound described above is valid on every
 box. For the six rows, the primary verifier closes the covers after 312, 315,
 789, 57, 219, and 233 box splits. The largest remaining box bound is the value
-in the last column. The primary certificate used by Theorem 13 is recorded in
+in the last column. The primary certificate used by Theorem 16 is recorded in
 `results/ternary-bulk-0.196-eta-0.0001.json`. The independent checker closes
 another 789-split cover and obtains the same upper bound to the displayed
 precision. Its result is recorded in
@@ -920,7 +923,118 @@ over `F_3` and through output fraction `0.26` over `F_5`.
 Proposition 12 controls every support below the smaller bulk cutoff; it is not
 only a sublinear-support statement.
 
-**Theorem 13 (ternary BAA distance at 0.196).** Set `delta_*:=49/250`. For the
+### 4.3 A deterministic bulk cutoff
+
+The sparse estimate already yields a field-uniform distance theorem once it
+is paired with an elementary property of the accumulator.
+
+**Lemma 13 (accumulator weight floor).** For every field and every word `u`,
+
+```text
+wt(Au) >= wt(u)/2.
+```
+
+Consequently, every realization of the repetition-`r` two-accumulator encoder
+satisfies
+
+```text
+wt(E_{P_1,P_2}(x)) >= r wt(x)/4.
+```
+
+**Proof.** Write `y:=Au` and set `y_{-1}:=0`. The identity
+`u_j=y_j-y_{j-1}` implies that `u_j` can be nonzero only if at least one of
+`y_{j-1}` and `y_j` is nonzero. Counting these two possible endpoints gives
+`wt(u)<=2 wt(y)`. Repetition multiplies weight by `r`, permutations preserve
+weight, and applying the one-accumulator inequality twice proves the second
+claim. ∎
+
+The lemma turns output weight into a deterministic upper bound on message
+support. In the repetition-three ensemble, a word of weight at most `delta N`
+can come only from a message of support at most `4 delta K`.
+
+**Theorem 14 (prime-ladder criterion).** Fix a prime `p` and an integer
+`m>=4`. If
+
+```text
+288(p-1)^2 m^4 < (m-2)^6(m+2)^3,
+```
+
+then the repetition-three addition-only BAA ensemble over `F_p` satisfies
+
+```text
+Pr[d_min <= floor(N/m^2)] -> 0.
+```
+
+**Proof.** Apply Proposition 12 with `delta:=1/m^2` and `eta:=4/m^2`.
+Then `R_0=3m^2/4`. The definition of `L_delta` gives
+
+```text
+L_delta > (m-2)/2.
+```
+
+Therefore
+
+```text
+3/((R_0-3)L_delta)
+  < 8/((m-2)^2(m+2)).
+```
+
+This quantity is less than one for `m>=4`, and `R_0>6`. Using `e<3`, the
+remaining condition in Proposition 12 follows from
+
+```text
+Q_{p,3,delta}(R_0)
+  < [3(p-1)m^2/4]
+    [8/((m-2)^2(m+2))]^(3/2)
+  < 1.
+```
+
+Squaring the last inequality gives exactly the integer hypothesis. Proposition
+12 excludes low-output words from messages of support at most `4K/m^2`.
+Lemma 13 excludes every larger support deterministically. ∎
+
+The criterion is nonempty for every fixed prime. For example, when `m>=4`,
+the simpler sufficient condition
+
+```text
+m^5 > 18432(p-1)^2
+```
+
+implies its integer hypothesis. Hence this proof gives explicit relative
+distance of order `p^(-4/5)` as the prime grows. The least integer roots for
+the first rungs are:
+
+| `p` | least certified `m` | certified relative distance `1/m^2` |
+|---:|---:|---:|
+| 5 | 7 | `1/49` |
+| 7 | 8 | `1/64` |
+| 11 | 10 | `1/100` |
+| 13 | 10 | `1/100` |
+| 17 | 11 | `1/121` |
+| 19 | 12 | `1/144` |
+
+Each row is an integer check, not a numerical entropy optimization.
+
+**Theorem 15 (quinary BAA distance at `1/49`).** For the repetition-three
+addition-only BAA ensemble over `F_5`,
+
+```text
+Pr[d_min <= floor(N/49)] -> 0.
+```
+
+**Proof.** Apply Theorem 14 with `p=5` and `m=7`. Its hypothesis is
+
+```text
+288 * 4^2 * 7^4 < 5^6 * 9^3,
+```
+
+or `11063808 < 11390625`. ∎
+
+Theorem 15 is a rigorous positive-distance result, not a claim that `1/49` is
+the quinary threshold. The numerical full-composition search remains relevant
+to the much stronger binary-threshold comparison.
+
+**Theorem 16 (ternary BAA distance at 0.196).** Set `delta_*:=49/250`. For the
 repetition-three BAA ensemble over `F_3`,
 
 ```text
@@ -933,7 +1047,7 @@ expected number from larger supports exponentially small at the same cutoff
 and output fraction. Markov's inequality completes the proof. ∎
 
 Kliewer et al. report `0.1323` to four decimal places as the binary
-repetition-three lower bound. Theorem 13 therefore gives a stronger certified
+repetition-three lower bound. Theorem 16 therefore gives a stronger certified
 lower bound for the ternary ensemble. This comparison proves one-sided
 threshold inheritance. It does not prove equality of the binary and ternary
 relative distances. See [Kliewer et al., *Coding Theorems for Repeat Multiple
@@ -997,7 +1111,7 @@ length 36, the mean weights for `s=1,...,12` are
 
 The beating events occur at the sparse edge of this curve. The typical
 nonbeating minimum moves toward larger support as `N` grows. This separation
-motivated the proof split used by Theorem 13.
+motivated the proof split used by Theorem 16.
 
 1. Bound every support below a fixed small linear cutoff with the random
    spacing estimate.
@@ -1039,7 +1153,7 @@ reset has the smaller fixed-span scale `N^(2-5)=N^-3`.
 The exact first moment suggests a theorem stated at a deterministic threshold,
 not at the random coupled binary distance.
 
-**Proposition 14 (sparse--bulk reduction).** Fix `r`, `p`, `delta>0`, and
+**Proposition 17 (sparse--bulk reduction).** Fix `r`, `p`, `delta>0`, and
 `eta>0`. Let `Z_p^s(delta N)` count nonzero messages of support less than
 `eta K` whose encoded word has weight at most `delta N`, and let
 `Z_p^bulk(delta N)` count the remaining low-weight messages. If
@@ -1076,9 +1190,9 @@ Pr[d_p <= delta N]
 The reduction is elementary; proving its two hypotheses is the substantive
 problem. It motivates the following ensemble-specific conjecture.
 
-**Conjecture 15 (BAA threshold inheritance).** For the `PAPA`
+**Conjecture 18 (BAA threshold inheritance).** For the `PAPA`
 repetition-`r` ensemble and every fixed odd prime `p`, there are `eta>0` and
-`delta_p>0` such that Proposition 14 applies for every `delta<delta_p`.
+`delta_p>0` such that Proposition 17 applies for every `delta<delta_p`.
 Moreover, `delta_p` is at least the proved binary distance threshold for the
 same repetition factor.
 
@@ -1088,8 +1202,8 @@ Suppose the binary repetition-`r` RAA ensemble satisfies
 Pr[d_2 < delta N] -> 0.
 ```
 
-If Conjecture 15 covers this `delta`, Proposition 14 gives the odd-field bound.
-If `d_2/N` converges in probability to `delta_2` and Conjecture 15 applies for
+If Conjecture 18 covers this `delta`, Proposition 17 gives the odd-field bound.
+If `d_2/N` converges in probability to `delta_2` and Conjecture 18 applies for
 every `delta<delta_2`, the two bounds imply
 
 ```text
@@ -1108,7 +1222,7 @@ This formulation separates two mathematical tasks.
 Neither task requires samplewise field monotonicity. Neither task claims that
 the binary and prime-field limiting distances are equal.
 
-For `p=r=3`, Theorem 13 completes both tasks at output fraction `0.196` using
+For `p=r=3`, Theorem 16 completes both tasks at output fraction `0.196` using
 cutoff `eta=0.0001`. Proposition 12 already covers sparse output fractions
 through `0.2`; the certified bulk exponent is now the limiting step.
 

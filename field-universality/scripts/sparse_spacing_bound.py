@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact spacing identities used by the ternary sparse-distance proof.
+"""Exact spacing identities used by the prime-field sparse-distance proofs.
 
 The functions in this file use integer arithmetic for the finite counting
 identities.  Floating-point arithmetic appears only in the human-readable
@@ -14,6 +14,35 @@ import json
 import math
 from collections import Counter
 from fractions import Fraction
+
+
+def hamming_weight(word: tuple[int, ...]) -> int:
+    return sum(value != 0 for value in word)
+
+
+def accumulate(word: tuple[int, ...], prime: int) -> tuple[int, ...]:
+    state = 0
+    output = []
+    for value in word:
+        state = (state + value) % prime
+        output.append(state)
+    return tuple(output)
+
+
+def ladder_integer_check(prime: int, denominator_root: int) -> bool:
+    """Check the repetition-three distance criterion at delta=1/m^2."""
+    m = denominator_root
+    if prime < 2 or m < 4:
+        return False
+    return 288 * (prime - 1) ** 2 * m**4 < (m - 2) ** 6 * (m + 2) ** 3
+
+
+def least_ladder_denominator_root(prime: int) -> int:
+    """Return the least integer m certified by ladder_integer_check."""
+    m = 4
+    while not ladder_integer_check(prime, m):
+        m += 1
+    return m
 
 
 def spacing_weight_count(length: int, transitions: int, active: int, weight: int) -> int:
@@ -153,7 +182,29 @@ def main() -> None:
     )
 
     rational_certificate = None
-    if prime == 3 and repetition == 3 and delta <= 0.2 and eta <= 0.0001:
+    ladder_root = least_ladder_denominator_root(prime)
+    ladder_delta = 1.0 / ladder_root**2
+    ladder_eta = 4.0 / ladder_root**2
+    endpoint_tolerance = 1e-14
+    if (
+        repetition == 3
+        and delta <= ladder_delta * (1.0 + endpoint_tolerance)
+        and eta <= ladder_eta * (1.0 + endpoint_tolerance)
+    ):
+        rational_left = 288 * (prime - 1) ** 2 * ladder_root**4
+        rational_right = (ladder_root - 2) ** 6 * (ladder_root + 2) ** 3
+        rational_certificate = {
+            "domain": (
+                f"p = {prime}, r = 3, 0 < delta <= 1/{ladder_root**2}, "
+                f"and 0 < eta <= 4/{ladder_root**2}"
+            ),
+            "base_upper_bound": 1.0,
+            "denominator_root": ladder_root,
+            "left": rational_left,
+            "right": rational_right,
+            "passes": rational_left < rational_right,
+        }
+    elif prime == 3 and repetition == 3 and delta <= 0.2 and eta <= 0.0001:
         # For delta <= 1/5, exp(D(1/2 || delta))-1 >= 1/4.  Together
         # with e<3, squaring the worst-case base bound proves that it is
         # less than 1/2.
@@ -167,6 +218,29 @@ def main() -> None:
             "left": rational_left,
             "right": rational_right,
             "passes": 12 < 29_997 and rational_left < rational_right,
+        }
+    elif prime == 5 and repetition == 3 and delta <= 0.05 and eta <= 0.0001:
+        # For delta <= 1/20, sqrt(4*delta*(1-delta)) <= sqrt(19)/10
+        # and sqrt(19) < 5.  Hence exp(D)-1 > 1.  Together with
+        # e<3, the integer inequality below makes the base less than 1/5.
+        ratio_integer = 30_000
+        rational_left = 400 * ratio_integer**2 * 3**3
+        rational_right = (ratio_integer - 3) ** 3
+        rational_certificate = {
+            "domain": (
+                "p = 5, r = 3, 0 < delta <= 1/20, "
+                "and 0 < eta <= 1/10000"
+            ),
+            "base_upper_bound": 0.2,
+            "sqrt_check": {"left": 19, "right": 5**2, "passes": 19 < 5**2},
+            "ratio_check": {"left": 3, "right": 29_997, "passes": 3 < 29_997},
+            "left": rational_left,
+            "right": rational_right,
+            "passes": (
+                19 < 5**2
+                and 3 < 29_997
+                and rational_left < rational_right
+            ),
         }
     elif prime == 5 and repetition == 3 and delta <= 0.26 and eta <= 0.00001:
         # For delta <= 13/50, sqrt(4*delta*(1-delta)) <= sqrt(481)/25

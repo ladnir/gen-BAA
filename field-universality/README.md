@@ -48,6 +48,21 @@ finite-dimensional bulk exponent.
 
 ## Current theorem
 
+For every fixed prime `p`, the project now gives an explicit integer `m` such
+that
+
+```text
+288(p-1)^2 m^4 < (m-2)^6(m+2)^3,
+Pr[Delta_{p,N} <= 1/m^2] -> 0.
+```
+
+This first ladder theorem uses only the random-spacing estimate and the
+deterministic fact that two accumulators can reduce Hamming weight by at most
+a factor of four. The least certified roots begin with `m=7,8,10,10` for
+`p=5,7,11,13`, respectively, and give distances of order `p^(-4/5)`. In
+particular, the quinary bound is `1/49`. These constants establish asymptotic
+goodness; they do not locate the true prime-field thresholds.
+
 For repetition three over `F_3`, the project now proves
 
 ```text
@@ -146,7 +161,8 @@ enumerator. Binary minimum distance alone is not a sufficient hypothesis.
 
 ## Proof program
 
-1. Build a full-composition bulk certificate for `F_5`; its sparse bound is
+1. Strengthen the proved `F_5` bound from `1/49` toward the published binary
+   threshold using a full-composition bulk certificate; its sparse bound is
    already proved through `0.26`.
 2. Certify a positive ternary bulk type at `0.197` and locate the first-moment
    transition above `0.196`.
@@ -160,9 +176,11 @@ The first-moment proof resolves the uniform quantifier for the ternary
 `0.196` theorem. Rank and residual-core diagnostics remain useful for finding
 counterexamples, but the theorem does not depend on a uniform rank comparison.
 
-The same spacing argument now proves the sparse half of a quinary theorem
-through output fraction `0.26`, using message cutoff `0.00001`. The remaining
-quinary task is a rigorous bulk certificate. The ternary sign reduction does
+The spacing argument and deterministic accumulator floor prove quinary
+relative distance `1/49` without any bulk optimization. The same spacing
+argument covers the sparse half of a stronger quinary theorem through output
+fraction `0.26`, using message cutoff `0.00001`. Reaching that stronger range
+still requires a rigorous bulk certificate. The ternary sign reduction does
 not generalize: an explicit stationary type over `F_5` makes sign averaging
 decrease the full exponent.
 
