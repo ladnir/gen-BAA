@@ -241,7 +241,8 @@ loss.
 
 ## Bulk exponent scripts
 
-The numerical scripts require Python 3, NumPy, and SciPy. They search the
+The numerical optimizers require Python 3, NumPy, and SciPy. The certificate
+uses only Python's standard `decimal` module. These scripts analyze the
 Markov-type exponent derived in `CLEAN_THEORY.md`:
 
 ```text
@@ -250,9 +251,21 @@ python scripts/optimize_bulk_exponent.py \
 
 python scripts/optimize_symmetric_ternary.py \
   --repetition 3 --delta 0.195 --eta 0.05
+
+python scripts/certify_symmetric_ternary.py \
+  --delta 0.19 --eta 0.01 --precision 80
 ```
 
 The first command searches the full vector-composition problem. The second
-uses the explicit sign-symmetric ternary reduction as an independent check.
+uses the exact sign-symmetric ternary reduction and separately checks the
+message-cutoff and output-boundary faces.
+
 A positive value identifies a candidate bad type. A negative numerical value
 is not a proof that the global maximum is negative.
+
+For `F_3`, the theory note proves that sign symmetrization is without loss.
+The certificate script then covers the reduced three-dimensional outer domain
+with deterministic entropy bounds. Its default 80-digit arithmetic adds a
+directed interval around every arithmetic operation and logarithm. The command
+above certifies a negative bulk exponent through output fraction `0.19` for
+message supports of at least one percent.

@@ -3,14 +3,67 @@
 from __future__ import annotations
 
 import unittest
+from types import SimpleNamespace
 
 import numpy as np
 
+import certify_symmetric_ternary as certificate
 import optimize_bulk_exponent as bulk
 import optimize_symmetric_ternary as ternary
 
 
 class OptimizerTests(unittest.TestCase):
+    def test_circulation_symmetrization_inequality(self) -> None:
+        random = np.random.default_rng(19)
+        sign = np.array([0, 2, 1])
+
+        def asymmetry(distribution: np.ndarray, matrix: bool = False) -> float:
+            flipped = (
+                distribution[np.ix_(sign, sign)]
+                if matrix
+                else distribution[sign]
+            )
+            return bulk.entropy((distribution + flipped) / 2.0) - bulk.entropy(
+                distribution
+            )
+
+        for _ in range(1000):
+            zero, b, c, e, f, h, cycle = random.exponential(size=7)
+            transition = np.array(
+                [
+                    [zero, c + cycle, b],
+                    [c, e, h + cycle],
+                    [b + cycle, h, f],
+                ]
+            )
+            transition /= transition.sum()
+            state = transition.sum(axis=1)
+            increment = np.array(
+                [
+                    sum(
+                        transition[source, (source + difference) % 3]
+                        for source in range(3)
+                    )
+                    for difference in range(3)
+                ]
+            )
+            gap = (
+                asymmetry(transition, matrix=True)
+                - asymmetry(increment)
+                - asymmetry(state)
+            )
+            self.assertGreaterEqual(gap, -2e-15)
+
+    def test_decimal_certificate_closes_below_binary_threshold(self) -> None:
+        result = certificate.certify(
+            certificate.Decimal("0.01"),
+            certificate.Decimal("0.13"),
+            precision=60,
+            max_boxes=1000,
+        )
+        self.assertLess(result.upper_bound, 0)
+        self.assertLess(result.boxes_split, 1000)
+
     def test_prime_validation(self) -> None:
         self.assertTrue(bulk.is_prime(2))
         self.assertTrue(bulk.is_prime(5))
@@ -106,6 +159,51 @@ class OptimizerTests(unittest.TestCase):
             ),
             places=12,
         )
+
+    def test_symmetric_search_checks_the_cutoff_face(self) -> None:
+        args = SimpleNamespace(
+            eta=0.01,
+            delta=0.19,
+            repetition=3,
+            max_iterations=100,
+        )
+        result = ternary.search_branch(
+            args,
+            "cutoff_and_output_boundary",
+            {0: args.eta, 2: args.delta},
+            seed=3,
+        )
+        self.assertEqual(result.point[0], args.eta)
+        self.assertEqual(result.point[2], args.delta)
+        self.assertAlmostEqual(-result.objective, -0.00375433102347, places=10)
+
+    def test_transition_tangent_is_an_upper_bound(self) -> None:
+        decimal = certificate.Decimal
+        tangent = certificate.transition_tangent(
+            decimal("0.18"), decimal("0.19"), decimal("1e-12")
+        )
+        for increment, state, bridge in (
+            ("0.18", "0.19", "0.04"),
+            ("0.10", "0.20", "0.02"),
+            ("0.30", "0.25", "0.05"),
+        ):
+            increment = decimal(increment)
+            state = decimal(state)
+            bridge = decimal(bridge)
+            entries = certificate.transition_entries(increment, state, bridge)
+            entropy = sum(
+                multiplicity * certificate.entropy_atom(entry)
+                for multiplicity, entry in zip(
+                    (decimal(1), decimal(4), decimal(2), decimal(2)), entries
+                )
+            )
+            upper = (
+                tangent.intercept
+                + tangent.increment_coefficient * increment
+                + tangent.state_coefficient * state
+                + tangent.bridge_coefficient * bridge
+            )
+            self.assertLessEqual(entropy, upper + decimal("1e-50"))
 
 
 if __name__ == "__main__":

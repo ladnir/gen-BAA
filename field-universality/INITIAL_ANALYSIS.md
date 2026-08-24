@@ -618,8 +618,8 @@ add more undirected distance tables.
    sparse message supports.
 2. Relate trace and core fingerprints to exact embedding counts for further
    recurrent trap families.
-3. Replace the heuristic bulk optimizer with a rigorous upper-bound
-   certificate, beginning with the sign-symmetric ternary reduction.
+3. Reproduce the ternary interval certificate independently and connect its
+   `0.19` bulk bound to a proved binary threshold.
 4. Extend exact message enumeration with branch-and-bound for dimensions above
    16.
 5. Compare `PAPA`, `PAPAPA`, and sign-only diagonal variants at the same

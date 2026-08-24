@@ -13,14 +13,18 @@ The central obstruction is not the existence of odd-characteristic torsion.
 Most successful samples contain such torsion above the binary minimum. The
 desired theorem must instead exclude torsion below a fixed linear threshold.
 
-This note develops three exact ingredients:
+This note develops five ingredients:
 
 1. a vector-composition enumerator for the complete addition-only ensemble;
 2. an exact embedding count for the dominant repetition-three trap; and
-3. an algebraic classification of every sampled odd-field minimum witness.
+3. an algebraic classification of every sampled odd-field minimum witness;
+4. an exact sign-symmetrization theorem for the ternary bulk exponent; and
+5. an interval certificate for the remaining symmetric optimization.
 
-The remaining step is asymptotic. We must bound the sparse enumerator and the
-bulk variational problem below the chosen binary threshold.
+For ternary repetition-three codes, the certificate closes the bulk regime
+through output fraction `0.19`. The remaining asymptotic task is a uniform
+bound below the message-support cutoff. Other primes still require both
+symmetry analysis and bulk certification.
 
 ## 2. Ensemble and probability space
 
@@ -251,10 +255,162 @@ For `p=5`, the low-output optimizer concentrates the message on one opposite
 pair of nonzero values. It does not use a uniform nonzero composition. This
 behavior confirms that the unweighted ensemble needs the vector enumerator.
 
-For `p=3`, the numerical maximizers are invariant under exchanging `1` and
-`-1`. This symmetric family has an explicit reduction. Let `A` be the
-nonzero increment fraction, let `B` be the nonzero state fraction, and let `b`
-be a bridge variable. Every symmetric feasible transition type has the form
+The ternary optimization admits a useful information-theoretic form. For
+compositions `alpha` and `beta` on `F_3`, define
+
+```text
+I_stat(alpha,beta)
+  := min I(D;S),
+```
+
+where the minimum ranges over pairs `(D,S)` such that
+
+```text
+law(D)=alpha,
+law(S)=law(S+D)=beta.
+```
+
+The identity `H(S+D|S)=H(D|S)` gives
+
+```text
+T_3(alpha,beta)-H(alpha) = -I_stat(alpha,beta).
+```
+
+Consequently,
+
+```text
+Psi_{3,r}(mu,beta,zeta)
+  = H(mu)/r-I_stat(mu,beta)-I_stat(beta,zeta).
+```
+
+The exponent therefore measures the information required to keep two
+nonuniform state distributions stationary under their prescribed increments.
+
+The numerical maximizers are invariant under the sign map `sigma(a):=-a`.
+The following lemma proves that this symmetry is without loss.
+
+For a distribution `q`, define its sign-asymmetry by
+
+```text
+Asym(q) := H((q+sigma q)/2)-H(q).
+```
+
+Apply `sigma` to both coordinates of a transition type.
+
+**Lemma 4 (ternary circulation symmetrization).** Let `tau` be a transition
+type on `F_3 x F_3`. Suppose its row and column marginals both equal `beta`,
+and its difference marginal equals `alpha`. Then
+
+```text
+Asym(tau) >= Asym(alpha)+Asym(beta).
+```
+
+**Proof.** For nonnegative `x,y`, set
+
+```text
+j(x,y)
+  := x log(2x/(x+y))+y log(2y/(x+y)).
+```
+
+Terms with zero coefficient use the continuous extension. The function `j`
+is jointly convex and positively homogeneous.
+
+The off-diagonal entries of `tau` form a circulation on three vertices. After
+exchanging the two nonzero symbols if necessary, write that circulation as
+
+```text
+tau_01=c+q,  tau_10=c,
+tau_12=h+q,  tau_21=h,
+tau_20=b+q,  tau_02=b,
+```
+
+where `b,c,h,q>=0`. Write `tau_11=e` and `tau_22=f`. Direct substitution gives
+
+```text
+Asym(tau)
+  = j(c+q,b)+j(c,b+q)+j(e,f)+j(h+q,h),
+
+Asym(alpha) = j(b+c+h+3q,b+c+h),
+
+Asym(beta) = j(c+e+h+q,b+f+h+q).
+```
+
+Joint convexity and homogeneity imply
+
+```text
+j(e,f)+j(c+h+q,b+h+q)
+  >= j(c+e+h+q,b+f+h+q).
+```
+
+It remains to prove that `G>=0`, where
+
+```text
+G := j(c+q,b)+j(c,b+q)+j(h+q,h)
+     -j(b+c+h+3q,b+c+h)
+     -j(c+h+q,b+h+q).
+```
+
+Set `m:=b+c`, `x:=c-b`, and
+
+```text
+J(s,d) := j((s+d)/2,(s-d)/2).
+```
+
+Then
+
+```text
+G = J(m+q,x+q)+J(m+q,x-q)+J(2h+q,q)
+    -J(2m+2h+3q,3q)-J(m+2h+2q,x).
+```
+
+For fixed `m,h,q`, this expression is even in `x`. Moreover,
+
+```text
+d^2 J(s,d)/d d^2 = s/(s^2-d^2).
+```
+
+Write `f_s(d):=s/(s^2-d^2)`. This function is convex in `d` and decreases as
+`s` increases. Since `m+2h+2q>=m+q`,
+
+```text
+d^2G/dx^2
+  = f_(m+q)(x+q)+f_(m+q)(x-q)-f_(m+2h+2q)(x)
+  >= 2f_(m+q)(x)-f_(m+2h+2q)(x)
+  >= 0.
+```
+
+The feasible interval for `x` is symmetric. Hence `G` is minimized at `x=0`.
+At that point,
+
+```text
+G = 2J(m+q,q)+J(2h+q,q)-J(2m+2h+3q,3q).
+```
+
+Joint convexity and homogeneity of `j` make `J` subadditive. Applying
+subadditivity to the three pairs
+
+```text
+(m+q,q), (m+q,q), (2h+q,q)
+```
+
+proves `G>=0`. ∎
+
+**Corollary 5 (exact sign reduction).** The maximum of `Psi_{3,r}` is attained
+by sign-symmetric compositions and transition types.
+
+**Proof.** Average any feasible point with its sign image. Feasibility is
+preserved. The change in the objective is
+
+```text
+Asym(tau_1)+Asym(tau_2)
+  -(1-1/r)Asym(mu)-2Asym(beta)-Asym(zeta).
+```
+
+Lemma 4 lower-bounds this change by `Asym(mu)/r`, which is nonnegative. ∎
+
+It remains to optimize the sign-symmetric family. Let `A` be the nonzero
+increment fraction, let `B` be the nonzero state fraction, and let `b` be a
+bridge variable. Every sign-symmetric feasible transition type has the form
 
 ```text
 [ 1-B-2b             b                 b           ]
@@ -268,13 +424,61 @@ The feasible interval is
 max(0,(A-B)/2) <= b <= min((1-B)/2,A/4).
 ```
 
-For fixed `(A,B)`, transition entropy is concave in `b`. The script
-`scripts/optimize_symmetric_ternary.py` solves this inner problem and performs
-a global differential-evolution search over the three nonzero fractions. At
-output fraction `0.195`, it returns exponent `-0.00103433377`, matching the
-full optimizer to eight displayed significant digits. This agreement gives a
-second implementation check. It does not prove that every global maximizer is
-sign-symmetric.
+On the relative interior `0<A<1`, `0<B<1`, and `A<2B`, transition entropy is
+strictly concave in `b`. Its unique maximum satisfies
+
+```text
+(1-B-2b)(A/2-2b)^2 = b^2(B-A+2b)/2.
+```
+
+The feasibility condition is `A<=2B`. For the two-stage exponent, the outer
+domain therefore satisfies
+
+```text
+eta <= A <= 1,
+A <= 2B,
+B <= 2C,
+0 <= C <= delta.
+```
+
+The script `scripts/optimize_symmetric_ternary.py` solves the cubic inner
+problem numerically. It searches the full outer box and the cutoff and output
+faces separately. At output fraction `0.195` and cutoff `eta=0.05`, it returns
+exponent `-0.00103433377`. The full nonsymmetric optimizer returns the same
+value. At output fraction `0.19` and cutoff `eta=0.01`, both searches return
+`-0.00375433102`; this maximum lies on both constrained faces.
+
+The script `scripts/certify_symmetric_ternary.py` supplies a deterministic
+upper bound. It uses a supporting hyperplane of each concave transition
+entropy. On an outer box, the remaining objective is a sum of convex
+one-variable functions, whose maxima occur at endpoints. Branching therefore
+produces a verified cover of the full outer domain. The verifier uses 80-digit
+decimal intervals. Every arithmetic operation and logarithm is rounded
+outwards.
+
+**Proposition 6 (certified ternary bulk bounds).** For repetition factor three,
+
+```text
+max Psi_{3,3} < 0
+```
+
+on each of the following domains:
+
+| message cutoff | output fraction | certified upper bound |
+|---:|---:|---:|
+| 0.01 | 0.13  | -0.0001378250 |
+| 0.01 | 0.19  | -0.0000053629 |
+| 0.05 | 0.195 | -0.0000275872 |
+
+**Proof.** Corollary 5 reduces the full ternary problem to the sign-symmetric
+domain. The supporting-hyperplane bound described above is valid on every
+box. For the three rows, the verifier closes the covers after 57, 219, and 233
+box splits. The largest remaining box bound is the value in the last column.
+The interval verifier is part of the certificate. ∎
+
+The first row lies below the binary numerical transition near `0.132`. The
+second row shows that the ternary bulk margin is much larger. Proposition 6
+does not control message supports below the stated cutoff.
 
 ## 4. Exact sparse-trap count
 
@@ -285,7 +489,7 @@ Fix one repetition block and track its `r` coordinates through `P_1`. Their
 positions form a uniform `r`-subset of `[N]`. For ordered positions
 `a_1<...<a_r`, define the span as `a_r-a_1`.
 
-**Lemma 4 (span distribution).** For `t>=r-1`,
+**Lemma 7 (span distribution).** For `t>=r-1`,
 
 ```text
 Pr[span=t]
@@ -296,7 +500,7 @@ Pr[span=t]
 `r-2` interior positions from the `t-1` positions strictly between the two
 endpoints. Divide by the number of `r`-subsets. ∎
 
-For every fixed `s>=r-1`, Lemma 4 gives
+For every fixed `s>=r-1`, Lemma 7 gives
 
 ```text
 Pr[span <= s] = Theta(N^{1-r})
@@ -315,7 +519,7 @@ contains the adjacent values `(x,-x)` and zeros elsewhere. The second
 permutation places these values at an ordered pair of distinct positions.
 The final accumulator weight is their separation.
 
-**Lemma 5 (two-stage repetition-three trap).** Fix one message coordinate and
+**Lemma 8 (two-stage repetition-three trap).** Fix one message coordinate and
 let `W` be its final ternary weight. The event described above satisfies
 
 ```text
@@ -330,7 +534,7 @@ is
 2/(N-1) * d(2N-d-1)/[N(N-1)].
 ```
 
-**Proof.** Lemma 4 gives
+**Proof.** Lemma 7 gives
 
 ```text
 Pr[first span=2] = (N-2)/binom(N,3) = 6/[N(N-1)].
@@ -392,7 +596,7 @@ absence of all `p`-torsion cores cannot succeed.
 
 The ternary beating fraction is close to a constant divided by `N` at the
 three larger lengths. The products `N Pr[d_3<d_2]` are `1.79`, `2.26`, and
-`2.04` at lengths `15`, `24`, and `36`. Lemma 5 supplies a concrete
+`2.04` at lengths `15`, `24`, and `36`. Lemma 8 supplies a concrete
 `1/N` mechanism, but it does not prove that all beating events belong to that
 family.
 
@@ -441,7 +645,7 @@ before random mixing. Every active local block deterministically maps
 ```
 
 At length 12, 651 of 1,000 exact samples have `d_3<d_2`. The sparse reset is
-present before the first random permutation, so Lemma 4 supplies no suppressing
+present before the first random permutation, so Lemma 7 supplies no suppressing
 factor.
 
 The schedule `PAPA` forces the same reset to arise from a rare span event.
@@ -463,7 +667,7 @@ reset has the smaller fixed-span scale `N^(2-5)=N^-3`.
 The exact first moment suggests a theorem stated at a deterministic threshold,
 not at the random coupled binary distance.
 
-**Proposition 6 (sparse--bulk reduction).** Fix `r`, `p`, `delta>0`, and
+**Proposition 9 (sparse--bulk reduction).** Fix `r`, `p`, `delta>0`, and
 `eta>0`. Let `Z_p^s(delta N)` count nonzero messages of support less than
 `eta K` whose encoded word has weight at most `delta N`, and let
 `Z_p^bulk(delta N)` count the remaining low-weight messages. If
@@ -500,9 +704,9 @@ Pr[d_p <= delta N]
 The reduction is elementary; proving its two hypotheses is the substantive
 problem. It motivates the following ensemble-specific conjecture.
 
-**Conjecture 7 (odd-field threshold bound).** For the `PAPA`
+**Conjecture 10 (odd-field threshold bound).** For the `PAPA`
 repetition-`r` ensemble and every fixed odd prime `p`, there are `eta>0` and
-`delta_p>0` such that Proposition 6 applies for every `delta<delta_p`.
+`delta_p>0` such that Proposition 9 applies for every `delta<delta_p`.
 Moreover, `delta_p` is at least the proved binary distance threshold for the
 same repetition factor.
 
@@ -512,8 +716,8 @@ Suppose the binary repetition-`r` RAA ensemble satisfies
 Pr[d_2 < delta N] -> 0.
 ```
 
-If Conjecture 7 covers this `delta`, Proposition 6 gives the odd-field bound.
-If `d_2/N` converges in probability to `delta_2` and Conjecture 7 applies for
+If Conjecture 10 covers this `delta`, Proposition 9 gives the odd-field bound.
+If `d_2/N` converges in probability to `delta_2` and Conjecture 10 applies for
 every `delta<delta_2`, the two bounds imply
 
 ```text
@@ -532,6 +736,10 @@ This formulation separates two mathematical tasks.
 Neither task requires samplewise field monotonicity. Neither task claims that
 the binary and prime-field limiting distances are equal.
 
+For `p=r=3`, Proposition 6 completes the bulk task through `delta=0.19` with
+cutoff `eta=0.01`. At any smaller threshold, the prime-field hypothesis in
+Proposition 9 now depends only on its sparse bound.
+
 ## 9. Remaining counterexample search
 
 The current experiments found no distance-beating witness with message support
@@ -543,16 +751,19 @@ whose entropy exceeds the placement cost of its residual core. Such a type
 would appear only when the message support grows linearly.
 
 The multistart searches found no positive bulk exponent below output fraction
-`0.13` for `p=3` or `p=5`. These searches are not global certificates. Their
-most useful output is a candidate field-symbol type: a positive exponent below
-a proved binary threshold would identify a possible counterexample without
-requiring a blind search over permutations. A planted construction could then
-test whether the first moment reflects real codewords or only correlations.
+`0.13` for `p=3` or `p=5`. Proposition 6 strengthens the ternary observation:
+with cutoff `eta=0.01`, no ternary bulk counterexample exists through output
+fraction `0.19`. The `p=5` search remains numerical.
+
+For an uncertified prime, a positive exponent below a proved binary threshold
+would identify a possible counterexample without a blind search over
+permutations. A planted construction could then test whether the first moment
+reflects real codewords or only correlations.
 
 ## 10. Immediate proof obligations
 
-1. Replace the numerical bulk searches with rigorous upper bounds, first for
-   the sign-symmetric ternary family and then for all compositions.
+1. Extend Proposition 6 toward the numerical ternary transition near `0.196`
+   and reproduce the directed-interval certificate independently.
 2. Prove a uniform sparse bound for supports `s<=eta N`, with `eta` tending to
    zero after `N` tends to infinity.
 3. Evaluate or certify the bulk exponent for further primes and the repetition

@@ -6,8 +6,20 @@ from __future__ import annotations
 import argparse
 import json
 import math
+from dataclasses import dataclass
 
 from scipy.optimize import differential_evolution, minimize_scalar
+
+
+@dataclass(frozen=True)
+class SearchResult:
+    point: tuple[float, float, float]
+    objective: float
+    branch: str
+    success: bool
+    message: str
+    iterations: int
+    evaluations: int
 
 
 def xlogx(value: float) -> float:
@@ -20,7 +32,9 @@ def ternary_composition_entropy(nonzero_fraction: float) -> float:
     return -xlogx(zero) - 2.0 * xlogx(half)
 
 
-def transition_entries(increment_weight: float, state_weight: float, bridge: float) -> tuple[float, ...]:
+def transition_entries(
+    increment_weight: float, state_weight: float, bridge: float
+) -> tuple[float, ...]:
     diagonal_zero = 1.0 - state_weight - 2.0 * bridge
     diagonal_nonzero = (state_weight - increment_weight + 2.0 * bridge) / 2.0
     off_diagonal_nonzero = increment_weight / 2.0 - 2.0 * bridge
@@ -59,7 +73,12 @@ def transition_rate(increment_weight: float, state_weight: float) -> tuple[float
     return max(candidates)
 
 
-def exponent(message_weight: float, middle_weight: float, output_weight: float, repetition: int) -> float:
+def exponent(
+    message_weight: float,
+    middle_weight: float,
+    output_weight: float,
+    repetition: int,
+) -> float:
     first, _ = transition_rate(message_weight, middle_weight)
     second, _ = transition_rate(middle_weight, output_weight)
     if not math.isfinite(first) or not math.isfinite(second):
@@ -84,12 +103,30 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def main() -> None:
-    args = parse_args()
+def search_branch(
+    args: argparse.Namespace,
+    branch: str,
+    fixed: dict[int, float],
+    seed: int,
+) -> SearchResult:
+    outer_bounds = ((args.eta, 1.0), (0.0, 1.0), (0.0, args.delta))
+    free = [index for index in range(3) if index not in fixed]
+
+    def point_from_free(values: list[float]) -> tuple[float, float, float]:
+        point = [0.0, 0.0, 0.0]
+        position = 0
+        for index in range(3):
+            if index in fixed:
+                point[index] = fixed[index]
+            else:
+                point[index] = values[position]
+                position += 1
+        return point[0], point[1], point[2]
+
     result = differential_evolution(
-        lambda point: -exponent(point[0], point[1], point[2], args.repetition),
-        bounds=((args.eta, 1.0), (0.0, 1.0), (0.0, args.delta)),
-        seed=args.seed,
+        lambda values: -exponent(*point_from_free(values), args.repetition),
+        bounds=tuple(outer_bounds[index] for index in free),
+        seed=seed,
         popsize=24,
         maxiter=args.max_iterations,
         tol=1e-11,
@@ -97,7 +134,36 @@ def main() -> None:
         workers=1,
         updating="immediate",
     )
-    message_weight, middle_weight, output_weight = result.x
+    point = point_from_free(result.x)
+    return SearchResult(
+        point,
+        float(result.fun),
+        branch,
+        bool(result.success),
+        str(result.message),
+        int(result.nit),
+        int(result.nfev),
+    )
+
+
+def optimize(args: argparse.Namespace) -> SearchResult:
+    branches = (
+        ("interior", {}),
+        ("message_cutoff", {0: args.eta}),
+        ("output_boundary", {2: args.delta}),
+        ("cutoff_and_output_boundary", {0: args.eta, 2: args.delta}),
+    )
+    results = [
+        search_branch(args, branch, fixed, args.seed + index)
+        for index, (branch, fixed) in enumerate(branches)
+    ]
+    return min(results, key=lambda result: result.objective)
+
+
+def main() -> None:
+    args = parse_args()
+    result = optimize(args)
+    message_weight, middle_weight, output_weight = result.point
     first_rate, first_bridge = transition_rate(message_weight, middle_weight)
     second_rate, second_bridge = transition_rate(middle_weight, output_weight)
     print(
@@ -106,7 +172,7 @@ def main() -> None:
                 "repetition": args.repetition,
                 "delta": args.delta,
                 "eta": args.eta,
-                "exponent": -result.fun,
+                "exponent": -result.objective,
                 "message_nonzero_fraction": message_weight,
                 "middle_nonzero_fraction": middle_weight,
                 "output_nonzero_fraction": output_weight,
@@ -114,10 +180,11 @@ def main() -> None:
                 "second_transition_rate": second_rate,
                 "first_bridge": first_bridge,
                 "second_bridge": second_bridge,
-                "optimizer_success": bool(result.success),
-                "optimizer_message": str(result.message),
-                "iterations": int(result.nit),
-                "evaluations": int(result.nfev),
+                "optimizer_branch": result.branch,
+                "optimizer_success": result.success,
+                "optimizer_message": result.message,
+                "iterations": result.iterations,
+                "evaluations": result.evaluations,
             },
             indent=2,
             sort_keys=True,
