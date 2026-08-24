@@ -10,6 +10,7 @@ import numpy as np
 import certify_symmetric_ternary as certificate
 import optimize_bulk_exponent as bulk
 import optimize_symmetric_ternary as ternary
+import verify_symmetric_ternary as independent
 
 
 class OptimizerTests(unittest.TestCase):
@@ -62,6 +63,16 @@ class OptimizerTests(unittest.TestCase):
             max_boxes=1000,
         )
         self.assertLess(result.upper_bound, 0)
+        self.assertLess(result.boxes_split, 1000)
+
+    def test_independent_interval_checker_closes(self) -> None:
+        result = independent.verify(
+            independent.Fraction("0.01"),
+            independent.Fraction("0.13"),
+            precision=50,
+            max_boxes=1000,
+        )
+        self.assertLess(independent.mpf_cmp(result.upper_bound, independent.fzero), 0)
         self.assertLess(result.boxes_split, 1000)
 
     def test_prime_validation(self) -> None:

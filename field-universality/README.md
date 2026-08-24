@@ -51,7 +51,7 @@ finite-dimensional bulk exponent.
 For repetition three over `F_3`, the project now proves
 
 ```text
-delta_* := 1323/10000,
+delta_* := 49/250,
 Pr[Delta_{3,N} <= delta_*] -> 0.
 ```
 
@@ -60,14 +60,17 @@ least `0.0001 K`. An exact random-spacing argument covers every smaller
 support. The sparse estimate sums over all ternary messages and does not
 assume random diagonal multipliers.
 
-The bulk certificate is stored in
-[`results/ternary-bulk-0.1323-eta-0.0001.json`](results/ternary-bulk-0.1323-eta-0.0001.json).
+Two implementations certify the bulk bound. The primary certificate is
+[`results/ternary-bulk-0.196-eta-0.0001.json`](results/ternary-bulk-0.196-eta-0.0001.json).
+The independent certificate is
+[`results/ternary-bulk-0.196-eta-0.0001-independent.json`](results/ternary-bulk-0.196-eta-0.0001-independent.json).
 
-This theorem uses the exact rational `1323/10000`. Kliewer et al. report the
-binary lower bound as `0.1323` to four decimal places. Our theorem matches that
-displayed benchmark; it does not certify the unrounded binary value behind the
-table entry. See [Kliewer et al., *Coding Theorems for Repeat Multiple
-Accumulate Codes*](https://arxiv.org/abs/0810.3422), Table I.
+Kliewer et al. report `0.1323` to four decimal places as the corresponding
+binary lower bound. The ternary theorem is therefore stronger than the
+published binary guarantee. It proves one-sided threshold inheritance, not
+equality of the binary and ternary distances. See [Kliewer et al., *Coding
+Theorems for Repeat Multiple Accumulate
+Codes*](https://arxiv.org/abs/0810.3422), Table I.
 
 ## Conjecture hierarchy
 
@@ -143,17 +146,17 @@ enumerator. Binary minimum distance alone is not a sufficient hypothesis.
 
 ## Proof program
 
-1. Reproduce the `0.1323` bulk certificate with an independent verifier.
-2. Bound the unrounded published binary threshold with rigorous intervals.
-3. Extend the spacing proof and bulk certificate to further odd primes.
-4. Establish the rank/cogirth formulation as an independent algebraic view of
+1. Certify a positive bulk type at `0.197` and locate the first-moment
+   transition between `0.196` and `0.197`.
+2. Extend the spacing proof and bulk certificate to further odd primes.
+3. Establish the rank/cogirth formulation as an independent algebraic view of
    characteristic-specific failures.
-5. Investigate the matching upper bound required for coupled universality.
-6. Extract checkable enumerator hypotheses for blockwise BAA base codes only
+4. Investigate the matching upper bound required for coupled universality.
+5. Extract checkable enumerator hypotheses for blockwise BAA base codes only
    after the repetition-based theorem is complete.
 
 The first-moment proof resolves the uniform quantifier for the ternary
-`0.1323` theorem. Rank and residual-core diagnostics remain useful for finding
+`0.196` theorem. Rank and residual-core diagnostics remain useful for finding
 counterexamples, but the theorem does not depend on a uniform rank comparison.
 
 ## Experimental program
@@ -284,22 +287,26 @@ loss.
 
 ## Bulk exponent scripts
 
-The numerical optimizers require Python 3, NumPy, and SciPy. The certificate
-uses only Python's standard `decimal` module. These scripts analyze the
-Markov-type exponent derived in `CLEAN_THEORY.md`:
+The numerical optimizers require Python 3, NumPy, and SciPy. The primary
+certificate uses Python's standard `decimal` module. The independent checker
+uses exact rational boxes and the interval module from mpmath. These scripts
+analyze the Markov-type exponent derived in `CLEAN_THEORY.md`:
 
 ```text
 python scripts/optimize_bulk_exponent.py \
-  --prime 3 --repetition 3 --delta 0.1323 --eta 0.01 --restarts 64
+  --prime 3 --repetition 3 --delta 0.196 --eta 0.0001 --restarts 64
 
 python scripts/optimize_symmetric_ternary.py \
   --repetition 3 --delta 0.195 --eta 0.05
 
 python scripts/certify_symmetric_ternary.py \
-  --delta 0.1323 --eta 0.0001 --precision 80
+  --delta 0.196 --eta 0.0001 --precision 80
+
+python scripts/verify_symmetric_ternary.py \
+  --delta 0.196 --eta 0.0001 --precision 80
 
 python scripts/sparse_spacing_bound.py \
-  --delta 0.1323 --eta 0.0001
+  --delta 0.196 --eta 0.0001
 ```
 
 The first command searches the full vector-composition problem. The second
@@ -310,11 +317,12 @@ A positive value identifies a candidate bad type. A negative numerical value
 is not a proof that the global maximum is negative.
 
 For `F_3`, the theory note proves that sign symmetrization is without loss.
-The certificate script then covers the reduced three-dimensional outer domain
-with deterministic entropy bounds. Its default 80-digit arithmetic adds a
-directed interval around every arithmetic operation and logarithm. The command
-above certifies the bulk half of the `0.1323` theorem at cutoff `0.0001`. A
-separate certificate reaches output fraction `0.19` at cutoff `0.01`.
+The certificate script covers the reduced three-dimensional outer domain with
+deterministic entropy bounds. Its default 80-digit arithmetic adds a directed
+interval around every arithmetic operation and logarithm. The independent
+checker constructs another cover using exact rational boxes and mpmath
+intervals. Both implementations certify the bulk half of the `0.196` theorem
+at cutoff `0.0001`.
 
 The final command reports the constants in the exact sparse proof. The proof
 uses integer inequalities; the displayed floating-point values are diagnostic.

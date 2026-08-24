@@ -105,7 +105,7 @@ def laplace_upper_bound(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--delta", type=float, default=0.1323)
+    parser.add_argument("--delta", type=float, default=0.196)
     parser.add_argument("--eta", type=float, default=0.0001)
     return parser.parse_args()
 
@@ -129,18 +129,18 @@ def main() -> None:
         * (3.0 / ((min_ratio - 3.0) * laplace_denominator)) ** 1.5
     )
 
-    exact_proof_parameters = delta <= 0.1323 and eta <= 0.0001
+    exact_proof_parameters = delta <= 0.2 and eta <= 0.0001
     rational_certificate = None
     if exact_proof_parameters:
-        # For delta <= 1323/10000, exp(D(1/2 || delta))-1 > 8/17.
-        # Together with e<3, squaring the resulting worst-case base bound
-        # proves that it is less than 1/5.
+        # For delta <= 1/5, exp(D(1/2 || delta))-1 >= 1/4.  Together
+        # with e<3, squaring the worst-case base bound proves that it is
+        # less than 1/2.
         ratio_integer = 30_000
-        rational_left = 100 * ratio_integer**2 * 51**3
-        rational_right = 512 * (ratio_integer - 3) ** 3
+        rational_left = 16 * ratio_integer**2 * 12**3
+        rational_right = (ratio_integer - 3) ** 3
         rational_certificate = {
-            "domain": "0 < delta <= 1323/10000 and 0 < eta <= 1/10000",
-            "base_upper_bound": 0.2,
+            "domain": "0 < delta <= 1/5 and 0 < eta <= 1/10000",
+            "base_upper_bound": 0.5,
             "left": rational_left,
             "right": rational_right,
             "passes": rational_left < rational_right,

@@ -15,18 +15,18 @@ Most successful samples contain such torsion above the binary minimum. The
 desired theorem must instead exclude torsion below a certified binary linear
 threshold.
 
-This note develops five ingredients:
+This note develops six ingredients:
 
 1. a vector-composition enumerator for the complete addition-only ensemble;
-2. an exact embedding count for the dominant repetition-three trap; and
+2. an exact embedding count for the dominant repetition-three trap;
 3. an algebraic classification of every sampled odd-field minimum witness;
-4. an exact sign-symmetrization theorem for the ternary bulk exponent; and
-5. an interval certificate for the remaining symmetric optimization.
+4. an exact sign-symmetrization theorem for the ternary bulk exponent;
+5. a uniform random-spacing bound for sparse messages; and
+6. two interval implementations for the remaining symmetric optimization.
 
-For ternary repetition-three codes, the certificate closes the bulk regime
-through output fraction `0.19`. The remaining asymptotic task is a uniform
-bound below the message-support cutoff. Other primes still require both
-symmetry analysis and bulk certification.
+For ternary repetition-three codes, the sparse and bulk bounds prove relative
+distance `0.196`. Other primes still require both symmetry analysis and bulk
+certification.
 
 ## 2. Ensemble and probability space
 
@@ -475,6 +475,14 @@ produces a verified cover of the full outer domain. The verifier uses 80-digit
 decimal intervals. Every arithmetic operation and logarithm is rounded
 outwards.
 
+The script `scripts/verify_symmetric_ternary.py` is an independent checker.
+It shares no implementation code with the primary certifier. The checker uses
+exact rational boxes and stationary-bridge bisection. It evaluates entropies
+with the interval module from mpmath and constructs its own cover. At output
+fraction `0.1323`, it reproduces the primary upper bound to the displayed
+precision. The result is recorded in
+`results/ternary-bulk-0.1323-eta-0.0001-independent.json`.
+
 **Proposition 6 (certified ternary bulk bounds).** For repetition factor three,
 
 ```text
@@ -487,21 +495,24 @@ on each of the following domains:
 |---:|---:|---:|
 | 0.0001 | 0.13 | -0.0000033185 |
 | 0.0001 | 0.1323 | -0.0000014822 |
+| 0.0001 | 0.196 | -0.0000003617 |
 | 0.01 | 0.13  | -0.0001378250 |
 | 0.01 | 0.19  | -0.0000053629 |
 | 0.05 | 0.195 | -0.0000275872 |
 
 **Proof.** Corollary 5 reduces the full ternary problem to the sign-symmetric
 domain. The supporting-hyperplane bound described above is valid on every
-box. For the five rows, the verifier closes the covers after 312, 315, 57,
-219, and 233 box splits. The largest remaining box bound is the value in the
-last column. The interval verifier is part of the certificate. The certificate
-used by Theorem 13 is recorded in
-`results/ternary-bulk-0.1323-eta-0.0001.json`. ∎
+box. For the six rows, the primary verifier closes the covers after 312, 315,
+789, 57, 219, and 233 box splits. The largest remaining box bound is the value
+in the last column. The primary certificate used by Theorem 13 is recorded in
+`results/ternary-bulk-0.196-eta-0.0001.json`. The independent checker closes
+another 789-split cover and obtains the same upper bound to the displayed
+precision. Its result is recorded in
+`results/ternary-bulk-0.196-eta-0.0001-independent.json`. ∎
 
 The first two rows certify the small-cutoff bulk through the displayed binary
-benchmark. The `0.19` row shows that the ternary bulk margin is much larger.
-Proposition 6 does not control message supports below the stated cutoff.
+benchmark. The `0.196` row reaches the new ternary theorem. Proposition 6 does
+not control message supports below the stated cutoff.
 
 ## 4. Sparse path theory
 
@@ -708,8 +719,7 @@ function evaluates the sum as `(exp(c)-1)^(-a)`. ∎
 Return to repetition three over `F_3`. Let `Z_{3,s}(d)` count messages of
 support exactly `s` whose encoded words have weight at most `d`.
 
-**Proposition 12 (uniform sparse first moment).** Fix
-`0<delta<=1323/10000` and set
+**Proposition 12 (uniform sparse first moment).** Fix `0<delta<=1/5` and set
 
 ```text
 eta := 0.0001,
@@ -754,39 +764,37 @@ Q(R)
 ```
 
 The cutoff implies `R=N/s>=30000`. The function `x -> 4x(1-x)` increases on
-`(0,1/2)`. Since `delta<=1323/10000`,
+`(0,1/2)`. Since `delta<=1/5`,
 
 ```text
-4 delta(1-delta)
-  <= 45918684/100000000
-  < 289/625.
+4 delta(1-delta) <= 16/25.
 ```
 
-It follows that `exp(c_delta)-1>8/17`.
+It follows that `exp(c_delta)-1>=1/4`.
 
 Using `e<3` gives
 
 ```text
-Q(R) < 2R [51/(8(R-3))]^(3/2).
+Q(R) < 2R [12/(R-3)]^(3/2).
 ```
 
-The right-hand side decreases for `R>=30000` and is less than `1/5` at
+The right-hand side decreases for `R>=30000` and is less than `1/2` at
 `R=30000`. After squaring, the last claim is the integer inequality
 
 ```text
-100 * 30000^2 * 51^3 < 512 * 29997^3.
+16 * 30000^2 * 12^3 < 29997^3.
 ```
 
 For each fixed `s`, `Q(N/s)` tends to zero. For all supported `s`, the terms
-are dominated by `(1/5)^s`. Split the sum at a fixed support bound and then
+are dominated by `(1/2)^s`. Split the sum at a fixed support bound and then
 send that bound to infinity. The dominated geometric tail proves the claim.
 ∎
 
 Proposition 12 controls every support below the smaller bulk cutoff; it is not
 only a sublinear-support statement.
 
-**Theorem 13 (ternary BAA distance at 0.1323).** Set
-`delta_*:=1323/10000`. For the repetition-three BAA ensemble over `F_3`,
+**Theorem 13 (ternary BAA distance at 0.196).** Set `delta_*:=49/250`. For the
+repetition-three BAA ensemble over `F_3`,
 
 ```text
 Pr[d_min <= floor(delta_* N)] -> 0.
@@ -798,11 +806,11 @@ expected number from larger supports exponentially small at the same cutoff
 and output fraction. Markov's inequality completes the proof. ∎
 
 Kliewer et al. report `0.1323` to four decimal places as the binary
-repetition-three lower bound. Theorem 13 uses the exact rational
-`1323/10000` on the ternary side. It therefore matches the displayed binary
-benchmark, but it does not certify the unrounded value behind that table
-entry. See [Kliewer et al., *Coding Theorems for Repeat Multiple Accumulate
-Codes*](https://arxiv.org/abs/0810.3422), Table I.
+repetition-three lower bound. Theorem 13 therefore gives a stronger certified
+lower bound for the ternary ensemble. This comparison proves one-sided
+threshold inheritance. It does not prove equality of the binary and ternary
+relative distances. See [Kliewer et al., *Coding Theorems for Repeat Multiple
+Accumulate Codes*](https://arxiv.org/abs/0810.3422), Table I.
 
 ## 5. What successful samples contain
 
@@ -973,10 +981,9 @@ This formulation separates two mathematical tasks.
 Neither task requires samplewise field monotonicity. Neither task claims that
 the binary and prime-field limiting distances are equal.
 
-For `p=r=3`, Proposition 6 completes the bulk task through `delta=0.19` with
-cutoff `eta=0.01`. Theorem 13 completes both tasks at output fraction `0.1323`
-using cutoff `eta=0.0001`. At larger ternary thresholds, Proposition 14 still
-requires a sparse bound with matching constants.
+For `p=r=3`, Theorem 13 completes both tasks at output fraction `0.196` using
+cutoff `eta=0.0001`. Proposition 12 already covers sparse output fractions
+through `0.2`; the certified bulk exponent is now the limiting step.
 
 ## 9. Remaining counterexample search
 
@@ -1000,14 +1007,11 @@ reflects real codewords or only correlations.
 
 ## 10. Immediate proof obligations
 
-1. Reproduce the `eta=0.0001`, `delta=0.1323` interval certificate with an
-   independent verifier.
-2. Determine a rigorous interval for the unrounded binary threshold rather
-   than treating its four-decimal table entry as exact.
-3. Extend Theorem 13 toward the ternary bulk transition near `0.196`.
-4. Evaluate or certify the bulk exponent for further primes and the repetition
+1. Certify a positive bulk type at `delta=0.197`, then locate the first-moment
+   transition between `0.196` and `0.197`.
+2. Evaluate or certify the bulk exponent for further primes and the repetition
    factors used by the binary RAA theorem.
-5. Search the bulk optimization for a positive-exponent type below that
+3. Search the bulk optimization for a positive-exponent type below that
    threshold.
 
 These obligations form a coherent proof program. New finite traps matter only

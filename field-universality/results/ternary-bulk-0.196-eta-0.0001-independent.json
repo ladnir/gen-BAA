@@ -1,0 +1,13 @@
+{
+  "arithmetic": "exact rational boxes and mpmath intervals",
+  "boxes_remaining": 790,
+  "boxes_split": 789,
+  "certified_upper_bound": "-0.00000036177429707601978182769759146558979236151566589170353649513969550677902152015281",
+  "command": "python scripts/verify_symmetric_ternary.py --eta 0.0001 --delta 0.196 --precision 80 --max-boxes 2000",
+  "delta": "49/250",
+  "eta": "1/10000",
+  "implementation": "independent checker",
+  "maximum_queue_size": 790,
+  "precision": 80,
+  "status": "negative bulk exponent independently verified"
+}

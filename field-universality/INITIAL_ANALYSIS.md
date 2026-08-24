@@ -25,7 +25,7 @@ Pr[d_p <= delta N] -> 0.
 ```
 
 The project now proves this threshold statement for `p=r=3` and the exact
-rational `delta=1323/10000`. Small instances still contain samples with
+rational `delta=49/250`. Small instances still contain samples with
 `d_3<d_2`. Their minimum words are usually sparse-message alignment events,
 but an exact spacing bound shows that the total probability of all such
 low-weight words tends to zero.
@@ -619,24 +619,21 @@ Two-sided profile equality is not expected.
 
 ## 15. Experimental next steps
 
-The harness now records message composition, exact support spectra,
-Smith-theoretic witness certificates, circuit traces, graph fingerprints,
-exact top divisors under a work budget, and both dense and sparse unit-equation
-cores. The first three items in the earlier experimental plan are now partly
-or fully implemented. The next work should use these diagnostics rather than
-add more undirected distance tables.
+The harness records message composition, exact support spectra, Smith-theoretic
+witness certificates, circuit traces, graph fingerprints, exact top divisors
+under a work budget, and both dense and sparse unit-equation cores. The next
+work should use these diagnostics rather than add more undirected distance
+tables.
 
-1. Turn the exact repetition-three span-two count into a uniform bound over all
-   sparse message supports.
+1. Certify a positive bulk type at `0.197` and locate the transition above the
+   proved `0.196` threshold.
 2. Relate trace and core fingerprints to exact embedding counts for further
    recurrent trap families.
-3. Reproduce the ternary interval certificate independently and connect its
-   `0.19` bulk bound to a proved binary threshold.
-4. Extend exact message enumeration with branch-and-bound for dimensions above
+3. Extend exact message enumeration with branch-and-bound for dimensions above
    16.
-5. Compare `PAPA`, `PAPAPA`, and sign-only diagonal variants at the same
+4. Compare `PAPA`, `PAPAPA`, and sign-only diagonal variants at the same
    lengths and seeds.
-6. Search local binary codes whose represented matroid is stable over
+5. Search local binary codes whose represented matroid is stable over
    `F_2,F_3,F_5,Q` but whose accumulated core has frequent odd torsion.
 
 The decisive negative result would be a family of linear-support witnesses
