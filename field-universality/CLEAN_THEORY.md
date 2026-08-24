@@ -274,6 +274,47 @@ For `p=5`, the low-output optimizer concentrates the message on one opposite
 pair of nonzero values. It does not use a uniform nonzero composition. This
 behavior confirms that the unweighted ensemble needs the vector enumerator.
 
+The full-composition problem still has a field-uniform family of affine upper
+bounds. Fix vectors `u,v,w in R^p` and define
+
+```text
+Z(u,v,w)
+  := sum_{s,t in F_p} exp(-u_s-v_t-w_{t-s}).
+```
+
+For every `tau in Gamma(alpha,beta)`,
+
+```text
+H(tau)
+  <= log Z(u,v,w) + <u+v,beta> + <w,alpha>.
+```
+
+Indeed, define
+
+```text
+q_{s,t} := exp(-u_s-v_t-w_{t-s})/Z(u,v,w).
+```
+
+The inequality is `D(tau || q)>=0`. The three linear terms follow from the
+row, column, and increment marginals of `tau`.
+
+This dual bound converts a box certificate into linear programming. On an
+interval `[a,b]`, the secant through `x log x` at `a` and `b` is an upper bound
+because `x log x` is convex. Apply these secants to the three negative entropy
+terms in `Psi_{p,r}`. Apply one or more entropy-dual bounds to each transition
+entropy. The remaining maximization is a linear program over the original
+composition and transition constraints.
+
+Consequently, a finite certificate for fixed `p` can contain:
+
+1. a box cover of the three composition simplices;
+2. dual potentials for both transition entropies on every box; and
+3. a feasible dual witness for each resulting linear program.
+
+The checker needs only interval evaluation of logarithms and exact validation
+of linear inequalities. Numerical optimization may design the cover, but it
+does not belong to the trusted proof.
+
 The ternary optimization admits a useful information-theoretic form. For
 compositions `alpha` and `beta` on `F_3`, define
 

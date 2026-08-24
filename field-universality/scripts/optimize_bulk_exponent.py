@@ -228,6 +228,8 @@ def optimize(args: argparse.Namespace) -> dict[str, object]:
         "mu": point[layout.mu].tolist(),
         "beta": point[layout.beta].tolist(),
         "zeta": point[layout.zeta].tolist(),
+        "tau1": point[layout.tau1].reshape((layout.prime, layout.prime)).tolist(),
+        "tau2": point[layout.tau2].reshape((layout.prime, layout.prime)).tolist(),
         "optimizer_success": bool(best.success),
         "optimizer_message": str(best.message),
         "iterations": int(best.nit),

@@ -166,6 +166,11 @@ quinary task is a rigorous bulk certificate. The ternary sign reduction does
 not generalize: an explicit stationary type over `F_5` makes sign averaging
 decrease the full exponent.
 
+The general certificate under development uses entropy duality. Arbitrary
+symbol potentials give affine upper bounds on each transition entropy.
+Secants upper-bound the negative composition entropies on a box. Each box then
+reduces to a linear program that retains all field-symbol constraints.
+
 ## Experimental program
 
 Experiments must use the same permutations for every field. Random-message
@@ -317,6 +322,12 @@ python scripts/sparse_spacing_bound.py \
 
 python scripts/sparse_spacing_bound.py \
   --prime 5 --repetition 3 --delta 0.26 --eta 0.00001
+
+python scripts/diagnose_entropy_dual.py \
+  --prime 5 --repetition 3 --delta 0.196 --eta 0.0001
+
+python scripts/search_entropy_dual_cover.py \
+  --prime 5 --repetition 3 --delta 0.196 --eta 0.0001 --max-boxes 100
 ```
 
 The first command searches the full vector-composition problem. The second
@@ -337,3 +348,8 @@ at cutoff `0.0001`.
 The two sparse commands report the constants in the exact ternary and quinary
 proofs. The proofs use integer inequalities; the displayed floating-point
 values are diagnostic.
+
+The last two commands develop the full-composition certificate. They use
+floating-point optimization to design entropy-dual cuts and a box cover.
+Their negative output would still require the independent interval checker
+described in `CLEAN_THEORY.md`.

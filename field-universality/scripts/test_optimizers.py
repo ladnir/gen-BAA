@@ -8,8 +8,10 @@ from types import SimpleNamespace
 import numpy as np
 
 import certify_symmetric_ternary as certificate
+import diagnose_entropy_dual as entropy_dual
 import optimize_bulk_exponent as bulk
 import optimize_symmetric_ternary as ternary
+import search_entropy_dual_cover as dual_cover
 import verify_symmetric_ternary as independent
 
 
@@ -103,6 +105,52 @@ class OptimizerTests(unittest.TestCase):
         self.assertAlmostEqual(
             full_change, -5.0 * np.log(2.0) / 28.0, places=14
         )
+
+    def test_entropy_dual_majorizes_transition_entropy(self) -> None:
+        transition = np.array(
+            [
+                [6, 0, 0, 5, 0],
+                [5, 6, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 5, 0, 1, 0],
+                [0, 0, 0, 0, 0],
+            ],
+            dtype=float,
+        )
+        transition /= transition.sum()
+        state = transition.sum(axis=1)
+        increment = np.array(
+            [
+                sum(
+                    transition[source, (source + difference) % 5]
+                    for source in range(5)
+                )
+                for difference in range(5)
+            ]
+        )
+        u = np.array([0.0, 0.2, -0.1, 0.4, -0.3])
+        v = np.array([0.0, -0.2, 0.3, 0.1, -0.4])
+        w = np.array([0.0, 0.5, -0.2, -0.1, 0.2])
+        potentials = entropy_dual.potential_matrix(u, v, w)
+        upper = (
+            np.log(np.exp(-potentials).sum())
+            + np.dot(u + v, state)
+            + np.dot(w, increment)
+        )
+        self.assertLessEqual(bulk.entropy(transition), upper)
+
+    def test_entropy_secants_are_upper_bounds(self) -> None:
+        lower, upper = 0.03, 0.81
+        slope, intercept = dual_cover.secant(lower, upper)
+        binary_slope, binary_intercept = dual_cover.binary_secant(lower, upper)
+        for point in np.linspace(lower, upper, 1001):
+            self.assertLessEqual(
+                dual_cover.xlogx(point), slope * point + intercept + 1e-15
+            )
+            self.assertLessEqual(
+                dual_cover.binary_xlogx(point),
+                binary_slope * point + binary_intercept + 1e-15,
+            )
 
     def test_decimal_certificate_closes_below_binary_threshold(self) -> None:
         result = certificate.certify(
