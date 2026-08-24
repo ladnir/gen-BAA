@@ -62,7 +62,7 @@ a factor of four. The least certified roots begin with `m=7,8,10,10` for
 `p=5,7,11,13`, respectively, and give distances of order `p^(-4/5)`. In
 particular, the field-uniform criterion alone gives the quinary bound `1/49`.
 A separately verified sign-orbit bulk certificate raises the proved quinary
-distance to `1/25`. These constants do not locate the true prime-field
+distance to `1/20`. These constants do not locate the true prime-field
 thresholds.
 
 For repetition three over `F_3`, the project now proves
@@ -163,7 +163,7 @@ enumerator. Binary minimum distance alone is not a sufficient hypothesis.
 
 ## Proof program
 
-1. Strengthen the proved `F_5` bound from `1/25` toward the published binary
+1. Strengthen the proved `F_5` bound from `1/20` toward the published binary
    threshold using a full-composition bulk certificate; its sparse bound is
    already proved through `0.26`.
 2. Certify a positive ternary bulk type at `0.197` and locate the first-moment
@@ -180,7 +180,7 @@ counterexamples, but the theorem does not depend on a uniform rank comparison.
 
 The spacing argument and deterministic accumulator floor prove quinary
 relative distance `1/49` without bulk optimization. A rigorous sign-orbit
-bulk certificate raises the bound to `1/25`. The spacing argument also covers
+bulk certificate raises the bound to `1/20`. The spacing argument also covers
 the sparse half of a stronger quinary theorem through output fraction `0.26`,
 using message cutoff `0.00001`. Reaching that stronger range still requires a
 full-symbol bulk certificate. The ternary sign reduction does not generalize:
@@ -345,18 +345,18 @@ python scripts/sparse_spacing_bound.py \
   --prime 5 --repetition 3 --delta 0.26 --eta 0.00001
 
 python scripts/sparse_spacing_bound.py \
-  --prime 5 --repetition 3 --delta 0.04 --eta 0.025
+  --prime 5 --repetition 3 --delta 0.05 --eta 0.016666666666666666
 
 python scripts/verify_sign_orbit_bulk.py \
-  --delta 1/25 --eta 1/40 --max-boxes 2500 \
+  --delta 1/20 --eta 1/60 --max-boxes 8000 \
   --maximum-cut-pairs 16 --precision 80
 
 python scripts/optimize_sign_orbit_bulk.py \
-  --prime 5 --repetition 3 --delta 0.04 --eta 0.025
+  --prime 5 --repetition 3 --delta 0.05 --eta 0.016666666666666666
 
 python scripts/search_sign_orbit_cover.py \
-  --prime 5 --repetition 3 --delta 0.04 --eta 0.025 \
-  --maximum-cut-pairs 16 --max-boxes 2500
+  --prime 5 --repetition 3 --delta 0.05 --eta 0.016666666666666666 \
+  --maximum-cut-pairs 16 --max-boxes 8000
 
 python scripts/verify_prime_ladder.py --prime 5
 
@@ -385,7 +385,7 @@ intervals. Both implementations certify the bulk half of the `0.196` theorem
 at cutoff `0.0001`.
 
 The sparse commands report the constants in the exact ternary and quinary
-proofs. The sign-orbit verifier proves the bulk half of the quinary `1/25`
+proofs. The sign-orbit verifier proves the bulk half of the quinary `1/20`
 theorem with directed logarithm intervals and exact rational LP duals. The
 prime-ladder verifier independently checks the all-integer
 criterion and its least passing denominator. The displayed floating-point

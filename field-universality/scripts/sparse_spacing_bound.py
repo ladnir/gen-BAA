@@ -238,6 +238,34 @@ def main() -> None:
             "right": rational_right,
             "passes": 96 < 100 and 196 < 198 and rational_left < rational_right,
         }
+    elif (
+        prime == 5
+        and repetition == 3
+        and delta <= 0.05
+        and eta <= float(Fraction(1, 60)) * (1.0 + endpoint_tolerance)
+    ):
+        # For delta <= 1/20, sqrt(4*delta*(1-delta)) < 7/16, so
+        # exp(D)-1 > 9/7.  With e<11/4 and eta<=1/60, Q<1 is the
+        # exact integer comparison below.
+        rational_left = 660**2 * 7**3
+        rational_right = 531**3
+        rational_certificate = {
+            "domain": (
+                "p = 5, r = 3, 0 < delta <= 1/20, "
+                "and 0 < eta <= 1/60"
+            ),
+            "base_upper_bound": 1.0,
+            "sqrt_check": {"left": 19 * 8**2, "right": 35**2, "passes": 1216 < 1225},
+            "e_check": {"left": 196, "right": 198, "passes": 196 < 198},
+            "spacing_ratio": {"numerator": 7, "denominator": 531},
+            "left": rational_left,
+            "right": rational_right,
+            "passes": (
+                1216 < 1225
+                and 196 < 198
+                and rational_left < rational_right
+            ),
+        }
     elif prime == 5 and repetition == 3 and delta <= 0.05 and eta <= 0.0001:
         # For delta <= 1/20, sqrt(4*delta*(1-delta)) <= sqrt(19)/10
         # and sqrt(19) < 5.  Hence exp(D)-1 > 1.  Together with

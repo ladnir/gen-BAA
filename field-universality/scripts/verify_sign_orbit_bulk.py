@@ -667,7 +667,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--prime", type=int, default=5)
     parser.add_argument("--repetition", type=int, default=3)
     parser.add_argument("--delta", type=parse_fraction, default=Fraction(1, 20))
-    parser.add_argument("--eta", type=parse_fraction, default=Fraction(1, 72))
+    parser.add_argument("--eta", type=parse_fraction, default=Fraction(1, 60))
     parser.add_argument("--precision", type=int, default=80)
     parser.add_argument("--cut-bits", type=int, default=30)
     parser.add_argument("--maximum-cut-pairs", type=int, default=16)

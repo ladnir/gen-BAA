@@ -28,7 +28,7 @@ This note develops eight ingredients:
 
 For ternary repetition-three codes, the sparse and bulk bounds prove relative
 distance `0.196`. A sign-orbit certificate proves quinary relative distance
-`0.04`. The spacing bound and deterministic floor also prove a positive
+`0.05`. The spacing bound and deterministic floor also prove a positive
 relative distance over every fixed prime. Stronger bounds beyond these rungs
 still require full-composition analysis.
 
@@ -590,19 +590,19 @@ in different transitions are jointly consistent. A negative maximum therefore
 certifies the full exponent. A positive maximum need not identify a full-field
 counterexample.
 
-**Proposition 7 (certified quinary bulk bound).** For repetition three, the
+**Proposition 7 (certified quinary bulk bounds).** For repetition three, the
 sign-orbit exponent satisfies
 
 ```text
 max hat(Psi)_{5,3} < 0
 ```
 
-under
+on each domain in the following table.
 
-```text
-1-bar(mu)_0 >= 1/40,
-1-bar(zeta)_0 <= 1/25.
-```
+| message cutoff | output fraction | certified upper bound |
+|---:|---:|---:|
+| `1/40` | `1/25` | `-0.0000161798496159` |
+| `1/60` | `1/20` | `-0.0000011386223254` |
 
 **Proof.** The verifier `scripts/verify_sign_orbit_bulk.py` covers the nine
 orbit-composition coordinates with rational boxes. Cross-entropy inequalities
@@ -616,15 +616,10 @@ to rational coefficients and repairs each proposed dual to exact feasibility.
 It discards a structurally infeasible box only after an exact rational phase-I
 dual proves positive constraint violation.
 
-The cover closes after 1,848 splits. It checks two infeasible children and
-returns the exact negative upper bound represented numerically by
-
-```text
--0.0000161798496159.
-```
-
-The run summary is recorded in
-`results/quinary-sign-orbit-bulk-0.04-eta-0.025.json`. ∎
+For the two rows, the covers close after 1,848 and 5,433 splits. The verifier
+checks two and ten infeasible children, respectively. The run summaries are
+recorded in `results/quinary-sign-orbit-bulk-0.04-eta-0.025.json` and
+`results/quinary-sign-orbit-bulk-0.05-eta-1-over-60.json`. ∎
 
 ### 3.5 Certified ternary optimization
 
@@ -1055,6 +1050,23 @@ bound for `Q` leaves the integer check
 
 or `1548800 < 1601613`.
 
+The stronger endpoint `delta=1/20` uses `eta=1/60`, so `R_0=180`. The bounds
+`sqrt(19)<35/8` and `e<11/4` give
+
+```text
+L_delta > 9/7,
+3/((R_0-3)L_delta) < 7/531,
+Q_{5,3,delta}(R_0) < 660(7/531)^(3/2) < 1.
+```
+
+After squaring, the last inequality is
+
+```text
+660^2 * 7^3 < 531^3,
+```
+
+or `149410800 < 149721291`.
+
 Consequently, the sparse first moment vanishes through output fraction `0.2`
 over `F_3` and through output fraction `0.26` over `F_5`.
 
@@ -1153,19 +1165,19 @@ the first rungs are:
 
 Each row is an integer check, not a numerical entropy optimization.
 
-**Theorem 17 (quinary BAA distance at `1/25`).** For the repetition-three
+**Theorem 17 (quinary BAA distance at `1/20`).** For the repetition-three
 addition-only BAA ensemble over `F_5`,
 
 ```text
-Pr[d_min <= floor(N/25)] -> 0.
+Pr[d_min <= floor(N/20)] -> 0.
 ```
 
 **Proof.** Proposition 14 makes the expected number of low-weight words from
-messages of support at most `K/40` tend to zero. Lemma 6 and Proposition 7
+messages of support at most `K/60` tend to zero. Lemma 6 and Proposition 7
 make the expected number from larger supports exponentially small. Markov's
 inequality completes the proof. ∎
 
-Theorem 17 is a rigorous positive-distance result, not a claim that `1/25` is
+Theorem 17 is a rigorous positive-distance result, not a claim that `1/20` is
 the quinary threshold. The full-composition problem remains relevant to the
 much stronger binary-threshold comparison.
 
@@ -1362,7 +1374,7 @@ cutoff `eta=0.0001`. Proposition 14 already covers sparse output fractions
 through `0.2`; the certified bulk exponent is now the limiting step.
 
 For `p=5` and `r=3`, Theorem 17 completes both tasks at output fraction
-`0.04` using cutoff `eta=1/40`. Raising this bound toward the binary benchmark
+`0.05` using cutoff `eta=1/60`. Raising this bound toward the binary benchmark
 requires a tighter orbit relaxation or a full-symbol certificate.
 
 ## 9. Remaining counterexample search
@@ -1379,7 +1391,7 @@ The multistart searches found no positive bulk exponent below output fraction
 `0.13` for `p=3` or `p=5`. Proposition 8 strengthens the ternary observation:
 with cutoff `eta=0.01`, no ternary bulk counterexample exists through output
 fraction `0.19`. Proposition 7 rigorously excludes quinary bulk counterexamples
-through output fraction `0.04`. The stronger quinary search remains numerical.
+through output fraction `0.05`. The stronger quinary search remains numerical.
 
 For an uncertified prime, a positive exponent below a proved binary threshold
 would identify a possible counterexample without a blind search over
@@ -1388,7 +1400,7 @@ reflects real codewords or only correlations.
 
 ## 10. Immediate proof obligations
 
-1. Raise the quinary bulk certificate from `0.04` toward the binary benchmark
+1. Raise the quinary bulk certificate from `0.05` toward the binary benchmark
    `0.1323` using the full-symbol transition polytope.
 2. Certify a positive ternary bulk type at `delta=0.197`, then locate the
    first-moment transition between `0.196` and `0.197`.
