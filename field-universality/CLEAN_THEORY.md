@@ -486,21 +486,22 @@ on each of the following domains:
 | message cutoff | output fraction | certified upper bound |
 |---:|---:|---:|
 | 0.0001 | 0.13 | -0.0000033185 |
+| 0.0001 | 0.1323 | -0.0000014822 |
 | 0.01 | 0.13  | -0.0001378250 |
 | 0.01 | 0.19  | -0.0000053629 |
 | 0.05 | 0.195 | -0.0000275872 |
 
 **Proof.** Corollary 5 reduces the full ternary problem to the sign-symmetric
 domain. The supporting-hyperplane bound described above is valid on every
-box. For the four rows, the verifier closes the covers after 312, 57, 219, and
-233 box splits. The largest remaining box bound is the value in the last
-column. The interval verifier is part of the certificate. The certificate used
-by Theorem 13 is recorded in
-`results/ternary-bulk-0.13-eta-0.0001.json`. ∎
+box. For the five rows, the verifier closes the covers after 312, 315, 57,
+219, and 233 box splits. The largest remaining box bound is the value in the
+last column. The interval verifier is part of the certificate. The certificate
+used by Theorem 13 is recorded in
+`results/ternary-bulk-0.1323-eta-0.0001.json`. ∎
 
-The first row lies below the binary numerical transition near `0.132`. The
-second row shows that the ternary bulk margin is much larger. Proposition 6
-does not control message supports below the stated cutoff.
+The first two rows certify the small-cutoff bulk through the displayed binary
+benchmark. The `0.19` row shows that the ternary bulk margin is much larger.
+Proposition 6 does not control message supports below the stated cutoff.
 
 ## 4. Sparse path theory
 
@@ -707,10 +708,10 @@ function evaluates the sum as `(exp(c)-1)^(-a)`. ∎
 Return to repetition three over `F_3`. Let `Z_{3,s}(d)` count messages of
 support exactly `s` whose encoded words have weight at most `d`.
 
-**Proposition 12 (uniform sparse first moment).** Set
+**Proposition 12 (uniform sparse first moment).** Fix
+`0<delta<=1323/10000` and set
 
 ```text
-delta := 0.13,
 eta := 0.0001,
 d := floor(delta N).
 ```
@@ -752,11 +753,16 @@ Q(R)
  := 2eR/3 * [3/((R-3)(exp(c_delta)-1))]^(3/2).
 ```
 
-The cutoff implies `R=N/s>=30000`. For `delta=13/100`,
+The cutoff implies `R=N/s>=30000`. The function `x -> 4x(1-x)` increases on
+`(0,1/2)`. Since `delta<=1323/10000`,
 
 ```text
-exp(c_delta)-1 = 50/sqrt(1131)-1 > 8/17.
+4 delta(1-delta)
+  <= 45918684/100000000
+  < 289/625.
 ```
+
+It follows that `exp(c_delta)-1>8/17`.
 
 Using `e<3` gives
 
@@ -779,11 +785,11 @@ send that bound to infinity. The dominated geometric tail proves the claim.
 Proposition 12 controls every support below the smaller bulk cutoff; it is not
 only a sublinear-support statement.
 
-**Theorem 13 (ternary BAA distance at 0.13).** For the repetition-three BAA
-ensemble over `F_3`,
+**Theorem 13 (ternary BAA distance at 0.1323).** Set
+`delta_*:=1323/10000`. For the repetition-three BAA ensemble over `F_3`,
 
 ```text
-Pr[d_min <= floor(0.13 N)] -> 0.
+Pr[d_min <= floor(delta_* N)] -> 0.
 ```
 
 **Proof.** Proposition 12 makes the expected number of low-weight words with
@@ -791,10 +797,11 @@ message support at most `0.0001 K` tend to zero. Proposition 6 makes the
 expected number from larger supports exponentially small at the same cutoff
 and output fraction. Markov's inequality completes the proof. ∎
 
-The published binary repetition-three RAA analysis gives `0.1323` as a lower
-bound on its asymptotic distance growth coefficient. Thus Theorem 13 proves a
-common certified guarantee of `0.13` for the binary and ternary ensembles. See
-[Kliewer et al., *Coding Theorems for Repeat Multiple Accumulate
+Kliewer et al. report `0.1323` to four decimal places as the binary
+repetition-three lower bound. Theorem 13 uses the exact rational
+`1323/10000` on the ternary side. It therefore matches the displayed binary
+benchmark, but it does not certify the unrounded value behind that table
+entry. See [Kliewer et al., *Coding Theorems for Repeat Multiple Accumulate
 Codes*](https://arxiv.org/abs/0810.3422), Table I.
 
 ## 5. What successful samples contain
@@ -967,7 +974,7 @@ Neither task requires samplewise field monotonicity. Neither task claims that
 the binary and prime-field limiting distances are equal.
 
 For `p=r=3`, Proposition 6 completes the bulk task through `delta=0.19` with
-cutoff `eta=0.01`. Theorem 13 completes both tasks at output fraction `0.13`
+cutoff `eta=0.01`. Theorem 13 completes both tasks at output fraction `0.1323`
 using cutoff `eta=0.0001`. At larger ternary thresholds, Proposition 14 still
 requires a sparse bound with matching constants.
 
@@ -993,12 +1000,11 @@ reflects real codewords or only correlations.
 
 ## 10. Immediate proof obligations
 
-1. Reproduce the `eta=0.0001`, `delta=0.13` interval certificate with an
+1. Reproduce the `eta=0.0001`, `delta=0.1323` interval certificate with an
    independent verifier.
-2. Push Theorem 13 from `0.13` to the exact published binary threshold that
-   will be cited in the final statement.
-3. Optimize Proposition 12's constants only if the larger output threshold
-   requires a smaller cutoff.
+2. Determine a rigorous interval for the unrounded binary threshold rather
+   than treating its four-decimal table entry as exact.
+3. Extend Theorem 13 toward the ternary bulk transition near `0.196`.
 4. Evaluate or certify the bulk exponent for further primes and the repetition
    factors used by the binary RAA theorem.
 5. Search the bulk optimization for a positive-exponent type below that

@@ -51,7 +51,8 @@ finite-dimensional bulk exponent.
 For repetition three over `F_3`, the project now proves
 
 ```text
-Pr[Delta_{3,N} <= 0.13] -> 0.
+delta_* := 1323/10000,
+Pr[Delta_{3,N} <= delta_*] -> 0.
 ```
 
 The proof uses a directed interval certificate for message supports of at
@@ -60,12 +61,13 @@ support. The sparse estimate sums over all ternary messages and does not
 assume random diagonal multipliers.
 
 The bulk certificate is stored in
-[`results/ternary-bulk-0.13-eta-0.0001.json`](results/ternary-bulk-0.13-eta-0.0001.json).
+[`results/ternary-bulk-0.1323-eta-0.0001.json`](results/ternary-bulk-0.1323-eta-0.0001.json).
 
-This theorem establishes a concrete inherited distance guarantee. It does not
-yet prove inheritance at every value below the published binary threshold of
-`0.1323`; see [Kliewer et al., *Coding Theorems for Repeat Multiple Accumulate
-Codes*](https://arxiv.org/abs/0810.3422), Table I.
+This theorem uses the exact rational `1323/10000`. Kliewer et al. report the
+binary lower bound as `0.1323` to four decimal places. Our theorem matches that
+displayed benchmark; it does not certify the unrounded binary value behind the
+table entry. See [Kliewer et al., *Coding Theorems for Repeat Multiple
+Accumulate Codes*](https://arxiv.org/abs/0810.3422), Table I.
 
 ## Conjecture hierarchy
 
@@ -141,8 +143,8 @@ enumerator. Binary minimum distance alone is not a sufficient hypothesis.
 
 ## Proof program
 
-1. Reproduce the `0.13` bulk certificate with an independent verifier.
-2. Push the ternary constant to the exact published binary threshold.
+1. Reproduce the `0.1323` bulk certificate with an independent verifier.
+2. Bound the unrounded published binary threshold with rigorous intervals.
 3. Extend the spacing proof and bulk certificate to further odd primes.
 4. Establish the rank/cogirth formulation as an independent algebraic view of
    characteristic-specific failures.
@@ -151,7 +153,7 @@ enumerator. Binary minimum distance alone is not a sufficient hypothesis.
    after the repetition-based theorem is complete.
 
 The first-moment proof resolves the uniform quantifier for the ternary
-`0.13` theorem. Rank and residual-core diagnostics remain useful for finding
+`0.1323` theorem. Rank and residual-core diagnostics remain useful for finding
 counterexamples, but the theorem does not depend on a uniform rank comparison.
 
 ## Experimental program
@@ -288,16 +290,16 @@ Markov-type exponent derived in `CLEAN_THEORY.md`:
 
 ```text
 python scripts/optimize_bulk_exponent.py \
-  --prime 3 --repetition 3 --delta 0.13 --eta 0.01 --restarts 64
+  --prime 3 --repetition 3 --delta 0.1323 --eta 0.01 --restarts 64
 
 python scripts/optimize_symmetric_ternary.py \
   --repetition 3 --delta 0.195 --eta 0.05
 
 python scripts/certify_symmetric_ternary.py \
-  --delta 0.13 --eta 0.0001 --precision 80
+  --delta 0.1323 --eta 0.0001 --precision 80
 
 python scripts/sparse_spacing_bound.py \
-  --delta 0.13 --eta 0.0001
+  --delta 0.1323 --eta 0.0001
 ```
 
 The first command searches the full vector-composition problem. The second
@@ -311,7 +313,7 @@ For `F_3`, the theory note proves that sign symmetrization is without loss.
 The certificate script then covers the reduced three-dimensional outer domain
 with deterministic entropy bounds. Its default 80-digit arithmetic adds a
 directed interval around every arithmetic operation and logarithm. The command
-above certifies the bulk half of the `0.13` theorem at cutoff `0.0001`. A
+above certifies the bulk half of the `0.1323` theorem at cutoff `0.0001`. A
 separate certificate reaches output fraction `0.19` at cutoff `0.01`.
 
 The final command reports the constants in the exact sparse proof. The proof

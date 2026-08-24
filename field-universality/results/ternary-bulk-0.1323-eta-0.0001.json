@@ -1,0 +1,12 @@
+{
+  "arithmetic": "outward-rounded Decimal intervals",
+  "boxes_remaining": 316,
+  "boxes_split": 315,
+  "certified_upper_bound": "-0.0000014822999565867799953723877716587494218405257545405979902474899449612166240269999",
+  "command": "python scripts/certify_symmetric_ternary.py --eta 0.0001 --delta 0.1323 --precision 80 --max-boxes 100000",
+  "delta": "0.1323",
+  "eta": "0.0001",
+  "maximum_queue_size": 316,
+  "precision": 80,
+  "status": "negative bulk exponent certified"
+}

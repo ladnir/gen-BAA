@@ -24,11 +24,11 @@ for every fixed odd prime p and every delta < delta_bin(r),
 Pr[d_p <= delta N] -> 0.
 ```
 
-The project now proves this threshold statement for `p=r=3` and
-`delta=0.13`. Small instances still contain samples with `d_3<d_2`. Their
-minimum words are usually sparse-message alignment events, but an exact
-spacing bound shows that the total probability of all such low-weight words
-tends to zero.
+The project now proves this threshold statement for `p=r=3` and the exact
+rational `delta=1323/10000`. Small instances still contain samples with
+`d_3<d_2`. Their minimum words are usually sparse-message alignment events,
+but an exact spacing bound shows that the total probability of all such
+low-weight words tends to zero.
 
 This distinction matters for the application. One-sided inheritance would
 permit an addition-only prime-field encoder to use the binary distance

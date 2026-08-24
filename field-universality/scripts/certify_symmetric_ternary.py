@@ -447,8 +447,8 @@ def certify(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--eta", type=Decimal, default=Decimal("0.01"))
-    parser.add_argument("--delta", type=Decimal, default=Decimal("0.13"))
+    parser.add_argument("--eta", type=Decimal, default=Decimal("0.0001"))
+    parser.add_argument("--delta", type=Decimal, default=Decimal("0.1323"))
     parser.add_argument("--precision", type=int, default=80)
     parser.add_argument("--max-boxes", type=int, default=100_000)
     return parser.parse_args()
