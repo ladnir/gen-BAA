@@ -111,8 +111,9 @@ The first implementation should compute or certify:
    fields, and the rationals;
 2. the gap `(d_p - d_2) / N` for coupled samples;
 3. minimum rank-deficient deletion sets;
-4. Smith normal forms of candidate integer submatrices, which identify the
-   characteristics that create additional dependencies; and
+4. Smith `p`-nullities and determinantal-divisor certificates for candidate
+   integer submatrices, which identify the characteristics that create
+   additional dependencies; and
 5. the effect of no diagonal multipliers, sign-only diagonals, and unrestricted
    field multipliers.
 
@@ -186,15 +187,28 @@ cargo run --release -- \
   --primes 3 \
   --distance-only \
   --no-rational \
+  --classify-losses \
+  --max-minors 100000 \
   --max-n 60 \
-  --output results/rep3-papa-b12-s100-distance.csv
+  --output results/rep3-papa-b12-s100-classified.csv
 ```
 
 Each CSV row records the field, exact distance, normalized distance, binary
 baseline, signed distance gap, normalized gap, complete deletion-rank profile,
 minimum message, minimum codeword, sample seed, and every permutation. The
-profile column is empty in distance-only mode. The modular and rational rank
-routines reuse flat row-major workspaces throughout the exhaustive subset
-loop. The rational routine uses checked fraction-free elimination. If an
-intermediate exceeds `i128`, the program stops instead of returning an
-uncertified result.
+profile column is empty in distance-only mode.
+
+With `--classify-losses`, every case `d_p<d_2` also records the Smith
+`p`-nullity of the retained matrix, an odd maximal minor divisible by `p`, the
+exact top determinantal divisor when its maximal-minor count does not exceed
+`--max-minors`, and two unit-equation cores. The retained-matrix core is a
+dense diagnostic. The factor core uses the sparse local-map, permutation, and
+accumulator equations and is the relevant object for a peeling argument. A
+zero minor budget disables only the exhaustive determinantal-divisor gcd; the
+explicit torsion certificate is still computed.
+
+The modular and rational rank routines reuse flat row-major workspaces
+throughout the exhaustive subset loop. The rational rank routine uses checked
+`i128` fraction-free elimination. Torsion certificates use arbitrary-precision
+integers, so determinant overflow cannot silently invalidate a classified
+loss.

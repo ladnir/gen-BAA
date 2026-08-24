@@ -229,6 +229,59 @@ At lengths `12,15,36`, the exact mean binary distances for `APAP` are
 `2.64,2.94,3.55`. The ternary means are `1.62,1.63,1.63`. Both normalized
 means decrease, while the ternary absolute distance remains tight.
 
+### 5.4 Torsion certificates and sparse residual cores
+
+The harness now classifies every sampled loss `d_p<d_2`. Let `D` be the
+support of the odd-field minimum word and let `M=G_{not D}`. Since
+`|D|<d_2`, the matrix `M` has full row rank over `F_2`. The classifier records
+the following exact data.
+
+1. `K-rank_F_p(M)`, which is the number of Smith invariant factors divisible
+   by `p`;
+2. a maximal minor selected by binary pivoting, whose determinant is nonzero,
+   odd, and divisible by `p`;
+3. the exact top determinantal divisor when the number of maximal minors is
+   within a specified budget; and
+4. the residual core after unit-equation elimination in the sparse encoder
+   circuit.
+
+The sparse circuit introduces variables for the message and every intermediate
+word. Its equations encode the local map, permutation equalities, accumulator
+recurrences, and the zero output coordinates outside `D`. A degree-one
+equation forces its variable to zero. Repeating this operation preserves the
+solution space up to the forced zero coordinates over every field. Therefore,
+every field-specific witness must leave at least one message variable in the
+residual core.
+
+For a residual bipartite core, the reported cycle rank is
+`edges-variables-equations+components`.
+
+The following table summarizes all classified losses. The top-divisor column
+reports exact computations only. The length-36 retained matrices have between
+51,895,935 and 834,451,800 maximal minors, so only their explicit pivot-minor
+certificates were computed.
+
+| field and length | losses | Smith `p`-nullity | exact top divisors | mean core message variables | mean core variables | mean cycle rank |
+|:---|---:|:---|:---|---:|---:|---:|
+| `F_3`, `N=6`  | 2,441 | 1 in every case | `3` in 2,435; `9` in 6 | 1.31 | 16.77 | 3.75 |
+| `F_5`, `N=6`  | 190   | 1 in every case | `5` in 190 | 1.54 | 22.34 | 4.73 |
+| `F_3`, `N=15` | 14    | 1 in every case | `3` in 14 | 1.43 | 19.21 | 4.14 |
+| `F_3`, `N=24` | 15    | 1 in every case | `3` in 15 | 2.00 | 28.07 | 5.33 |
+| `F_3`, `N=36` | 9     | 1 in every case | not enumerated | 2.22 | 34.00 | 5.89 |
+
+Every residual factor core in this data is one connected component and has no
+isolated variable. In 2,650 of the 2,669 losses, the surviving message
+variables are exactly the support of the minimum witness. Thus the observed
+losses are almost uniformly rank-one torsion events carried by one small
+connected circuit trap. They are not diffuse rank collapses.
+
+This observation strengthens the sparse-alignment explanation, but it does
+not prove that the core size is bounded as `N` grows. The classifier sees the
+minimum witness in a small sample of encoders. A linear-size family of rarer
+cores could still control an asymptotic tail. The forward retained-matrix core
+is also much less informative: it becomes nearly the entire message space by
+length 24. The sparse circuit representation is essential.
+
 ## 6. A fully explained finite failure
 
 Consider `PAPA` with five repetition-three blocks at length 15. In one sampled
@@ -545,13 +598,19 @@ Two-sided profile equality is not expected.
 
 ## 15. Experimental next steps
 
-The next experiments should target mechanisms, not only distances.
+The harness now records message composition, Smith-theoretic loss
+certificates, exact top divisors under a work budget, and both dense and sparse
+unit-equation cores. The next experiments should use these diagnostics rather
+than add more distance-only tables.
 
-1. Record the outer message weight and complete nonzero-symbol composition of
-   every minimum witness.
-2. Record the Smith invariant or a prime-divisible maximal-minor certificate
-   for every sample with `d_p<d_2`.
-3. Separate peelable witnesses from witnesses with a nonempty residual core.
+1. Classify every odd-field minimum witness, including samples with
+   `d_p>=d_2`. Separate shared binary dependencies from odd-only torsion that
+   occurs above the binary threshold.
+2. Trace the active values and run boundaries through each residual factor
+   component. Relate its cycle rank to the prime valuation of the top divisor.
+3. Count embeddings of each small core type under the two random
+   permutations. This should turn the observed traps into candidate tail
+   exponents.
 4. Extend exact message enumeration with branch-and-bound for dimensions above
    16.
 5. Compare `PAPA`, `PAPAPA`, and sign-only diagonal variants at the same
@@ -581,8 +640,10 @@ cargo run --release -- \
   --primes 3 \
   --distance-only \
   --no-rational \
+  --classify-losses \
+  --max-minors 0 \
   --max-n 60 \
-  --output results/rep3-papa-b12-s100-distance.csv
+  --output results/rep3-papa-b12-s100-classified.csv
 ```
 
 All reported distances are exact for the sampled encoders. Sampling error is
