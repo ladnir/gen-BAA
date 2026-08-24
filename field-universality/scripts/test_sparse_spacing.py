@@ -97,6 +97,11 @@ class SparseSpacingTests(unittest.TestCase):
             (ratio - 3) ** 3,
         )
 
+    def test_quinary_sparse_constant_at_one_twenty_fifth(self) -> None:
+        # 49/18 < 11/4 certifies the series bound e < 11/4.
+        self.assertLess(196, 198)
+        self.assertLess(440**2 * 2**3, 117**3)
+
     def test_quinary_sparse_constant_at_deterministic_cutoff(self) -> None:
         self.assertTrue(ladder_integer_check(5, 7))
         self.assertEqual(least_ladder_denominator_root(5), 7)

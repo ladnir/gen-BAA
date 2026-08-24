@@ -219,6 +219,25 @@ def main() -> None:
             "right": rational_right,
             "passes": 12 < 29_997 and rational_left < rational_right,
         }
+    elif prime == 5 and repetition == 3 and delta <= 0.04 and eta <= 0.025:
+        # For delta <= 1/25, sqrt(4*delta*(1-delta)) < 2/5, so
+        # exp(D)-1 > 3/2.  The elementary series bound e<11/4 then
+        # reduces Q<1 to the exact integer comparison below.
+        rational_left = 440**2 * 2**3
+        rational_right = 117**3
+        rational_certificate = {
+            "domain": (
+                "p = 5, r = 3, 0 < delta <= 1/25, "
+                "and 0 < eta <= 1/40"
+            ),
+            "base_upper_bound": 1.0,
+            "sqrt_check": {"left": 4**2 * 6, "right": 10**2, "passes": 96 < 100},
+            "e_check": {"left": 196, "right": 198, "passes": 196 < 198},
+            "spacing_ratio": {"numerator": 2, "denominator": 117},
+            "left": rational_left,
+            "right": rational_right,
+            "passes": 96 < 100 and 196 < 198 and rational_left < rational_right,
+        }
     elif prime == 5 and repetition == 3 and delta <= 0.05 and eta <= 0.0001:
         # For delta <= 1/20, sqrt(4*delta*(1-delta)) <= sqrt(19)/10
         # and sqrt(19) < 5.  Hence exp(D)-1 > 1.  Together with
