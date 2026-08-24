@@ -146,9 +146,10 @@ enumerator. Binary minimum distance alone is not a sufficient hypothesis.
 
 ## Proof program
 
-1. Certify a positive bulk type at `0.197` and locate the first-moment
-   transition between `0.196` and `0.197`.
-2. Extend the spacing proof and bulk certificate to further odd primes.
+1. Build a full-composition bulk certificate for `F_5`; its sparse bound is
+   already proved through `0.26`.
+2. Certify a positive ternary bulk type at `0.197` and locate the first-moment
+   transition above `0.196`.
 3. Establish the rank/cogirth formulation as an independent algebraic view of
    characteristic-specific failures.
 4. Investigate the matching upper bound required for coupled universality.
@@ -158,6 +159,12 @@ enumerator. Binary minimum distance alone is not a sufficient hypothesis.
 The first-moment proof resolves the uniform quantifier for the ternary
 `0.196` theorem. Rank and residual-core diagnostics remain useful for finding
 counterexamples, but the theorem does not depend on a uniform rank comparison.
+
+The same spacing argument now proves the sparse half of a quinary theorem
+through output fraction `0.26`, using message cutoff `0.00001`. The remaining
+quinary task is a rigorous bulk certificate. The ternary sign reduction does
+not generalize: an explicit stationary type over `F_5` makes sign averaging
+decrease the full exponent.
 
 ## Experimental program
 
@@ -307,6 +314,9 @@ python scripts/verify_symmetric_ternary.py \
 
 python scripts/sparse_spacing_bound.py \
   --delta 0.196 --eta 0.0001
+
+python scripts/sparse_spacing_bound.py \
+  --prime 5 --repetition 3 --delta 0.26 --eta 0.00001
 ```
 
 The first command searches the full vector-composition problem. The second
@@ -324,5 +334,6 @@ checker constructs another cover using exact rational boxes and mpmath
 intervals. Both implementations certify the bulk half of the `0.196` theorem
 at cutoff `0.0001`.
 
-The final command reports the constants in the exact sparse proof. The proof
-uses integer inequalities; the displayed floating-point values are diagnostic.
+The two sparse commands report the constants in the exact ternary and quinary
+proofs. The proofs use integer inequalities; the displayed floating-point
+values are diagnostic.

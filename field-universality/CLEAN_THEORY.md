@@ -427,6 +427,49 @@ Asym(tau_1)+Asym(tau_2)
 
 Lemma 4 lower-bounds this change by `Asym(mu)/r`, which is nonnegative. ∎
 
+The one-stage inequality in Lemma 4 does not extend to every odd prime. Over
+`F_5`, consider the stationary transition type
+
+```text
+tau := 1/28 *
+  [ 6  0  0  5  0 ]
+  [ 5  6  0  0  0 ]
+  [ 0  0  0  0  0 ]
+  [ 0  5  0  1  0 ]
+  [ 0  0  0  0  0 ].
+```
+
+Its state and increment marginals are
+
+```text
+beta  = (11,11,0,6,0)/28,
+alpha = (13,0,0,10,5)/28.
+```
+
+Rows and columns of `tau` both sum to `beta`. Direct entropy evaluation gives
+
+```text
+Asym(tau)-Asym(alpha)-Asym(beta) = -(5/14) log 2 < 0.
+```
+
+The obstruction also survives the two-stage objective. Set `mu:=alpha` and
+choose the second transition by
+
+```text
+(tau_2)_{s,t} := beta_{t-s}/5.
+```
+
+This transition has increment marginal `beta` and uniform state marginal.
+For repetition factor three, sign averaging changes the full exponent by
+
+```text
+-(5/14)log 2 + Asym(alpha)/3 = -(5/28)log 2 < 0,
+```
+
+where `Asym(alpha)=(15/28)log 2`. Thus the ternary sign reduction is
+characteristic-specific. A quinary bulk certificate must retain more than one
+nonzero-symbol orbit.
+
 It remains to optimize the sign-symmetric family. Let `A` be the nonzero
 increment fraction, let `B` be the nonzero state fraction, and let `b` be a
 bridge variable. Every sign-symmetric feasible transition type has the form
@@ -714,28 +757,39 @@ E[exp(-cH)]
 The binomial ratio equals `(t)_a/(N)_a`. The negative-binomial generating
 function evaluates the sum as `(exp(c)-1)^(-a)`. ∎
 
-### 4.2 Uniform ternary sparse bound
+### 4.2 A field-uniform sparse criterion
 
-Return to repetition three over `F_3`. Let `Z_{3,s}(d)` count messages of
-support exactly `s` whose encoded words have weight at most `d`.
-
-**Proposition 12 (uniform sparse first moment).** Fix `0<delta<=1/5` and set
-
-```text
-eta := 0.0001,
-d := floor(delta N).
-```
-
-Then
+Fix a prime `p`, a repetition factor `r>=3`, and a message support `s`. Let
+`Z_{p,s}(d)` count messages of support exactly `s` whose encoded words have
+weight at most `d`. Define
 
 ```text
-sum_{1<=s<=eta K} E[Z_{3,s}(d)] = o(1).
+L_delta := exp(c_delta)-1,
+R_0 := r/eta,
+
+Q_{p,r,delta}(R)
+  := (p-1)eR/r * [r/((R-r)L_delta)]^(r/2).
 ```
 
-**Proof.** Fix a nonzero message of support `s`. Its repeated word has
-`t=3s` nonzero increments. Condition on their value order after `P_1`. If the
-first accumulator has weight `H`, Lemma 10 bounds the conditional probability
-over `P_2` by `exp(-c_delta H)`. Lemma 11 averages this bound over the first
+**Proposition 12 (uniform sparse first moment).** Fix `0<delta<1/2` and
+`0<eta<1`. Suppose
+
+```text
+R_0 > 2r/(r-2),
+r/((R_0-r)L_delta) < 1,
+Q_{p,r,delta}(R_0) < 1.
+```
+
+For `d:=floor(delta N)`, we then have
+
+```text
+sum_{1<=s<=eta K} E[Z_{p,s}(d)] = o(1).
+```
+
+**Proof.** Fix a nonzero message of support `s`. Its repeated word has `t=rs`
+nonzero increments. Condition on their value order after `P_1`. If the first
+accumulator has weight `H`, Lemma 10 bounds the conditional probability over
+`P_2` by `exp(-c_delta H)`. Lemma 11 averages this bound over the first
 transition positions.
 
 Let `a` be the number of nonzero first-stage intervals. We have
@@ -745,50 +799,82 @@ Let `a` be the number of nonzero first-stage intervals. We have
 (t-a)/((N-a)(exp(c_delta)-1)).
 ```
 
-This ratio is less than one for `t<=eta N`. Hence the largest bound occurs at
-`a=ceil(t/2)`, and
+The ratio decreases with `a`. The second assumption bounds it by a number less
+than one for `s<=eta K`. The same assumption makes the base below less than
+one. Hence the largest bound occurs at `a=ceil(t/2)`, and
 
 ```text
 Pr[encoded weight <= d]
  <= [t/((N-t)(exp(c_delta)-1))]^(t/2).
 ```
 
-There are `2^s binom(K,s)` ternary messages of support `s`. The estimate
+There are `(p-1)^s binom(K,s)` messages of support `s`. The estimate
 `binom(K,s)<=(eK/s)^s` therefore gives
 
 ```text
-E[Z_{3,s}(d)] <= Q(N/s)^s,
-
-Q(R)
- := 2eR/3 * [3/((R-3)(exp(c_delta)-1))]^(3/2).
+E[Z_{p,s}(d)] <= Q_{p,r,delta}(N/s)^s.
 ```
 
-The cutoff implies `R=N/s>=30000`. The function `x -> 4x(1-x)` increases on
-`(0,1/2)`. Since `delta<=1/5`,
+The first assumption makes `Q_{p,r,delta}(R)` decrease for `R>=R_0`. For each
+fixed `s`, the same quantity tends to zero because `r>=3`. The third assumption
+therefore supplies a summable geometric dominator. Splitting the sum at a
+fixed support bound and then sending that bound to infinity proves the claim.
+∎
+
+Two exact specializations start the prime ladder. For `p=r=3`, take
+`eta=1/10000` and `delta<=1/5`. The function `x -> 4x(1-x)` increases on
+`(0,1/2)`, so
 
 ```text
 4 delta(1-delta) <= 16/25.
 ```
 
-It follows that `exp(c_delta)-1>=1/4`.
-
-Using `e<3` gives
+Thus `L_delta>=1/4`. Using `e<3` gives, for `R>=30000`,
 
 ```text
-Q(R) < 2R [12/(R-3)]^(3/2).
+Q_{3,3,delta}(R) < 2R [12/(R-3)]^(3/2) < 1/2.
 ```
 
-The right-hand side decreases for `R>=30000` and is less than `1/2` at
-`R=30000`. After squaring, the last claim is the integer inequality
+The last inequality follows from monotonicity and the integer check
 
 ```text
 16 * 30000^2 * 12^3 < 29997^3.
 ```
 
-For each fixed `s`, `Q(N/s)` tends to zero. For all supported `s`, the terms
-are dominated by `(1/2)^s`. Split the sum at a fixed support bound and then
-send that bound to infinity. The dominated geometric tail proves the claim.
-∎
+The other conditions hold because `R_0=30000>6` and
+
+```text
+3/((R_0-3)L_delta) <= 12/29997 < 1.
+```
+
+For `p=5` and `r=3`, take `eta=1/100000` and `delta<=13/50`. We have
+
+```text
+4 delta(1-delta) <= 481/625,
+sqrt(481) < 22,
+L_delta > 3/22.
+```
+
+Using `e<3` gives, for `R>=300000`,
+
+```text
+Q_{5,3,delta}(R) < 4R [22/(R-3)]^(3/2) < 4/5.
+```
+
+After squaring, the final inequality reduces to
+
+```text
+25 * 300000^2 * 22^3 < 299997^3.
+```
+
+The other conditions hold because `R_0=300000>6` and
+
+```text
+3/((R_0-3)L_delta) < 22/299997 < 1.
+```
+
+Consequently, the sparse first moment vanishes through output fraction `0.2`
+over `F_3` and through output fraction `0.26` over `F_5`.
 
 Proposition 12 controls every support below the smaller bulk cutoff; it is not
 only a sublinear-support statement.

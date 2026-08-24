@@ -59,9 +59,19 @@ class SparseSpacingTests(unittest.TestCase):
                     )
 
     def test_rational_sparse_constant(self) -> None:
+        self.assertLess(12, 29_997)
         ratio = 30_000
         self.assertLess(
             16 * ratio**2 * 12**3,
+            (ratio - 3) ** 3,
+        )
+
+    def test_quinary_sparse_constant(self) -> None:
+        self.assertLess(481, 22**2)
+        self.assertLess(22, 299_997)
+        ratio = 300_000
+        self.assertLess(
+            25 * ratio**2 * 22**3,
             (ratio - 3) ** 3,
         )
 

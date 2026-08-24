@@ -55,6 +55,55 @@ class OptimizerTests(unittest.TestCase):
             )
             self.assertGreaterEqual(gap, -2e-15)
 
+    def test_quinary_sign_reduction_counterexample(self) -> None:
+        transition = np.array(
+            [
+                [6, 0, 0, 5, 0],
+                [5, 6, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 5, 0, 1, 0],
+                [0, 0, 0, 0, 0],
+            ],
+            dtype=float,
+        )
+        transition /= 28.0
+        state = transition.sum(axis=1)
+        increment = np.array(
+            [
+                sum(
+                    transition[source, (source + difference) % 5]
+                    for source in range(5)
+                )
+                for difference in range(5)
+            ]
+        )
+        np.testing.assert_allclose(transition.sum(axis=0), state)
+        np.testing.assert_allclose(state, np.array([11, 11, 0, 6, 0]) / 28.0)
+        np.testing.assert_allclose(increment, np.array([13, 0, 0, 10, 5]) / 28.0)
+
+        sign = np.array([0, 4, 3, 2, 1])
+
+        def asymmetry(distribution: np.ndarray, matrix: bool = False) -> float:
+            flipped = (
+                distribution[np.ix_(sign, sign)]
+                if matrix
+                else distribution[sign]
+            )
+            return bulk.entropy((distribution + flipped) / 2.0) - bulk.entropy(
+                distribution
+            )
+
+        gap = (
+            asymmetry(transition, matrix=True)
+            - asymmetry(increment)
+            - asymmetry(state)
+        )
+        self.assertAlmostEqual(gap, -5.0 * np.log(2.0) / 14.0, places=14)
+        full_change = gap + asymmetry(increment) / 3.0
+        self.assertAlmostEqual(
+            full_change, -5.0 * np.log(2.0) / 28.0, places=14
+        )
+
     def test_decimal_certificate_closes_below_binary_threshold(self) -> None:
         result = certificate.certify(
             certificate.Decimal("0.01"),

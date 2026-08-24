@@ -105,33 +105,55 @@ def laplace_upper_bound(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--prime", type=int, default=3)
+    parser.add_argument("--repetition", type=int, default=3)
     parser.add_argument("--delta", type=float, default=0.196)
     parser.add_argument("--eta", type=float, default=0.0001)
     return parser.parse_args()
 
 
+def is_prime(value: int) -> bool:
+    if value < 2:
+        return False
+    divisor = 2
+    while divisor * divisor <= value:
+        if value % divisor == 0:
+            return False
+        divisor += 1 if divisor == 2 else 2
+    return True
+
+
 def main() -> None:
     args = parse_args()
+    prime = args.prime
+    repetition = args.repetition
     delta = args.delta
     eta = args.eta
+    if not is_prime(prime):
+        raise SystemExit("prime must be a prime integer")
+    if repetition < 3:
+        raise SystemExit("repetition must be at least three")
     if not 0.0 < delta < 0.5:
         raise SystemExit("delta must lie strictly between 0 and 0.5")
     if not 0.0 < eta < 1.0:
         raise SystemExit("eta must lie strictly between 0 and 1")
-    min_ratio = 3.0 / eta
+    min_ratio = repetition / eta
     divergence = -0.5 * math.log(4.0 * delta * (1.0 - delta))
     laplace_denominator = math.exp(divergence) - 1.0
     exact_base = (
-        2.0
+        (prime - 1.0)
         * math.e
         * min_ratio
-        / 3.0
-        * (3.0 / ((min_ratio - 3.0) * laplace_denominator)) ** 1.5
+        / repetition
+        * (
+            repetition
+            / ((min_ratio - repetition) * laplace_denominator)
+        )
+        ** (repetition / 2.0)
     )
 
-    exact_proof_parameters = delta <= 0.2 and eta <= 0.0001
     rational_certificate = None
-    if exact_proof_parameters:
+    if prime == 3 and repetition == 3 and delta <= 0.2 and eta <= 0.0001:
         # For delta <= 1/5, exp(D(1/2 || delta))-1 >= 1/4.  Together
         # with e<3, squaring the worst-case base bound proves that it is
         # less than 1/2.
@@ -141,13 +163,39 @@ def main() -> None:
         rational_certificate = {
             "domain": "0 < delta <= 1/5 and 0 < eta <= 1/10000",
             "base_upper_bound": 0.5,
+            "ratio_check": {"left": 12, "right": 29_997, "passes": 12 < 29_997},
             "left": rational_left,
             "right": rational_right,
-            "passes": rational_left < rational_right,
+            "passes": 12 < 29_997 and rational_left < rational_right,
+        }
+    elif prime == 5 and repetition == 3 and delta <= 0.26 and eta <= 0.00001:
+        # For delta <= 13/50, sqrt(4*delta*(1-delta)) <= sqrt(481)/25
+        # and sqrt(481) < 22.  Hence exp(D)-1 > 3/22.  Together with
+        # e<3, the integer inequality below makes the base less than 4/5.
+        ratio_integer = 300_000
+        rational_left = 25 * ratio_integer**2 * 22**3
+        rational_right = (ratio_integer - 3) ** 3
+        rational_certificate = {
+            "domain": (
+                "p = 5, r = 3, 0 < delta <= 13/50, "
+                "and 0 < eta <= 1/100000"
+            ),
+            "base_upper_bound": 0.8,
+            "sqrt_check": {"left": 481, "right": 22**2, "passes": 481 < 22**2},
+            "ratio_check": {"left": 22, "right": 299_997, "passes": 22 < 299_997},
+            "left": rational_left,
+            "right": rational_right,
+            "passes": (
+                481 < 22**2
+                and 22 < 299_997
+                and rational_left < rational_right
+            ),
         }
     print(
         json.dumps(
             {
+                "prime": prime,
+                "repetition": repetition,
                 "delta": delta,
                 "eta": eta,
                 "minimum_N_over_s": min_ratio,
