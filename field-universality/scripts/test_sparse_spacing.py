@@ -3,9 +3,11 @@ from __future__ import annotations
 import itertools
 import math
 import unittest
+from fractions import Fraction
 
 from sparse_spacing_bound import (
     accumulate,
+    binary_benchmark_sparse_certificate,
     conditional_weight_histogram,
     hamming_weight,
     hypergeometric_tail_count,
@@ -122,6 +124,19 @@ class SparseSpacingTests(unittest.TestCase):
             self.assertEqual(least_ladder_denominator_root(prime), root)
             self.assertTrue(ladder_integer_check(prime, root))
             self.assertFalse(ladder_integer_check(prime, root - 1))
+
+    def test_binary_benchmark_sparse_ladder(self) -> None:
+        endpoints = {
+            5: Fraction(1, 2000),
+            7: Fraction(1, 5000),
+            11: Fraction(1, 10_000),
+            13: Fraction(1, 15_000),
+            17: Fraction(1, 25_000),
+        }
+        for prime, eta in endpoints.items():
+            certificate = binary_benchmark_sparse_certificate(prime, eta)
+            self.assertTrue(certificate["sqrt_check"]["passes"])
+            self.assertTrue(certificate["passes"])
 
 
 if __name__ == "__main__":

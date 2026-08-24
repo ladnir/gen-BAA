@@ -52,6 +52,11 @@ class Layout:
     prime: int
     orbits: tuple[tuple[int, ...], ...]
     triples: tuple[tuple[int, int, int], ...]
+    pair_representatives: tuple[tuple[int, int], ...] = ()
+
+    @property
+    def sign_symmetric(self) -> bool:
+        return bool(self.pair_representatives)
 
     @property
     def orbit_count(self) -> int:
@@ -83,7 +88,7 @@ class Layout:
         return self.gamma2.stop
 
 
-def make_layout(prime: int) -> Layout:
+def make_layout(prime: int, sign_symmetric: bool = False) -> Layout:
     seen: set[int] = set()
     orbits = []
     for value in range(prime):
@@ -92,17 +97,48 @@ def make_layout(prime: int) -> Layout:
         current = tuple(sorted({value, (-value) % prime}))
         seen.update(current)
         orbits.append(current)
+    orbit_of = {
+        value: index for index, orbit in enumerate(orbits) for value in orbit
+    }
     triples = []
-    for increment, increment_orbit in enumerate(orbits):
-        for source, source_orbit in enumerate(orbits):
-            for target, target_orbit in enumerate(orbits):
-                if any(
-                    (state + difference) % prime in target_orbit
-                    for difference in increment_orbit
-                    for state in source_orbit
-                ):
-                    triples.append((increment, source, target))
-    return Layout(prime, tuple(orbits), tuple(triples))
+    pair_representatives = []
+    if sign_symmetric:
+        seen_pairs: set[tuple[int, int]] = set()
+        for source in range(prime):
+            for target in range(prime):
+                pair = (source, target)
+                if pair in seen_pairs:
+                    continue
+                opposite = ((-source) % prime, (-target) % prime)
+                cell = tuple(sorted({pair, opposite}))
+                seen_pairs.update(cell)
+                representative = cell[0]
+                source_value, target_value = representative
+                difference = (target_value - source_value) % prime
+                triples.append(
+                    (
+                        orbit_of[difference],
+                        orbit_of[source_value],
+                        orbit_of[target_value],
+                    )
+                )
+                pair_representatives.append(representative)
+    else:
+        for increment, increment_orbit in enumerate(orbits):
+            for source, source_orbit in enumerate(orbits):
+                for target, target_orbit in enumerate(orbits):
+                    if any(
+                        (state + difference) % prime in target_orbit
+                        for difference in increment_orbit
+                        for state in source_orbit
+                    ):
+                        triples.append((increment, source, target))
+    return Layout(
+        prime,
+        tuple(orbits),
+        tuple(triples),
+        tuple(pair_representatives),
+    )
 
 
 def mpf_fraction(raw: tuple[int, int, int, int]) -> Fraction:
@@ -275,6 +311,14 @@ def tighten(raw_box: Box, orbit_count: int) -> Box | None:
 
 
 def pair_distribution(point: np.ndarray, layout: Layout, gamma: slice) -> np.ndarray:
+    if layout.sign_symmetric:
+        distribution = np.maximum(point[gamma], 0.0)
+        total = distribution.sum()
+        return (
+            distribution / total
+            if total > 0.0
+            else np.full_like(distribution, 1.0 / len(distribution))
+        )
     pair = np.zeros((layout.orbit_count, layout.orbit_count))
     for value, (increment, source, _) in zip(point[gamma], layout.triples, strict=True):
         pair[increment, source] += value
@@ -305,6 +349,45 @@ def orbit_automorphisms(layout: Layout) -> tuple[tuple[int, ...], ...]:
     return tuple(sorted(permutations))
 
 
+def entropy_automorphisms(layout: Layout) -> tuple[tuple[int, ...], ...]:
+    if not layout.sign_symmetric:
+        orbit_permutations = orbit_automorphisms(layout)
+        return tuple(
+            tuple(
+                permutation[increment] * layout.orbit_count
+                + permutation[source]
+                for increment in range(layout.orbit_count)
+                for source in range(layout.orbit_count)
+            )
+            for permutation in orbit_permutations
+        )
+
+    index_of = {}
+    for index, (source, target) in enumerate(layout.pair_representatives):
+        pair = (source, target)
+        opposite = ((-source) % layout.prime, (-target) % layout.prime)
+        index_of[min(pair, opposite)] = index
+    permutations = set()
+    for multiplier in range(1, layout.prime):
+        image = []
+        for source, target in layout.pair_representatives:
+            pair = (
+                (multiplier * source) % layout.prime,
+                (multiplier * target) % layout.prime,
+            )
+            opposite = ((-pair[0]) % layout.prime, (-pair[1]) % layout.prime)
+            image.append(index_of[min(pair, opposite)])
+        permutations.add(tuple(image))
+    return tuple(sorted(permutations))
+
+
+def entropy_coordinate(layout: Layout, offset: int) -> int:
+    if layout.sign_symmetric:
+        return offset
+    increment, source, _ = layout.triples[offset]
+    return increment * layout.orbit_count + source
+
+
 def cuts_from_point(
     point: np.ndarray, layout: Layout, bits: int, close_automorphisms: bool
 ) -> tuple[Cut, ...]:
@@ -312,28 +395,23 @@ def cuts_from_point(
     for gamma in (layout.gamma1, layout.gamma2):
         pair = rational_distribution(pair_distribution(point, layout, gamma), bits)
         stage_pairs.append(pair)
+    entropy_size = len(stage_pairs[0])
     permutations = (
-        orbit_automorphisms(layout)
+        entropy_automorphisms(layout)
         if close_automorphisms
-        else (tuple(range(layout.orbit_count)),)
+        else (tuple(range(entropy_size)),)
     )
     cuts = []
     for permutation in permutations:
         stages = []
         for pair in stage_pairs:
             image = [ZERO] * len(pair)
-            for increment in range(layout.orbit_count):
-                for source in range(layout.orbit_count):
-                    image[
-                        permutation[increment] * layout.orbit_count
-                        + permutation[source]
-                    ] = pair[increment * layout.orbit_count + source]
+            for index, value in enumerate(pair):
+                image[permutation[index]] = value
             stages.append(
                 tuple(
-                    negative_log_upper(
-                        image[increment * layout.orbit_count + source]
-                    )
-                    for increment, source, _ in layout.triples
+                    negative_log_upper(image[entropy_coordinate(layout, offset)])
+                    for offset in range(len(layout.triples))
                 )
             )
         cuts.append(Cut(stages[0], stages[1]))
@@ -341,7 +419,12 @@ def cuts_from_point(
 
 
 def uniform_cut(layout: Layout) -> Cut:
-    probability = Fraction(1, layout.orbit_count**2)
+    entropy_size = (
+        len(layout.triples)
+        if layout.sign_symmetric
+        else layout.orbit_count**2
+    )
+    probability = Fraction(1, entropy_size)
     coefficient = negative_log_upper(probability)
     stage = tuple(coefficient for _ in layout.triples)
     return Cut(stage, stage)
@@ -490,9 +573,24 @@ def evaluate(
     objective = [ZERO] * extended_size
     objective[-2] = ONE
     objective[-1] = ONE
-    ln2_over_r = log_upper(Fraction(2)) / repetition
-    for index in range(layout.mu.start + 1, layout.mu.stop):
-        objective[index] += ln2_over_r
+    ln2 = log_upper(Fraction(2))
+    if layout.sign_symmetric:
+        composition_coefficients = (
+            (layout.mu, -Fraction(repetition - 1, repetition)),
+            (layout.beta, -Fraction(2)),
+            (layout.zeta, -ONE),
+        )
+        for component, coefficient in composition_coefficients:
+            for index in range(component.start + 1, component.stop):
+                objective[index] += coefficient * ln2
+        for gamma in (layout.gamma1, layout.gamma2):
+            for offset, representative in enumerate(layout.pair_representatives):
+                if representative != (0, 0):
+                    objective[gamma.start + offset] += ln2
+    else:
+        ln2_over_r = ln2 / repetition
+        for index in range(layout.mu.start + 1, layout.mu.stop):
+            objective[index] += ln2_over_r
     constant = ZERO
     entropy_coefficients = (
         [Fraction(repetition - 1, repetition)] * layout.orbit_count
@@ -619,7 +717,7 @@ def split(box: Box, dimension: int) -> tuple[Box, Box]:
 
 def search(args: argparse.Namespace) -> dict[str, object]:
     iv.dps = args.precision
-    layout = make_layout(args.prime)
+    layout = make_layout(args.prime, args.sign_symmetric)
     equality, target = structural_equalities(layout)
     lower = [ZERO] * (3 * layout.orbit_count)
     upper = [ONE] * (3 * layout.orbit_count)
@@ -647,7 +745,16 @@ def search(args: argparse.Namespace) -> dict[str, object]:
         _, _, current = heapq.heappop(queue)
         if current.value < ZERO:
             return {
-                "status": "verified negative sign-orbit cover",
+                "status": (
+                    "verified negative sign-symmetric cover"
+                    if layout.sign_symmetric
+                    else "verified negative sign-orbit cover"
+                ),
+                "transition_model": (
+                    "exact sign-symmetric full-symbol"
+                    if layout.sign_symmetric
+                    else "sign-orbit upper relaxation"
+                ),
                 "upper_bound": float(current.value),
                 "upper_bound_numerator": str(current.value.numerator),
                 "upper_bound_denominator": str(current.value.denominator),
@@ -690,6 +797,11 @@ def search(args: argparse.Namespace) -> dict[str, object]:
         maximum_queue = max(maximum_queue, len(queue))
     return {
         "status": "exact cover search incomplete",
+        "transition_model": (
+            "exact sign-symmetric full-symbol"
+            if layout.sign_symmetric
+            else "sign-orbit upper relaxation"
+        ),
         "current_upper_bound": float(-queue[0][0]) if queue else None,
         "current_upper_bound_is_exact": bool(queue),
         "boxes_split": splits,
@@ -713,6 +825,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--precision", type=int, default=80)
     parser.add_argument("--cut-bits", type=int, default=30)
     parser.add_argument("--maximum-cut-pairs", type=int, default=16)
+    parser.add_argument(
+        "--sign-symmetric",
+        action="store_true",
+        help="verify the exact globally sign-symmetric full-symbol subproblem",
+    )
     parser.add_argument(
         "--automorphism-cuts",
         action="store_true",

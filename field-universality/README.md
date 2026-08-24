@@ -66,6 +66,15 @@ distance to `1/20`. The same method, closed under field-multiplication
 automorphisms, raises the septic bound from `1/64` to `9/500`. These constants
 do not locate the true prime-field thresholds.
 
+At the binary benchmark `1323/10000`, exact support-indicator certificates now
+control initial bulk slabs over `F_5`, `F_7`, `F_11`, `F_13`, and `F_17`.
+The bound follows by retaining only the zero/nonzero indicators in the two
+mutual-information terms. Its small-weight leading term is
+`(1/r-1/2)A log(1/A)`, which is negative for every repetition factor greater
+than two and every fixed field. Exact sparse-spacing specializations meet the
+lower endpoint of every certified slab. This is a proved field-uniform tangent
+mechanism, not yet a proof for the remaining bulk domains.
+
 For repetition three over `F_3`, the project now proves
 
 ```text
@@ -384,6 +393,14 @@ python scripts/optimize_lifted_orbit_bulk.py \
 python scripts/search_full_symbol_cover.py \
   --prime 5 --repetition 3 --delta 0.1323 --eta 0.0005 \
   --maximum-cut-pairs 32 --max-boxes 1000
+
+python scripts/verify_support_indicator_bulk.py \
+  --prime 5 --repetition 3 --delta 1323/10000 \
+  --eta 1/2000 --cutoff 1/500 --precision 80
+
+python scripts/verify_sign_orbit_bulk.py \
+  --prime 5 --delta 1323/10000 --eta 1/500 \
+  --sign-symmetric --automorphism-cuts --maximum-cut-pairs 64
 ```
 
 The first command searches the full vector-composition problem. The second
@@ -419,3 +436,8 @@ described in `CLEAN_THEORY.md`.
 
 The lifted-orbit and full-symbol commands diagnose the remaining quinary gap.
 They are numerical design tools. Their output cannot certify a theorem.
+
+The support-indicator command is an exact checker for the small-message slab.
+The final sign-symmetric command invokes the exact full-symbol quotient under
+global sign symmetry. Its current box search is incomplete and does not
+justify restricting the unrestricted quinary problem to that quotient.

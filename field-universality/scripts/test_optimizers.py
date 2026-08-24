@@ -9,6 +9,7 @@ import numpy as np
 
 import certify_symmetric_ternary as certificate
 import diagnose_entropy_dual as entropy_dual
+import optimize_asymmetric_bulk as asymmetric
 import optimize_bulk_exponent as bulk
 import optimize_symmetric_ternary as ternary
 import search_entropy_dual_cover as dual_cover
@@ -177,6 +178,40 @@ class OptimizerTests(unittest.TestCase):
         self.assertTrue(bulk.is_prime(5))
         self.assertFalse(bulk.is_prime(1))
         self.assertFalse(bulk.is_prime(9))
+
+    def test_sign_symmetry_constraints_accept_uniform_types(self) -> None:
+        layout = bulk.Layout(5)
+        equality, target, _, _ = bulk.constraints(layout, 0.01, 0.13)
+        symmetric_equality, symmetric_target = bulk.add_sign_symmetry(
+            layout, equality, target
+        )
+        point = np.zeros(layout.size)
+        point[layout.mu] = 1.0 / 5.0
+        point[layout.beta] = 1.0 / 5.0
+        point[layout.zeta] = 1.0 / 5.0
+        point[layout.tau1] = 1.0 / 25.0
+        point[layout.tau2] = 1.0 / 25.0
+        np.testing.assert_allclose(
+            symmetric_equality @ point, symmetric_target, atol=1e-14
+        )
+
+    def test_asymmetry_permutation_is_an_involution(self) -> None:
+        layout = bulk.Layout(5)
+        permutation = asymmetric.sign_permutation(layout)
+        np.testing.assert_array_equal(permutation[permutation], np.arange(layout.size))
+        uniform = np.zeros(layout.size)
+        uniform[layout.mu] = 1.0 / 5.0
+        uniform[layout.beta] = 1.0 / 5.0
+        uniform[layout.zeta] = 1.0 / 5.0
+        uniform[layout.tau1] = 1.0 / 25.0
+        uniform[layout.tau2] = 1.0 / 25.0
+        mask = asymmetric.energy_mask(layout, "all")
+        self.assertEqual(
+            asymmetric.asymmetry_energy(uniform, permutation, mask), 0.0
+        )
+        self.assertAlmostEqual(
+            asymmetric.entropy_asymmetry(uniform, permutation, mask), 0.0
+        )
 
     def test_bulk_objective_gradient(self) -> None:
         layout = bulk.Layout(3)

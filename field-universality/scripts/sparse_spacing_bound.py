@@ -45,6 +45,43 @@ def least_ladder_denominator_root(prime: int) -> int:
     return m
 
 
+def binary_benchmark_sparse_certificate(
+    prime: int, eta: Fraction
+) -> dict[str, object]:
+    """Return the exact sparse check at delta=1323/10000."""
+    benchmark = Fraction(1323, 10_000)
+    radicand = 4 * benchmark * (1 - benchmark)
+    sqrt_check = radicand * 59**2 < 40**2
+    spacing_lower = Fraction(19, 40)
+    q_squared_upper = (
+        Fraction((prime - 1) ** 2 * 121, 16)
+        * eta
+        / ((1 - eta) ** 3 * spacing_lower**3)
+    )
+    return {
+        "domain": (
+            f"p = {prime}, r = 3, 0 < delta <= 1323/10000, "
+            f"and 0 < eta <= {eta}"
+        ),
+        "base_upper_bound": 1.0,
+        "sqrt_check": {
+            "left": (radicand * 59**2).numerator,
+            "left_denominator": (radicand * 59**2).denominator,
+            "right": 40**2,
+            "passes": sqrt_check,
+        },
+        "spacing_denominator_lower": {
+            "numerator": spacing_lower.numerator,
+            "denominator": spacing_lower.denominator,
+        },
+        "q_squared_upper": {
+            "numerator": q_squared_upper.numerator,
+            "denominator": q_squared_upper.denominator,
+        },
+        "passes": sqrt_check and q_squared_upper < 1,
+    }
+
+
 def spacing_weight_count(length: int, transitions: int, active: int, weight: int) -> int:
     """Count transition supports whose selected post-transition gaps sum to weight."""
     if not 1 <= active <= transitions <= length:
@@ -136,8 +173,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--prime", type=int, default=3)
     parser.add_argument("--repetition", type=int, default=3)
-    parser.add_argument("--delta", type=float, default=0.196)
-    parser.add_argument("--eta", type=float, default=0.0001)
+    parser.add_argument("--delta", type=Fraction, default=Fraction(49, 250))
+    parser.add_argument("--eta", type=Fraction, default=Fraction(1, 10_000))
     return parser.parse_args()
 
 
@@ -156,8 +193,10 @@ def main() -> None:
     args = parse_args()
     prime = args.prime
     repetition = args.repetition
-    delta = args.delta
-    eta = args.eta
+    delta_fraction = args.delta
+    eta_fraction = args.eta
+    delta = float(delta_fraction)
+    eta = float(eta_fraction)
     if not is_prime(prime):
         raise SystemExit("prime must be a prime integer")
     if repetition < 3:
@@ -294,6 +333,21 @@ def main() -> None:
                 and rational_left < rational_right
             ),
         }
+    elif (
+        repetition == 3
+        and delta_fraction <= Fraction(1323, 10_000)
+    ):
+        # At delta=1323/10000, monotonicity on (0,1/2) and the integer
+        # comparison below give
+        #
+        #   sqrt(4 delta (1-delta)) < 40/59,
+        #   exp(D(1/2 || delta))-1 > 19/40.
+        #
+        # Together with e<11/4, squaring the geometric base reduces Q<1
+        # to an exact rational comparison for any supplied eta.
+        rational_certificate = binary_benchmark_sparse_certificate(
+            prime, eta_fraction
+        )
     elif prime == 5 and repetition == 3 and delta <= 0.05 and eta <= 0.0001:
         # For delta <= 1/20, sqrt(4*delta*(1-delta)) <= sqrt(19)/10
         # and sqrt(19) < 5.  Hence exp(D)-1 > 1.  Together with

@@ -33,6 +33,17 @@ class SignOrbitVerifierTests(unittest.TestCase):
         self.assertEqual(layout.orbits, ((0,), (1, 4), (2, 3)))
         self.assertEqual(len(layout.triples), 13)
 
+    def test_quinary_sign_symmetric_layout(self) -> None:
+        layout = make_layout(5, sign_symmetric=True)
+        self.assertTrue(layout.sign_symmetric)
+        self.assertEqual(len(layout.pair_representatives), 13)
+        self.assertEqual(layout.pair_representatives[0], (0, 0))
+        represented = set()
+        for source, target in layout.pair_representatives:
+            represented.add((source, target))
+            represented.add(((-source) % 5, (-target) % 5))
+        self.assertEqual(len(represented), 25)
+
     def test_septic_orbit_automorphisms(self) -> None:
         layout = make_layout(7)
         self.assertEqual(len(layout.orbits), 4)

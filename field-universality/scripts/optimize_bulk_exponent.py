@@ -118,6 +118,42 @@ def constraints(layout: Layout, eta: float, delta: float) -> tuple[np.ndarray, .
     return equality, equality_target, upper, upper_target
 
 
+def add_sign_symmetry(
+    layout: Layout, equality: np.ndarray, target: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    rows = [row.copy() for row in equality]
+    targets = target.tolist()
+    p = layout.prime
+    for component in (layout.mu, layout.beta, layout.zeta):
+        for value in range(1, p):
+            opposite = (-value) % p
+            if value >= opposite:
+                continue
+            row = np.zeros(layout.size)
+            row[component.start + value] = 1.0
+            row[component.start + opposite] = -1.0
+            rows.append(row)
+            targets.append(0.0)
+    for layer in (1, 2):
+        for source in range(p):
+            for destination in range(p):
+                opposite_source = (-source) % p
+                opposite_destination = (-destination) % p
+                if (source, destination) >= (
+                    opposite_source,
+                    opposite_destination,
+                ):
+                    continue
+                row = np.zeros(layout.size)
+                row[layout.edge(layer, source, destination)] = 1.0
+                row[
+                    layout.edge(layer, opposite_source, opposite_destination)
+                ] = -1.0
+                rows.append(row)
+                targets.append(0.0)
+    return independent_equalities(np.stack(rows), np.array(targets))
+
+
 def entropy(vector: np.ndarray) -> float:
     positive = vector[vector > 0.0]
     return float(-np.dot(positive, np.log(positive)))
@@ -176,6 +212,10 @@ def feasible_vertices(
 def optimize(args: argparse.Namespace) -> dict[str, object]:
     layout = Layout(args.prime)
     equality, equality_target, upper, upper_target = constraints(layout, args.eta, args.delta)
+    if args.sign_symmetric:
+        equality, equality_target = add_sign_symmetry(
+            layout, equality, equality_target
+        )
     random = np.random.default_rng(args.seed)
     vertices = feasible_vertices(
         layout,
@@ -222,6 +262,7 @@ def optimize(args: argparse.Namespace) -> dict[str, object]:
         "delta": args.delta,
         "eta": args.eta,
         "restarts": args.restarts,
+        "sign_symmetric": args.sign_symmetric,
         "exponent": exponent(point, layout, args.repetition),
         "message_nonzero_fraction": 1.0 - point[layout.mu.start],
         "output_nonzero_fraction": 1.0 - point[layout.zeta.start],
@@ -248,6 +289,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--max-iterations", type=int, default=2000)
     parser.add_argument("--tolerance", type=float, default=1e-11)
+    parser.add_argument("--sign-symmetric", action="store_true")
     args = parser.parse_args()
     if not is_prime(args.prime):
         parser.error("prime must be a prime integer")

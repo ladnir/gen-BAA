@@ -351,6 +351,97 @@ Psi_{3,r}(mu,beta,zeta)
 The exponent therefore measures the information required to keep two
 nonuniform state distributions stationary under their prescribed increments.
 
+### 3.3.1 A field-uniform support-indicator bound
+
+The zero/nonzero indicators retain enough information to control the
+small-message boundary. Let a stationary accumulator transition have
+nonzero-increment fraction `a` and nonzero-state fraction `b`. Write `x` for
+the probability of a transition from zero to a nonzero state. Stationarity
+makes the reverse crossing probability equal to `x`. Both crossings use a
+nonzero increment, so `2x<=a`. The joint law of the nonzero-increment and
+nonzero-source indicators is
+
+```text
+           source 0       source nonzero
+inc 0        1-b-x             b-a+x
+inc nz          x                 a-x.
+```
+
+For `a<=2b` and `b<1/2`, let `J(a,b)` be the mutual information of this table
+at `x=a/2`.
+
+**Support-indicator lemma.** Suppose `C<1/4`, and let `A`, `B`, and `C` be the
+nonzero fractions of `mu`, `beta`, and `zeta`. Every feasible full-symbol
+point satisfies
+
+```text
+Psi_{p,r}
+ <= (h(A)+A log(p-1))/r - J(A,B)-J(B,C),
+```
+
+where `h` is binary entropy.
+
+**Proof.** Applying the zero/nonzero map to the increment and source at each
+stage cannot increase mutual information. With fixed Bernoulli marginals,
+mutual information is convex in the crossing parameter and is minimized at
+independence, where `x=a(1-b)`. Since `b<1/2`, this point lies at or to the
+right of `a/2`. Feasibility restricts `x<=a/2`, so the minimum over feasible
+crossings is attained at `x=a/2`.
+
+The accumulator support inequalities give `A<=2B` and `B<=2C`. Thus
+`B<1/2` and `C<1/2`, and the preceding argument applies at both stages.
+Finally,
+
+```text
+H(mu) <= h(A)+A log(p-1).
+```
+
+Substitution in the information form of `Psi_{p,r}` proves the claim. ∎
+
+This lemma explains the vanishing bulk margin. On the branch `B=Theta(A)`,
+the first support mutual information has leading term
+`(A/2)log(1/A)`, whereas `H(mu)/r` contributes
+`(A/r)log(1/A)`. Consequently,
+
+```text
+Psi_{p,r}
+ <= (1/r-1/2) A log(1/A) + O_p(A).
+```
+
+For every fixed field and repetition factor `r>2`, the leading coefficient is
+negative. At repetition three it is `-1/6`. This is a field-uniform tangent
+mechanism; the field size enters only the linear term `A log(p-1)/r`.
+
+At `r=3` and `C<=1323/10000`, the checker
+`scripts/verify_support_indicator_bulk.py` gives the following exact ladder.
+
+| field | lower endpoint | upper endpoint | boxes split | exact upper bound |
+|---:|---:|---:|---:|---:|
+| `F_5` | `1/2000` | `1/500` | 3,165 | `-1.7042e-7` |
+| `F_7` | `1/5000` | `1/1250` | 7,112 | `-4.3382e-8` |
+| `F_11` | `1/10000` | `1/4000` | 9,286 | `-1.6792e-8` |
+| `F_13` | `1/15000` | `1/5000` | 18,981 | `-2.3037e-9` |
+| `F_17` | `1/25000` | `1/10000` | 18,441 | `-7.6116e-11` |
+
+Directed intervals enclose every logarithm, and rational arithmetic checks
+every box bound. The exact numerators and denominators are recorded in
+`results/support-indicator-binary-benchmark-ladder.json`.
+
+The sparse-spacing estimate also holds below each listed lower endpoint. A
+single rational specialization proves this fact. At
+`delta=1323/10000`,
+
+```text
+sqrt(4 delta (1-delta)) < 40/59,
+exp(D(1/2 || delta))-1 > 19/40.
+```
+
+Together with `e<11/4`, the remaining check is a rational inequality in `p`
+and the lower endpoint; `scripts/sparse_spacing_bound.py` verifies it exactly.
+Thus the sparse and support-indicator arguments meet at every row. These
+results certify only the displayed small-message slabs. They do not certify
+the remaining full-symbol domains above the upper endpoints.
+
 The numerical maximizers are invariant under the sign map `sigma(a):=-a`.
 The following lemma proves that this symmetry is without loss.
 
@@ -634,6 +725,17 @@ The most negative symmetrization gap found has value `-0.1374837842`, but its
 full exponent is `-0.4863645818`. These are numerical diagnostics, not
 certificates. They motivate a future split between a near-symmetric region and
 an asymmetric region with a large negative exponent.
+
+The support-indicator certificate sharpens this proposed decomposition. Raw
+Euclidean distance from sign symmetry is poorly scaled near zero support: an
+output of weight `0.1323` can be completely one-sided while having squared
+asymmetry below `0.00876`. Entropy asymmetry gives the appropriate normalized
+diagnostic, but its constrained maxima also remain close to the symmetric
+maximum. At composition entropy-asymmetry levels `0.01`, `0.05`, and `0.09`,
+the numerical full-symbol maxima are approximately `-0.000610`, `-0.000652`,
+and `-0.000729`. Thus asymmetry does not provide a large-margin complement.
+The more promising split isolates the field-uniform small-`A` tangent regime
+before certifying the remaining full-symbol domain.
 
 ### 3.5 Certified ternary optimization
 
