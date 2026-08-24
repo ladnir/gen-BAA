@@ -532,8 +532,170 @@ Thus the sparse and support-indicator arguments meet at every row. These
 results certify only the displayed small-message slabs. They do not certify
 the remaining full-symbol domains above the upper endpoints.
 
+### 3.3.2 Paying for internal symbol entropy
+
+The support projection separates the remaining obstruction. For stage `i`,
+let `I_i` be the full mutual information and let `I_i^supp` be the mutual
+information after mapping both symbols to their zero/nonzero indicators. Set
+
+```text
+H_int(mu) := H(mu)-h(A),
+
+Phi := h(A)/3-I_1^supp-I_2^supp,
+
+G := (I_1-I_1^supp)+(I_2-I_2^supp)-H_int(mu)/3.
+```
+
+Then the full repetition-three exponent satisfies the exact identity
+
+```text
+Psi_{p,3} = Phi-G.
+```
+
+The quantity `G` measures whether the two accumulator transitions pay for the
+message entropy hidden inside the nonzero symbols. A global inequality `G>=0`
+would reduce the problem to the binary support exponent. It is false. Over
+`F_5`, numerical minimization finds `G=-0.10395`, but the same type has full
+exponent `-0.328996`. Thus violations found so far occur far below the
+maximizing region.
+
+This observation gives a quantitative proof split. On the domain
+
+```text
+A >= 1/500,
+C <= 1323/10000,
+```
+
+the exact checker `scripts/verify_support_indicator_bulk.py` proves
+
+```text
+Phi < 1/10000.
+```
+
+It uses cross-entropy tangents for the two positive joint entropies and exact
+endpoint maximization of the remaining convex one-variable terms. The cover
+closes after 1,629 rational boxes. Its exact upper bound is
+`0.00009797319670870162`, and the full numerator and denominator are recorded
+in `results/binary-support-upper-0.1323-eta-0.002.json`.
+
+Consequently, every type in this domain with `G>=1/10000` has negative full
+exponent. Only the region `G<=1/10000` remains.
+
+The low-gap region has a useful Lagrangian formulation. For every type with
+`G<=gamma` and every `lambda>=0`,
+
+```text
+Psi <= max(Psi-lambda G)+lambda gamma.
+```
+
+At `lambda=3/2`, the full-symbol optimizer finds
+
+```text
+max(Psi-(3/2)G) = -0.0025410203.
+```
+
+This would give `Psi<-0.002391` throughout `G<=1/10000`. These two values are
+numerical diagnostics, not certificates. They reduce the remaining quinary
+binary-benchmark proof to an unconstrained full-symbol Lagrangian bound with
+a visible margin.
+
+There is one field-uniform face on which the internal-information payment is
+already exact. Let `D` be the first-stage increment, let `S` be its source
+state, and put `T:=S+D`. Write `U:=1[D!=0]` and `V:=1[S!=0]`.
+
+**One-orbit information toll.** Fix an odd prime `p>=5`. Suppose the
+increment composition is sign-symmetric and supported on `{0,+a,-a}`, and
+the stationary state composition is sign-symmetric and supported on
+`{0,+b,-b}`. If `A:=Pr[U=1]`, then
+
+```text
+I(D;S)-I(U;V) >= (A/2) log 2.
+```
+
+**Proof.** Let `W:=1[T!=0]`. Stationarity gives `V` and `W` the same
+distribution. If
+
+```text
+x:=Pr[V=0,W=1],
+```
+
+then `Pr[V=1,W=0]=x`. Both events require a nonzero increment. The first is
+the support cell `(U,V)=(1,0)`, whereas the second lies in `(U,V)=(1,1)`.
+Consequently,
+
+```text
+Pr[U=1,V=1] = A-x >= A/2.
+```
+
+Every nonzero support cell contains at most two compatible symbol pairs
+`(D,S)`. This is immediate for `(0,1)` and `(1,0)`. For `(1,1)`, fix
+`S=b`. The only possible nonzero increments that keep `T` in
+`{0,+b,-b}` are `-b` and `-2b`. Both cannot lie in one sign orbit unless
+`[b]=[2b]`, which would force `3b=0`. The case `S=-b` is identical. This is
+the only point at which `p>=5` is used.
+
+The message and state sign symmetries give
+
+```text
+H(D)-h(A)=A log 2,
+H(S)-h(B)=B log 2,
+```
+
+where `B:=Pr[V=1]`. Conditioning `(D,S)` on `(U,V)` costs at most one bit on
+each nonzero support cell. Hence
+
+```text
+H(D,S | U,V)
+  <= (A+B-Pr[U=1,V=1]) log 2.
+```
+
+Subtracting the support mutual information from the full mutual information
+now gives at least `Pr[U=1,V=1] log 2`, which is at least
+`(A/2)log 2`. ∎
+
+If both `mu` and `beta` have this one-orbit form, the second-stage internal
+information is nonnegative by data processing, while
+`H_int(mu)=A log 2`. Therefore
+
+```text
+G >= (A/6) log 2.
+```
+
+On the domain `A>=1/500`, the exact support certificate above gives
+`Phi<1/10000`. Directed interval arithmetic and an exact rational comparison
+then verify
+
+```text
+1/10000 < (1/500)(log 2)/6.
+```
+
+Thus every such one-orbit type has `Psi<0` at output fraction
+`1323/10000`, over every odd prime `p>=5`. The checked negative margin is
+`0.0001310490601`; `scripts/verify_one_orbit_toll.py` records its exact
+numerator and denominator in
+`results/one-orbit-toll-eta-0.002.json`.
+
+The reduced optimizer makes the same face visible at the next primes. The
+following best values found in the globally sign-symmetric subproblem are
+numerical diagnostics.
+
+| field | cutoff `A` | exponent found | `Phi` | `G` |
+|---:|---:|---:|---:|---:|
+| `F_5` | `0.002` | `-0.00194321` | `-0.00128306` | `0.00066015` |
+| `F_7` | `0.0008` | `-0.00090459` | `-0.00062603` | `0.00027857` |
+| `F_11` | `0.00025` | `-0.00033118` | `-0.00024186` | `0.00008933` |
+
+In all three searches, the best point found has `mu` and `beta` concentrated
+on one nonzero sign orbit and lies at the lower message cutoff. The first-stage internal
+increment approaches the exact `(A/2)log 2` toll. This repeated structure
+suggests a useful route to a field-uniform theorem: control departures from a
+single sign orbit, then analyze the remaining accumulator as a lazy walk on
+the odd cycle generated by that orbit. The table does not prove that this
+face contains the unrestricted maximum. In particular, sign averaging is not
+valid over `F_5`, as the counterexample below shows.
+
 The numerical maximizers are invariant under the sign map `sigma(a):=-a`.
-The following lemma proves that this symmetry is without loss.
+The following lemma proves that this symmetry is without loss over `F_3`.
 
 For a distribution `q`, define its sign-asymmetry by
 

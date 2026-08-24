@@ -129,6 +129,83 @@ def cut_from_point(point: np.ndarray, layout: bulk.Layout) -> Cut:
     return Cut(stages[0], stages[1])
 
 
+def support_joint(point: np.ndarray, layout: bulk.Layout, transition: slice) -> np.ndarray:
+    joint = np.zeros((2, 2))
+    matrix = point[transition].reshape((layout.prime, layout.prime))
+    for source in range(layout.prime):
+        for target in range(layout.prime):
+            difference = (target - source) % layout.prime
+            joint[int(difference != 0), int(source != 0)] += matrix[
+                source, target
+            ]
+    return joint
+
+
+def support_joint_bounds(
+    box: Box, increment_zero: int, state_zero: int
+) -> tuple[tuple[float, float], ...]:
+    increment_lower = 1.0 - box.upper[increment_zero]
+    increment_upper = 1.0 - box.lower[increment_zero]
+    state_lower = 1.0 - box.upper[state_zero]
+    state_upper = 1.0 - box.lower[state_zero]
+    crossing_lower = max(0.0, increment_lower - state_upper)
+    crossing_upper = min(increment_upper / 2.0, 1.0 - state_lower)
+    return (
+        (
+            max(0.0, 1.0 - state_upper - crossing_upper),
+            min(1.0, 1.0 - state_lower - crossing_lower),
+        ),
+        (
+            max(0.0, state_lower - increment_upper + crossing_lower),
+            min(1.0, state_upper - increment_lower + crossing_upper),
+        ),
+        (crossing_lower, crossing_upper),
+        (
+            max(0.0, increment_lower - crossing_upper),
+            min(1.0, increment_upper - crossing_lower),
+        ),
+    )
+
+
+def add_support_joint_secants(
+    linear: np.ndarray,
+    box: Box,
+    layout: bulk.Layout,
+    transition: slice,
+    increment_zero: int,
+    state_zero: int,
+    coefficient: float,
+) -> tuple[float, tuple[tuple[float, float], ...]]:
+    bounds = support_joint_bounds(box, increment_zero, state_zero)
+    secants = tuple(secant(lower, upper) for lower, upper in bounds)
+    matrix_start = transition.start
+    for source in range(layout.prime):
+        for target in range(layout.prime):
+            difference = (target - source) % layout.prime
+            category = 2 * int(difference != 0) + int(source != 0)
+            linear[matrix_start + source * layout.prime + target] += (
+                coefficient * secants[category][0]
+            )
+    constant = coefficient * sum(intercept for _, intercept in secants)
+    return constant, secants
+
+
+def add_binary_entropy_tangent(
+    linear: np.ndarray,
+    box: Box,
+    component: slice,
+    coefficient: float,
+) -> None:
+    zero_reference = (box.lower[component.start] + box.upper[component.start]) / 2.0
+    mixing = 1e-12
+    zero_reference = (1.0 - mixing) * zero_reference + mixing / 2.0
+    nonzero_reference = 1.0 - zero_reference
+    linear[component.start] += coefficient * -np.log(zero_reference)
+    linear[component.start + 1 : component.stop] += coefficient * -np.log(
+        nonzero_reference
+    )
+
+
 def evaluate(
     box: Box,
     cuts: tuple[Cut, ...],
@@ -136,20 +213,61 @@ def evaluate(
     equality: np.ndarray,
     target: np.ndarray,
     repetition: int,
+    objective_mode: str,
+    gap_multiplier: float,
 ) -> tuple[float, int, np.ndarray] | None:
     extended_size = layout.size + 2
     linear = np.zeros(extended_size)
-    linear[-2:] = 1.0
+    transition_coefficient = (
+        1.0 + gap_multiplier if objective_mode == "lagrangian" else 1.0
+    )
+    linear[-2:] = transition_coefficient
     constant = 0.0
+    scale = 1.0 + gap_multiplier if objective_mode == "lagrangian" else 1.0
     entropy_coefficients = (
-        [1.0 - 1.0 / repetition] * layout.prime
-        + [2.0] * layout.prime
-        + [1.0] * layout.prime
+        [scale * (1.0 - 1.0 / repetition)] * layout.prime
+        + [scale * 2.0] * layout.prime
+        + [scale] * layout.prime
     )
     for index, coefficient in enumerate(entropy_coefficients):
         slope, intercept = secant(box.lower[index], box.upper[index])
         linear[index] += coefficient * slope
         constant += coefficient * intercept
+
+    support_secants = ()
+    if objective_mode == "lagrangian":
+        add_binary_entropy_tangent(
+            linear,
+            box,
+            layout.mu,
+            gap_multiplier * (1.0 - 1.0 / repetition),
+        )
+        add_binary_entropy_tangent(
+            linear, box, layout.beta, gap_multiplier * 2.0
+        )
+        add_binary_entropy_tangent(
+            linear, box, layout.zeta, gap_multiplier
+        )
+        first_constant, first_secants = add_support_joint_secants(
+            linear,
+            box,
+            layout,
+            layout.tau1,
+            layout.mu.start,
+            layout.beta.start,
+            gap_multiplier,
+        )
+        second_constant, second_secants = add_support_joint_secants(
+            linear,
+            box,
+            layout,
+            layout.tau2,
+            layout.beta.start,
+            layout.zeta.start,
+            gap_multiplier,
+        )
+        constant += first_constant + second_constant
+        support_secants = (first_secants, second_secants)
 
     upper_rows = []
     for cut in cuts:
@@ -187,7 +305,30 @@ def evaluate(
                 ),
             )
         )
-    return constant - float(result.fun), int(np.argmax(gaps)), result.x[: layout.size]
+    if objective_mode == "lagrangian":
+        support_gap = 0.0
+        support_dimensions = []
+        for transition, secants, dimensions in (
+            (layout.tau1, support_secants[0], (layout.mu.start, layout.beta.start)),
+            (layout.tau2, support_secants[1], (layout.beta.start, layout.zeta.start)),
+        ):
+            joint = support_joint(result.x[: layout.size], layout, transition).ravel()
+            current_gap = sum(
+                max(0.0, slope * value + intercept - xlogx(value))
+                for value, (slope, intercept) in zip(joint, secants)
+            )
+            support_gap += gap_multiplier * current_gap
+            support_dimensions.extend(dimensions)
+        if support_gap > max(gaps):
+            dimension = max(
+                support_dimensions,
+                key=lambda index: box.upper[index] - box.lower[index],
+            )
+        else:
+            dimension = int(np.argmax(gaps))
+    else:
+        dimension = int(np.argmax(gaps))
+    return constant - float(result.fun), dimension, result.x[: layout.size]
 
 
 def box_bound(
@@ -198,6 +339,8 @@ def box_bound(
     target: np.ndarray,
     repetition: int,
     maximum_cut_pairs: int,
+    objective_mode: str,
+    gap_multiplier: float,
 ) -> Bound | None:
     box = tighten(raw_box, layout.prime)
     if box is None:
@@ -208,12 +351,30 @@ def box_bound(
     cuts = (inherited + (cut_from_point(reference, layout),))[
         -maximum_cut_pairs:
     ]
-    first = evaluate(box, cuts, layout, equality, target, repetition)
+    first = evaluate(
+        box,
+        cuts,
+        layout,
+        equality,
+        target,
+        repetition,
+        objective_mode,
+        gap_multiplier,
+    )
     if first is None:
         return None
     _, _, witness = first
     cuts = (cuts + (cut_from_point(witness, layout),))[-maximum_cut_pairs:]
-    second = evaluate(box, cuts, layout, equality, target, repetition)
+    second = evaluate(
+        box,
+        cuts,
+        layout,
+        equality,
+        target,
+        repetition,
+        objective_mode,
+        gap_multiplier,
+    )
     if second is None:
         return None
     value, dimension, _ = second
@@ -244,6 +405,8 @@ def search(args: argparse.Namespace) -> dict[str, object]:
         target,
         args.repetition,
         args.maximum_cut_pairs,
+        args.objective,
+        args.gap_multiplier,
     )
     if initial is None:
         raise RuntimeError("initial full-symbol domain is infeasible")
@@ -274,6 +437,8 @@ def search(args: argparse.Namespace) -> dict[str, object]:
                 target,
                 args.repetition,
                 args.maximum_cut_pairs,
+                args.objective,
+                args.gap_multiplier,
             )
             if bounded is not None:
                 heapq.heappush(queue, (-bounded.value, identifier, bounded))
@@ -297,6 +462,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--eta", type=float, default=0.0005)
     parser.add_argument("--maximum-cut-pairs", type=int, default=32)
     parser.add_argument("--max-boxes", type=int, default=10_000)
+    parser.add_argument(
+        "--objective", choices=("exponent", "lagrangian"), default="exponent"
+    )
+    parser.add_argument("--gap-multiplier", type=float, default=1.5)
     return parser.parse_args()
 
 
@@ -310,6 +479,8 @@ def main() -> None:
             "delta": args.delta,
             "eta": args.eta,
             "maximum_cut_pairs": args.maximum_cut_pairs,
+            "objective": args.objective,
+            "gap_multiplier": args.gap_multiplier,
             "arithmetic": "floating-point certificate design",
         }
     )

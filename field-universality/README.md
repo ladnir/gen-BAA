@@ -88,6 +88,15 @@ support-indicator bound above `K/(100(p-1)^2)` with the exact random-spacing
 estimate below it. `scripts/verify_uniform_support_slab.py` checks all
 constants using rational arithmetic.
 
+At `p>=5`, the binary-endpoint proof also covers a field-uniform full-symbol
+face. If both the message and first accumulator state use zero and one
+opposite symbol pair, the first transition pays at least `(A/2)log(2)` beyond
+its support mutual information. After charging the message sign entropy, this
+leaves a net `(A/6)log(2)` toll. Together with the exact support bound, this
+proves negativity for every such type with `A>=1/500`. This result identifies
+a concrete mechanism behind the `p=5,7,11` optimizers, but it does not yet
+control compositions spread across several sign orbits.
+
 For repetition three over `F_3`, the project now proves
 
 ```text
@@ -412,6 +421,22 @@ python scripts/verify_support_indicator_bulk.py \
   --eta 1/2000 --cutoff 1/500 --precision 80
 
 python scripts/verify_uniform_support_slab.py
+
+python scripts/verify_support_indicator_bulk.py \
+  --prime 5 --delta 1323/10000 --eta 1/500 \
+  --cutoff 1323/2500 --internal-values-paid \
+  --target-upper-bound 1/10000 --precision 80
+
+python scripts/search_internal_information_gap.py \
+  --prime 5 --delta 0.1323 --eta 0.002 --mode lagrangian \
+  --gap-multiplier 1.5 --restarts 32
+
+python scripts/verify_one_orbit_toll.py \
+  --eta 1/500 --support-upper-bound 1/10000
+
+python scripts/optimize_sign_symmetric_bulk.py \
+  --prime 7 --delta 0.1323 --eta 0.0008 --objective exponent \
+  --restarts 16
 
 python scripts/verify_sign_orbit_bulk.py \
   --prime 5 --delta 1323/10000 --eta 1/500 \

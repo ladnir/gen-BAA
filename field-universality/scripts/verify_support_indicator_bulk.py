@@ -131,7 +131,10 @@ def tighten(box: Box) -> Box | None:
 
 
 def box_bound(
-    raw_box: Box, prime: int, repetition: int
+    raw_box: Box,
+    prime: int,
+    repetition: int,
+    internal_values_paid: bool = False,
 ) -> tuple[Fraction, int, Box] | None:
     box = tighten(raw_box)
     if box is None:
@@ -141,7 +144,11 @@ def box_bound(
     )
     first = joint_cross_entropy_coefficients(reference[0], reference[1])
     second = joint_cross_entropy_coefficients(reference[1], reference[2])
-    log_field = interval_upper(iv.log(iv.mpf(prime - 1)))
+    log_field = (
+        ZERO
+        if internal_values_paid
+        else interval_upper(iv.log(iv.mpf(prime - 1)))
+    )
     linear = (
         first[1] + log_field / repetition,
         first[2] + second[1],
@@ -193,11 +200,18 @@ def is_prime(value: int) -> bool:
 
 def search(args: argparse.Namespace) -> dict[str, object]:
     iv.dps = args.precision
+    internal_values_paid = getattr(args, "internal_values_paid", False)
+    target_upper_bound = getattr(args, "target_upper_bound", ZERO)
     initial_box = Box(
         (args.eta, args.eta / TWO, args.eta / 4),
         (args.cutoff, TWO * args.delta, args.delta),
     )
-    initial = box_bound(initial_box, args.prime, args.repetition)
+    initial = box_bound(
+        initial_box,
+        args.prime,
+        args.repetition,
+        internal_values_paid,
+    )
     if initial is None:
         raise RuntimeError("initial support-indicator domain is infeasible")
     queue = [(-initial[0], 0, initial[1], initial[2])]
@@ -207,19 +221,30 @@ def search(args: argparse.Namespace) -> dict[str, object]:
     while queue and splits < args.max_boxes:
         negative_bound, _, dimension, box = heapq.heappop(queue)
         bound = -negative_bound
-        if bound < ZERO:
+        if bound < target_upper_bound:
             return {
-                "status": "verified negative support-indicator cover",
+                "status": (
+                    "verified support-indicator target bound"
+                    if target_upper_bound != ZERO
+                    else "verified negative support-indicator cover"
+                ),
                 "upper_bound": float(bound),
                 "upper_bound_numerator": str(bound.numerator),
                 "upper_bound_denominator": str(bound.denominator),
-                "upper_bound_is_exactly_negative": True,
+                "upper_bound_is_exactly_negative": bound < ZERO,
+                "target_upper_bound": str(target_upper_bound),
+                "upper_bound_is_below_target": True,
                 "boxes_split": splits,
                 "boxes_remaining": len(queue) + 1,
                 "maximum_queue_size": maximum_queue,
             }
         for child in split(box, dimension):
-            result = box_bound(child, args.prime, args.repetition)
+            result = box_bound(
+                child,
+                args.prime,
+                args.repetition,
+                internal_values_paid,
+            )
             if result is None:
                 continue
             child_bound, child_dimension, child_box = result
@@ -249,6 +274,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cutoff", type=Fraction, default=Fraction(1, 500))
     parser.add_argument("--precision", type=int, default=80)
     parser.add_argument("--max-boxes", type=int, default=100_000)
+    parser.add_argument(
+        "--internal-values-paid",
+        action="store_true",
+        help="omit A log(p-1)/r after internal message entropy is paid",
+    )
+    parser.add_argument(
+        "--target-upper-bound", type=Fraction, default=ZERO
+    )
     args = parser.parse_args()
     if args.prime < 3 or not is_prime(args.prime):
         parser.error("prime must be an odd prime")
@@ -272,6 +305,8 @@ def main() -> None:
             "eta": str(args.eta),
             "cutoff": str(args.cutoff),
             "interval_precision": args.precision,
+            "internal_values_paid": args.internal_values_paid,
+            "target_upper_bound": str(args.target_upper_bound),
             "arithmetic": "directed logarithm intervals and exact rational boxes",
         }
     )

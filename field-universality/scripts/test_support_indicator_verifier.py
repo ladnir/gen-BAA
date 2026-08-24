@@ -52,6 +52,25 @@ class SupportIndicatorVerifierTests(unittest.TestCase):
         self.assertTrue(result["upper_bound_is_exactly_negative"])
         self.assertLess(result["boxes_split"], args.max_boxes)
 
+    def test_binary_support_target_closes_exactly(self) -> None:
+        args = SimpleNamespace(
+            prime=5,
+            repetition=3,
+            delta=Fraction(1323, 10_000),
+            eta=Fraction(1, 500),
+            cutoff=Fraction(1323, 2500),
+            precision=60,
+            max_boxes=2000,
+            internal_values_paid=True,
+            target_upper_bound=Fraction(1, 10_000),
+        )
+        result = support.search(args)
+        self.assertEqual(
+            result["status"], "verified support-indicator target bound"
+        )
+        self.assertTrue(result["upper_bound_is_below_target"])
+        self.assertLess(result["boxes_split"], args.max_boxes)
+
 
 if __name__ == "__main__":
     unittest.main()

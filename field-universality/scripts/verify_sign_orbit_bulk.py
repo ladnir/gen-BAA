@@ -430,6 +430,88 @@ def uniform_cut(layout: Layout) -> Cut:
     return Cut(stage, stage)
 
 
+def support_joint_bounds(
+    box: Box, increment_zero: int, state_zero: int
+) -> tuple[tuple[Fraction, Fraction], ...]:
+    increment_lower = ONE - box.upper[increment_zero]
+    increment_upper = ONE - box.lower[increment_zero]
+    state_lower = ONE - box.upper[state_zero]
+    state_upper = ONE - box.lower[state_zero]
+    crossing_lower = max(ZERO, increment_lower - state_upper)
+    crossing_upper = min(increment_upper / 2, ONE - state_lower)
+    return (
+        (
+            max(ZERO, ONE - state_upper - crossing_upper),
+            min(ONE, ONE - state_lower - crossing_lower),
+        ),
+        (
+            max(ZERO, state_lower - increment_upper + crossing_lower),
+            min(ONE, state_upper - increment_lower + crossing_upper),
+        ),
+        (crossing_lower, crossing_upper),
+        (
+            max(ZERO, increment_lower - crossing_upper),
+            min(ONE, increment_upper - crossing_lower),
+        ),
+    )
+
+
+def add_binary_entropy_tangent(
+    objective: list[Fraction],
+    box: Box,
+    component: slice,
+    coefficient: Fraction,
+) -> None:
+    zero_reference = (
+        box.lower[component.start] + box.upper[component.start]
+    ) / 2
+    mixing = Fraction(1, 1 << 40)
+    zero_reference = (ONE - mixing) * zero_reference + mixing / 2
+    nonzero_reference = ONE - zero_reference
+    objective[component.start] += coefficient * negative_log_upper(
+        zero_reference
+    )
+    nonzero_coefficient = coefficient * negative_log_upper(nonzero_reference)
+    for index in range(component.start + 1, component.stop):
+        objective[index] += nonzero_coefficient
+
+
+def add_support_joint_secants(
+    objective: list[Fraction],
+    constant: Fraction,
+    box: Box,
+    layout: Layout,
+    gamma: slice,
+    increment_zero: int,
+    state_zero: int,
+    coefficient: Fraction,
+) -> Fraction:
+    secants = tuple(
+        secant_upper(lower, upper)
+        for lower, upper in support_joint_bounds(
+            box, increment_zero, state_zero
+        )
+    )
+    for offset, (increment, source, _) in enumerate(layout.triples):
+        category = 2 * int(increment != 0) + int(source != 0)
+        objective[gamma.start + offset] += coefficient * secants[category][0]
+    return constant + coefficient * sum(
+        (intercept for _, intercept in secants), ZERO
+    )
+
+
+def support_joint_from_point(
+    point: np.ndarray, layout: Layout, gamma: slice
+) -> np.ndarray:
+    joint = np.zeros(4)
+    for value, (increment, source, _) in zip(
+        point[gamma], layout.triples, strict=True
+    ):
+        category = 2 * int(increment != 0) + int(source != 0)
+        joint[category] += value
+    return joint
+
+
 def variable_bounds(box: Box, layout: Layout) -> tuple[tuple[Fraction, Fraction], ...]:
     bounds = [
         (box.lower[index], box.upper[index])
@@ -568,11 +650,14 @@ def evaluate(
     equality_core: tuple[tuple[Fraction, ...], ...],
     target: tuple[Fraction, ...],
     repetition: int,
+    objective_mode: str,
+    gap_multiplier: Fraction,
 ) -> tuple[Fraction, int, np.ndarray] | None:
     extended_size = layout.size + 2
     objective = [ZERO] * extended_size
-    objective[-2] = ONE
-    objective[-1] = ONE
+    scale = ONE + gap_multiplier if objective_mode == "lagrangian" else ONE
+    objective[-2] = scale
+    objective[-1] = scale
     ln2 = log_upper(Fraction(2))
     if layout.sign_symmetric:
         composition_coefficients = (
@@ -582,25 +667,61 @@ def evaluate(
         )
         for component, coefficient in composition_coefficients:
             for index in range(component.start + 1, component.stop):
-                objective[index] += coefficient * ln2
+                objective[index] += scale * coefficient * ln2
         for gamma in (layout.gamma1, layout.gamma2):
             for offset, representative in enumerate(layout.pair_representatives):
                 if representative != (0, 0):
-                    objective[gamma.start + offset] += ln2
+                    objective[gamma.start + offset] += scale * ln2
     else:
         ln2_over_r = ln2 / repetition
         for index in range(layout.mu.start + 1, layout.mu.stop):
-            objective[index] += ln2_over_r
+            objective[index] += scale * ln2_over_r
     constant = ZERO
     entropy_coefficients = (
-        [Fraction(repetition - 1, repetition)] * layout.orbit_count
-        + [Fraction(2)] * layout.orbit_count
-        + [ONE] * layout.orbit_count
+        [scale * Fraction(repetition - 1, repetition)] * layout.orbit_count
+        + [scale * Fraction(2)] * layout.orbit_count
+        + [scale] * layout.orbit_count
     )
     for index, coefficient in enumerate(entropy_coefficients):
         slope, intercept = secant_upper(box.lower[index], box.upper[index])
         objective[index] += coefficient * slope
         constant += coefficient * intercept
+
+    if objective_mode == "lagrangian":
+        if not layout.sign_symmetric:
+            raise ValueError("the Lagrangian checker requires sign symmetry")
+        add_binary_entropy_tangent(
+            objective,
+            box,
+            layout.mu,
+            gap_multiplier * Fraction(repetition - 1, repetition),
+        )
+        add_binary_entropy_tangent(
+            objective, box, layout.beta, gap_multiplier * 2
+        )
+        add_binary_entropy_tangent(
+            objective, box, layout.zeta, gap_multiplier
+        )
+        constant = add_support_joint_secants(
+            objective,
+            constant,
+            box,
+            layout,
+            layout.gamma1,
+            layout.mu.start,
+            layout.beta.start,
+            gap_multiplier,
+        )
+        constant = add_support_joint_secants(
+            objective,
+            constant,
+            box,
+            layout,
+            layout.gamma2,
+            layout.beta.start,
+            layout.zeta.start,
+            gap_multiplier,
+        )
 
     upper_rows = []
     for cut in cuts:
@@ -664,7 +785,66 @@ def evaluate(
             float(coefficient)
             * max(0.0, float(slope) * point + float(intercept) - actual)
         )
-    return upper, int(np.argmax(gaps)), result.x[: layout.size]
+    dimension = int(np.argmax(gaps))
+    largest_gap = gaps[dimension]
+    if objective_mode == "lagrangian":
+        for component, coefficient in (
+            (
+                layout.mu,
+                gap_multiplier * Fraction(repetition - 1, repetition),
+            ),
+            (layout.beta, gap_multiplier * 2),
+            (layout.zeta, gap_multiplier),
+        ):
+            zero_reference = (
+                box.lower[component.start] + box.upper[component.start]
+            ) / 2
+            mixing = Fraction(1, 1 << 40)
+            zero_reference = (ONE - mixing) * zero_reference + mixing / 2
+            nonzero_reference = ONE - zero_reference
+            zero_mass = max(0.0, min(1.0, composition[component.start]))
+            nonzero_mass = 1.0 - zero_mass
+            tangent = -zero_mass * np.log(float(zero_reference))
+            if nonzero_mass > 0.0:
+                tangent -= nonzero_mass * np.log(float(nonzero_reference))
+            actual = 0.0
+            for mass in (zero_mass, nonzero_mass):
+                if mass > 0.0:
+                    actual -= mass * np.log(mass)
+            current_gap = float(coefficient) * max(0.0, tangent - actual)
+            if current_gap > largest_gap:
+                largest_gap = current_gap
+                dimension = component.start
+
+        for gamma, increment_zero, state_zero in (
+            (layout.gamma1, layout.mu.start, layout.beta.start),
+            (layout.gamma2, layout.beta.start, layout.zeta.start),
+        ):
+            secants = tuple(
+                secant_upper(lower, upper)
+                for lower, upper in support_joint_bounds(
+                    box, increment_zero, state_zero
+                )
+            )
+            joint = support_joint_from_point(
+                result.x[: layout.size], layout, gamma
+            )
+            current_gap = float(gap_multiplier) * sum(
+                max(
+                    0.0,
+                    float(slope) * value
+                    + float(intercept)
+                    - (0.0 if value <= 0.0 else value * np.log(value)),
+                )
+                for value, (slope, intercept) in zip(joint, secants)
+            )
+            if current_gap > largest_gap:
+                dimension = max(
+                    (increment_zero, state_zero),
+                    key=lambda index: box.upper[index] - box.lower[index],
+                )
+                largest_gap = current_gap
+    return upper, dimension, result.x[: layout.size]
 
 
 def box_bound(
@@ -677,6 +857,8 @@ def box_bound(
     maximum_cut_pairs: int,
     cut_bits: int,
     close_automorphisms: bool,
+    objective_mode: str,
+    gap_multiplier: Fraction,
 ) -> Bound | None:
     box = tighten(raw_box, layout.orbit_count)
     if box is None:
@@ -692,14 +874,32 @@ def box_bound(
         inherited
         + cuts_from_point(reference, layout, cut_bits, close_automorphisms)
     )[-maximum_cut_pairs:]
-    first = evaluate(box, cuts, layout, equality, target, repetition)
+    first = evaluate(
+        box,
+        cuts,
+        layout,
+        equality,
+        target,
+        repetition,
+        objective_mode,
+        gap_multiplier,
+    )
     if first is None:
         return None
     _, _, witness = first
     cuts = (
         cuts + cuts_from_point(witness, layout, cut_bits, close_automorphisms)
     )[-maximum_cut_pairs:]
-    second = evaluate(box, cuts, layout, equality, target, repetition)
+    second = evaluate(
+        box,
+        cuts,
+        layout,
+        equality,
+        target,
+        repetition,
+        objective_mode,
+        gap_multiplier,
+    )
     if second is None:
         return None
     value, dimension, _ = second
@@ -722,6 +922,8 @@ def search(args: argparse.Namespace) -> dict[str, object]:
     lower = [ZERO] * (3 * layout.orbit_count)
     upper = [ONE] * (3 * layout.orbit_count)
     upper[layout.mu.start] = ONE - args.eta
+    if args.max_message_weight is not None:
+        lower[layout.mu.start] = ONE - args.max_message_weight
     lower[layout.zeta.start] = ONE - args.delta
     initial = box_bound(
         Box(tuple(lower), tuple(upper)),
@@ -733,6 +935,8 @@ def search(args: argparse.Namespace) -> dict[str, object]:
         args.maximum_cut_pairs,
         args.cut_bits,
         args.automorphism_cuts,
+        args.objective,
+        args.gap_multiplier,
     )
     if initial is None:
         raise RuntimeError("initial orbit domain is infeasible")
@@ -766,6 +970,13 @@ def search(args: argparse.Namespace) -> dict[str, object]:
                 "maximum_queue_size": maximum_queue,
                 "infeasible_boxes_checked_exactly": infeasible_boxes,
                 "maximum_cut_pairs": args.maximum_cut_pairs,
+                "objective": args.objective,
+                "gap_multiplier": str(args.gap_multiplier),
+                "max_message_weight": (
+                    str(args.max_message_weight)
+                    if args.max_message_weight is not None
+                    else None
+                ),
             }
         dimension = current.split_dimension
         if current.box.lower[dimension] == current.box.upper[dimension]:
@@ -787,6 +998,8 @@ def search(args: argparse.Namespace) -> dict[str, object]:
                 args.maximum_cut_pairs,
                 args.cut_bits,
                 args.automorphism_cuts,
+                args.objective,
+                args.gap_multiplier,
             )
             if bounded is None:
                 infeasible_boxes += 1
@@ -809,6 +1022,13 @@ def search(args: argparse.Namespace) -> dict[str, object]:
         "maximum_queue_size": maximum_queue,
         "infeasible_boxes_checked_exactly": infeasible_boxes,
         "maximum_cut_pairs": args.maximum_cut_pairs,
+        "objective": args.objective,
+        "gap_multiplier": str(args.gap_multiplier),
+        "max_message_weight": (
+            str(args.max_message_weight)
+            if args.max_message_weight is not None
+            else None
+        ),
     }
 
 
@@ -836,6 +1056,13 @@ def parse_args() -> argparse.Namespace:
         help="close each entropy cut under field-multiplication automorphisms",
     )
     parser.add_argument("--max-boxes", type=int, default=10_000)
+    parser.add_argument(
+        "--objective", choices=("exponent", "lagrangian"), default="exponent"
+    )
+    parser.add_argument(
+        "--gap-multiplier", type=parse_fraction, default=Fraction(3, 2)
+    )
+    parser.add_argument("--max-message-weight", type=parse_fraction)
     args = parser.parse_args()
     if args.prime not in (5, 7):
         parser.error("the current verifier supports p=5 and p=7")
@@ -847,6 +1074,13 @@ def parse_args() -> argparse.Namespace:
         parser.error("eta must lie between zero and one")
     if args.maximum_cut_pairs < 1:
         parser.error("maximum-cut-pairs must be positive")
+    if args.objective == "lagrangian" and not args.sign_symmetric:
+        parser.error("the Lagrangian checker requires --sign-symmetric")
+    if (
+        args.max_message_weight is not None
+        and not args.eta <= args.max_message_weight <= ONE
+    ):
+        parser.error("max-message-weight must lie between eta and one")
     return args
 
 

@@ -1,0 +1,20 @@
+{
+  "arithmetic": "directed logarithm intervals and exact rational boxes",
+  "boxes_remaining": 1630,
+  "boxes_split": 1629,
+  "cutoff": "1323/2500",
+  "delta": "1323/10000",
+  "eta": "1/500",
+  "internal_values_paid": true,
+  "interval_precision": 80,
+  "maximum_queue_size": 1630,
+  "prime": 5,
+  "repetition": 3,
+  "status": "verified support-indicator target bound",
+  "target_upper_bound": "1/10000",
+  "upper_bound": 0.00009797319670870162,
+  "upper_bound_denominator": "3642504172923242007973991075294097949954512823222761602347148268260445534759765934080000",
+  "upper_bound_is_below_target": true,
+  "upper_bound_is_exactly_negative": false,
+  "upper_bound_numerator": "356867777846075270201115511861310842689931281714564009844025630232412496674349596643"
+}
