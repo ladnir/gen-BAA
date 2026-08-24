@@ -75,6 +75,39 @@ class SignSymmetricOptimizerTests(unittest.TestCase):
             exponent, decomposition["reconstructed_exponent"], places=12
         )
 
+    def test_sign_branch_identity_on_a_feasible_transition(self) -> None:
+        layout = self.layout
+        increment = np.array([0.6, 0.3, 0.1])
+        state = np.array([0.2, 0.4, 0.4])
+        full_increment = np.array([0.6, 0.15, 0.05, 0.05, 0.15])
+        full_state = np.full(5, 0.2)
+        full_pair = np.outer(full_increment, full_state)
+        orbit_values = np.zeros(len(layout.pair_representatives))
+        for index, (source, target) in enumerate(
+            layout.pair_representatives
+        ):
+            opposite = ((-source) % 5, (-target) % 5)
+            orbit_values[index] = full_pair[
+                (target - source) % 5, source
+            ]
+            if opposite != (source, target):
+                orbit_values[index] += full_pair[
+                    (opposite[1] - opposite[0]) % 5, opposite[0]
+                ]
+        stage = symmetric.orbit_transition_decomposition(
+            orbit_values, increment, state, layout
+        )
+        full_information = (
+            symmetric.full_orbit_entropy(increment)
+            + symmetric.full_orbit_entropy(state)
+            - symmetric.full_pair_entropy(orbit_values, layout)
+        )
+        self.assertAlmostEqual(
+            full_information - stage["orbit_information"],
+            stage["relative_sign_information_toll"],
+            places=12,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

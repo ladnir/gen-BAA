@@ -97,6 +97,24 @@ proves negativity for every such type with `A>=1/500`. This result identifies
 a concrete mechanism behind the `p=5,7,11` optimizers, but it does not yet
 control compositions spread across several sign orbits.
 
+For globally sign-symmetric transitions, the remaining sign loss also has an
+exact orbit-level formula. It is the sum, over active increment--state orbit
+pairs, of `w(log(2)-h(q))`, where `q` chooses between the two possible folded
+target-orbit branches. Pinsker's inequality turns a small loss into an
+explicit near-balance condition. This reduces the next proof step to a
+quantitative statement about a nearly unbiased walk on the folded odd cycle,
+together with the separately measured magnitude mutual information.
+
+A stronger reduction removes sign symmetry altogether. For each accumulator,
+the internal-information excess is a KL divergence from the coupling that
+keeps the observed support cells but makes the nonzero symbol values
+conditionally independent. Data processing first to cancellation and then to
+the nonzero target symbol gives an explicit two-level lower bound. Applied to
+both stages, it produces a rigorous composition-only upper bound with
+`3p+2` variables. Numerical maximization is negative at the binary endpoint
+for `p=5,7,11`; exact global certification of this reduced bound is now the
+main bulk obligation.
+
 For repetition three over `F_3`, the project now proves
 
 ```text
@@ -437,6 +455,14 @@ python scripts/verify_one_orbit_toll.py \
 python scripts/optimize_sign_symmetric_bulk.py \
   --prime 7 --delta 0.1323 --eta 0.0008 --objective exponent \
   --restarts 16
+
+python scripts/optimize_conditional_product_bound.py \
+  --prime 5 --delta 0.1323 --eta 0.002 --projection two-level \
+  --restarts 32
+
+python scripts/verify_reduced_composition_bulk.py \
+  --prime 5 --delta 1323/10000 --eta 1/500 \
+  --max-boxes 1000 --precision 80
 
 python scripts/verify_sign_orbit_bulk.py \
   --prime 5 --delta 1323/10000 --eta 1/500 \

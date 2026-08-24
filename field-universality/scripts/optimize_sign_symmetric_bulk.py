@@ -98,6 +98,43 @@ def support_joint_and_gradient(
     return entropy(pushed), pushed_gradient[categories], pushed
 
 
+def orbit_transition_decomposition(
+    values: np.ndarray,
+    increment: np.ndarray,
+    state: np.ndarray,
+    layout: exact.Layout,
+) -> dict[str, float]:
+    pair = np.zeros((layout.orbit_count, layout.orbit_count))
+    both_nonzero = 0.0
+    for value, (increment_orbit, state_orbit, _) in zip(
+        values, layout.triples, strict=True
+    ):
+        pair[increment_orbit, state_orbit] += value
+        if increment_orbit != 0 and state_orbit != 0:
+            both_nonzero += float(value)
+    orbit_information = (
+        entropy(increment) + entropy(state) - entropy(pair.ravel())
+    )
+    branch_entropy = entropy(values) - entropy(pair.ravel())
+    sign_toll = both_nonzero * LOG_TWO - branch_entropy
+    support_increment, _ = support_entropy_and_gradient(increment)
+    support_state, _ = support_entropy_and_gradient(state)
+    _, _, support_joint = support_joint_and_gradient(values, layout)
+    support_information = (
+        support_increment + support_state - entropy(support_joint)
+    )
+    return {
+        "orbit_information": orbit_information,
+        "magnitude_information_beyond_support": (
+            orbit_information - support_information
+        ),
+        "both_nonzero_mass": both_nonzero,
+        "relative_sign_branch_entropy": branch_entropy,
+        "relative_sign_information_toll": sign_toll,
+        "support_joint": support_joint.tolist(),
+    }
+
+
 def exponent_and_gradient(
     point: np.ndarray, layout: exact.Layout, repetition: int
 ) -> tuple[float, np.ndarray]:
@@ -165,6 +202,12 @@ def information_decomposition(
         - internal_message / repetition
     )
     phi = support_mu / repetition - support_first - support_second
+    first_orbit = orbit_transition_decomposition(
+        point[layout.gamma1], mu, beta, layout
+    )
+    second_orbit = orbit_transition_decomposition(
+        point[layout.gamma2], beta, zeta, layout
+    )
     return {
         "full_first_stage_information": full_first,
         "full_second_stage_information": full_second,
@@ -173,6 +216,8 @@ def information_decomposition(
         "internal_message_entropy": internal_message,
         "support_exponent_phi": phi,
         "internal_information_gap": gap,
+        "first_stage_orbit_decomposition": first_orbit,
+        "second_stage_orbit_decomposition": second_orbit,
         "reconstructed_exponent": phi - gap,
     }
 

@@ -559,6 +559,155 @@ would reduce the problem to the binary support exponent. It is false. Over
 exponent `-0.328996`. Thus violations found so far occur far below the
 maximizing region.
 
+There is nevertheless a field-uniform lower bound on each internal payment.
+It removes the transition type from the problem.
+
+Let `P` be the increment--source joint law of one stationary transition. Its
+marginals are the increment composition `alpha` and the state composition
+`beta`. Let
+
+```text
+U:=1[D!=0],  V:=1[S!=0],  T:=D+S,
+```
+
+and let `J` be the joint law of `(U,V)`. Define the support-preserving product
+law
+
+```text
+Q(d,s)
+  := J(u,v) Pr[D=d | U=u] Pr[S=s | V=v].
+```
+
+Terms in a zero-mass support cell use the continuous extension.
+
+**Conditional-product lemma.** The internal information beyond the support
+projection satisfies
+
+```text
+I(D;S)-I(U;V) = D(P || Q).                          [product identity]
+```
+
+**Proof.** Expand the relative entropy:
+
+```text
+D(P || Q)
+  = -H(D,S)+H(U,V)+H(D | U)+H(S | V)
+  = I(D;S)-I(U;V).
+```
+
+The second equality uses that `U` and `V` are deterministic functions of `D`
+and `S`. ∎
+
+The product identity yields an explicit composition-only bound. Write
+
+```text
+A:=Pr[U=1],  B:=Pr[V=1],  x:=J(1,0).
+```
+
+Stationarity gives `Pr[V=1,T=0]=x`, so
+
+```text
+J = (1-B-x, B-A+x, x, A-x)
+```
+
+in the order `(0,0),(0,1),(1,0),(1,1)`. In particular,
+
+```text
+max(0,A-B) <= x <= min(A/2,1-B).
+```
+
+Let `alpha^+` and `beta^+` be the conditional nonzero-symbol laws. Under
+`Q`, two nonzero symbols cancel with probability
+
+```text
+kappa := sum_(d!=0) alpha^+_d beta^+_(-d).
+```
+
+Under `P`, the cancellation probability in the `(1,1)` cell is
+`q:=x/(A-x)`. Hence data processing already gives the binary-divergence
+payment
+
+```text
+(A-x) d(q || kappa).
+```
+
+There is a second payment after conditioning on a nonzero target. Let `rho^+`
+be the law of `D+S` conditioned on `D!=0`, `S!=0`, and `D+S!=0` under the
+product law `alpha^+ tensor beta^+`. Define
+
+```text
+nu^+
+  := [(B-A+x) beta^+ + x alpha^+ + (A-2x) rho^+] / B.
+```
+
+Tilting `Q` only enough to match the forced cancellation probability leaves
+`nu^+` as its conditional nonzero-target law. The KL chain rule, followed by
+data processing to the target symbol, therefore proves
+
+```text
+I(D;S)-I(U;V)
+  >= L(alpha,beta,x),
+
+L(alpha,beta,x)
+  := (A-x)d(q || kappa)+B D(beta^+ || nu^+).        [two-level bound]
+```
+
+This argument does not assume sign symmetry. It uses only stationarity,
+addition in the field, and the zero/nonzero projection.
+
+Apply the two-level bound to both accumulators, with crossing masses `x_1`
+and `x_2`. The full exponent then obeys
+
+```text
+Psi_{p,3}
+  <= Phi + H_int(mu)/3
+       -L(mu,beta,x_1)-L(beta,zeta,x_2).            [reduced master bound]
+```
+
+The right-hand side has `3p+2` variables and linear feasibility constraints;
+the original transition formulation has `2p^2+3p` variables. More
+importantly, the reduction is an inequality for every transition type, not a
+symmetry ansatz.
+
+The script `scripts/optimize_conditional_product_bound.py` numerically
+maximizes the reduced master bound. At the binary output endpoint, its best
+values found are as follows.
+
+| field | message cutoff | reduced upper bound found |
+|---:|---:|---:|
+| `F_5` | `0.002` | `-0.00146130` |
+| `F_7` | `0.0008` | `-0.00066335` |
+| `F_11` | `0.00025` | `-0.00023818` |
+
+These values are numerical diagnostics, not global certificates. Their signs
+show that the two-level inequality is strong enough to support the desired
+prime ladder. The next certification problem is now composition-only and
+retains a visible margin at each of the first three rungs.
+
+The exact checker `scripts/verify_reduced_composition_bulk.py` works in the
+variables `(A,B,C,x_1,x_2)` and the three conditional nonzero-symbol laws. It
+uses the variational inequality
+
+```text
+D(R || K)
+  >= <a,J>+<b,beta>
+       -sum_(c,t) K_(c,t)(exp(a_c+b_t)-1)
+```
+
+for rational cell potentials `a` and target potentials `b`. The reference
+law `K` is the conditional-product law pushed to the support cell and target
+symbol. In conditional-composition coordinates, every entry of `K` is a
+linear or quadratic polynomial; no small support appears in a denominator.
+Directed intervals enclose the exponential coefficients and every entropy.
+
+At the numerical quinary maximizer, a degenerate rational box receives the
+exact upper bound `-0.0014613008557`, matching the numerical two-level value.
+The regression test checks this point certificate. The global cover remains
+open: after 1,000 boxes, the current exact upper bound is `0.4747874`. Broad
+conditional-composition boxes still make the KL dual cuts uninformative.
+This is now a cover-refinement problem, not a missing inequality or a
+transition-dimension problem.
+
 This observation gives a quantitative proof split. On the domain
 
 ```text
@@ -675,6 +824,58 @@ Thus every such one-orbit type has `Psi<0` at output fraction
 numerator and denominator in
 `results/one-orbit-toll-eta-0.002.json`.
 
+The direct counting argument above has an exact extension for globally
+sign-symmetric transitions. Write `[x]:={x,-x}` for a sign orbit and set
+
+```text
+M:=[D],  R:=[S],  L:=[T].
+```
+
+Let `J:=Pr[D!=0,S!=0]`. Then
+
+```text
+I(D;S)-I(M;R) = J log 2-H(L | M,R).       [branch identity]
+```
+
+To see this, condition a symbol pair `(D,S)` on `(M,R)`. If exactly one
+symbol is nonzero, there is one global sign bit and `L` is determined. If
+both are nonzero, there are two relative-sign branches, with target orbits
+`[s+d]` and `[s-d]`. These orbits are distinct over an odd field. Within
+each branch, global sign symmetry contributes one unbiased sign bit. It
+follows that
+
+```text
+H(D,S | M,R)
+  = Pr[(D,S)!=(0,0)] log 2 + H(L | M,R).
+```
+
+Combining this equality with
+
+```text
+H(D)=H(M)+A log 2,
+H(S)=H(R)+B log 2
+```
+
+proves the branch identity.
+
+The branch identity identifies the precise loss in the sign-orbit relaxation. For a
+nonzero orbit pair `(m,r)`, let `w_(m,r)` be its mass and let `q_(m,r)` be
+the conditional probability of one of the two target-orbit branches. Then
+
+```text
+I(D;S)-I(M;R)
+  = sum_(m,r) w_(m,r) [log 2-h(q_(m,r))]
+  >= 2 sum_(m,r) w_(m,r) (q_(m,r)-1/2)^2.
+```
+
+The last inequality is Pinsker's inequality in natural units. Thus a small
+conditional-sign payment is not an unstructured failure: nearly every active
+orbit pair must split almost evenly between its two folded-cycle neighbors.
+The magnitude mutual information `I(M;R)-I(U;V)` measures the other possible
+payment. A general proof can therefore split on two checkable quantities:
+dependence between the increment and state orbits, and imbalance between the
+two relative-sign branches.
+
 The reduced optimizer makes the same face visible at the next primes. The
 following best values found in the globally sign-symmetric subproblem are
 numerical diagnostics.
@@ -686,8 +887,8 @@ numerical diagnostics.
 | `F_11` | `0.00025` | `-0.00033118` | `-0.00024186` | `0.00008933` |
 
 In all three searches, the best point found has `mu` and `beta` concentrated
-on one nonzero sign orbit and lies at the lower message cutoff. The first-stage internal
-increment approaches the exact `(A/2)log 2` toll. This repeated structure
+on one nonzero sign orbit and lies at the lower message cutoff. The first-stage
+internal increment approaches the exact `(A/2)log 2` toll. This repeated structure
 suggests a useful route to a field-uniform theorem: control departures from a
 single sign orbit, then analyze the remaining accumulator as a lazy walk on
 the odd cycle generated by that orbit. The table does not prove that this
