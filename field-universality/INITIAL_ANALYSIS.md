@@ -231,10 +231,10 @@ means decrease, while the ternary absolute distance remains tight.
 
 ### 5.4 Torsion certificates and sparse residual cores
 
-The harness now classifies every sampled loss `d_p<d_2`. Let `D` be the
+The first classifier covered every sampled loss `d_p<d_2`. Let `D` be the
 support of the odd-field minimum word and let `M=G_{not D}`. Since
-`|D|<d_2`, the matrix `M` has full row rank over `F_2`. The classifier records
-the following exact data.
+`|D|<d_2`, the matrix `M` has full row rank over `F_2`. For these losses, the
+classifier records the following exact data.
 
 1. `K-rank_F_p(M)`, which is the number of Smith invariant factors divisible
    by `p`;
@@ -252,6 +252,15 @@ equation forces its variable to zero. Repeating this operation preserves the
 solution space up to the forced zero coordinates over every field. Therefore,
 every field-specific witness must leave at least one message variable in the
 residual core.
+
+The current harness classifies every odd-field minimum, not only losses. It
+distinguishes distance-beating `p`-torsion, nonbeating `p`-torsion, modular
+dependencies shared with characteristic two, and structural dependencies over
+the rationals. It also records exact intermediate circuit traces and a colored
+graph fingerprint for the factor core. The resulting tables and their
+interpretation appear in [`CLEAN_THEORY.md`](CLEAN_THEORY.md). The main new
+finding is that successful samples usually still contain odd-characteristic
+torsion; the torsion minimum simply lies above the binary distance.
 
 For a residual bipartite core, the reported cycle rank is
 `edges-variables-equations+components`.
@@ -598,19 +607,19 @@ Two-sided profile equality is not expected.
 
 ## 15. Experimental next steps
 
-The harness now records message composition, Smith-theoretic loss
-certificates, exact top divisors under a work budget, and both dense and sparse
-unit-equation cores. The next experiments should use these diagnostics rather
-than add more distance-only tables.
+The harness now records message composition, exact support spectra,
+Smith-theoretic witness certificates, circuit traces, graph fingerprints,
+exact top divisors under a work budget, and both dense and sparse unit-equation
+cores. The first three items in the earlier experimental plan are now partly
+or fully implemented. The next work should use these diagnostics rather than
+add more undirected distance tables.
 
-1. Classify every odd-field minimum witness, including samples with
-   `d_p>=d_2`. Separate shared binary dependencies from odd-only torsion that
-   occurs above the binary threshold.
-2. Trace the active values and run boundaries through each residual factor
-   component. Relate its cycle rank to the prime valuation of the top divisor.
-3. Count embeddings of each small core type under the two random
-   permutations. This should turn the observed traps into candidate tail
-   exponents.
+1. Turn the exact repetition-three span-two count into a uniform bound over all
+   sparse message supports.
+2. Relate trace and core fingerprints to exact embedding counts for further
+   recurrent trap families.
+3. Replace the heuristic bulk optimizer with a rigorous upper-bound
+   certificate, beginning with the sign-symmetric ternary reduction.
 4. Extend exact message enumeration with branch-and-bound for dimensions above
    16.
 5. Compare `PAPA`, `PAPAPA`, and sign-only diagonal variants at the same
@@ -640,7 +649,8 @@ cargo run --release -- \
   --primes 3 \
   --distance-only \
   --no-rational \
-  --classify-losses \
+  --classify-witnesses \
+  --support-spectrum \
   --max-minors 0 \
   --max-n 60 \
   --output results/rep3-papa-b12-s100-classified.csv

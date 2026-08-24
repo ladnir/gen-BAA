@@ -20,7 +20,8 @@ struct Config {
     seed: u64,
     include_rationals: bool,
     distance_only: bool,
-    classify_losses: bool,
+    classify_witnesses: bool,
+    support_spectrum: bool,
     max_n: usize,
     max_rank_evals: u64,
     max_codewords: u64,
@@ -41,7 +42,8 @@ impl Default for Config {
             seed: 1,
             include_rationals: true,
             distance_only: false,
-            classify_losses: false,
+            classify_witnesses: false,
+            support_spectrum: false,
             max_n: 22,
             max_rank_evals: 50_000_000,
             max_codewords: 100_000_000,
@@ -98,7 +100,9 @@ OPTIONS:\n\
   --seed N                Reproducible master seed [default: 1]\n\
   --no-rational           Skip the exact characteristic-zero profile\n\
   --distance-only         Enumerate messages; requires --no-rational\n\
-  --classify-losses       Certify and classify every case with d_p < d_2\n\
+  --classify-witnesses    Classify every odd-field minimum witness\n\
+  --classify-losses       Deprecated alias for --classify-witnesses\n\
+  --support-spectrum      Record minima by exact message support weight\n\
   --max-n N               Refuse exhaustive profiles above N [default: 22]\n\
   --max-rank-evals N      Work-budget guard [default: 50000000]\n\
   --max-codewords N       Message-enumeration guard [default: 100000000]\n\
@@ -159,7 +163,8 @@ fn parse_config() -> Result<Option<Config>, String> {
             "--seed" => config.seed = parse_u64("--seed", arguments.next())?,
             "--no-rational" => config.include_rationals = false,
             "--distance-only" => config.distance_only = true,
-            "--classify-losses" => config.classify_losses = true,
+            "--classify-witnesses" | "--classify-losses" => config.classify_witnesses = true,
+            "--support-spectrum" => config.support_spectrum = true,
             "--max-n" => config.max_n = parse_usize("--max-n", arguments.next())?,
             "--max-rank-evals" => {
                 config.max_rank_evals = parse_u64("--max-rank-evals", arguments.next())?
@@ -191,6 +196,9 @@ fn validate_config(config: &Config) -> Result<(), String> {
     }
     if config.distance_only && config.include_rationals {
         return Err("--distance-only requires --no-rational".to_owned());
+    }
+    if config.support_spectrum && !config.distance_only {
+        return Err("--support-spectrum requires --distance-only".to_owned());
     }
     if config.schedule.is_empty()
         || !config
@@ -738,10 +746,16 @@ fn checked_power(base: u64, exponent: usize) -> Option<u64> {
     (0..exponent).try_fold(1_u64, |value, _| value.checked_mul(base))
 }
 
-fn minimum_distance_by_messages(
+struct MessageEnumeration {
+    distance: usize,
+    witness: ModularWitness,
+    support_spectrum: Vec<usize>,
+}
+
+fn minimum_distance_by_messages<const SUPPORT_SPECTRUM: bool>(
     matrix: &IntegerMatrix,
     prime: u64,
-) -> Result<(usize, ModularWitness), String> {
+) -> Result<MessageEnumeration, String> {
     let dimension = matrix.len();
     let length = matrix[0].len();
     let codeword_count = checked_power(prime, dimension)
@@ -756,6 +770,12 @@ fn minimum_distance_by_messages(
     let mut best_distance = length + 1;
     let mut best_message = Vec::new();
     let mut best_codeword = Vec::new();
+    let mut message_weight = 0;
+    let mut support_spectrum = if SUPPORT_SPECTRUM {
+        vec![length + 1; dimension + 1]
+    } else {
+        Vec::new()
+    };
 
     for _ in 1..codeword_count {
         let mut digit = 0;
@@ -766,27 +786,41 @@ fn minimum_distance_by_messages(
                 *symbol = if sum >= prime { sum - prime } else { sum };
             }
             message[digit] += 1;
+            if SUPPORT_SPECTRUM && message[digit] == 1 {
+                message_weight += 1;
+            }
             if message[digit] != prime {
                 break;
             }
             message[digit] = 0;
+            if SUPPORT_SPECTRUM {
+                message_weight -= 1;
+            }
             digit += 1;
         }
 
+        let threshold = if SUPPORT_SPECTRUM {
+            support_spectrum[message_weight]
+        } else {
+            best_distance
+        };
         let mut weight = 0;
         for &symbol in &codeword {
             if symbol != 0 {
                 weight += 1;
-                if weight >= best_distance {
+                if weight >= threshold {
                     break;
                 }
             }
+        }
+        if SUPPORT_SPECTRUM && weight < support_spectrum[message_weight] {
+            support_spectrum[message_weight] = weight;
         }
         if weight < best_distance {
             best_distance = weight;
             best_message.clone_from(&message);
             best_codeword.clone_from(&codeword);
-            if best_distance <= 1 {
+            if !SUPPORT_SPECTRUM && best_distance <= 1 {
                 break;
             }
         }
@@ -805,14 +839,27 @@ fn minimum_distance_by_messages(
                     mask | (1_u64 << coordinate)
                 }
             });
-    Ok((
-        best_distance,
-        ModularWitness {
+    Ok(MessageEnumeration {
+        distance: best_distance,
+        witness: ModularWitness {
             deleted_mask,
             message: best_message,
             codeword: best_codeword,
         },
-    ))
+        support_spectrum,
+    })
+}
+
+fn enumerate_messages(
+    matrix: &IntegerMatrix,
+    prime: u64,
+    support_spectrum: bool,
+) -> Result<MessageEnumeration, String> {
+    if support_spectrum {
+        minimum_distance_by_messages::<true>(matrix, prime)
+    } else {
+        minimum_distance_by_messages::<false>(matrix, prime)
+    }
 }
 
 fn retained_coordinates(length: usize, deleted_mask: u64) -> Vec<usize> {
@@ -862,6 +909,72 @@ fn independent_columns_mod_two(
     Err(format!(
         "retained matrix has binary rank {rank}, expected {rows}"
     ))
+}
+
+struct RationalColumnBasis {
+    rank: usize,
+    pivot_columns: Vec<usize>,
+}
+
+fn independent_columns_rational(
+    matrix: &IntegerMatrix,
+    retained: &[usize],
+) -> Result<RationalColumnBasis, String> {
+    let rows = matrix.len();
+    let columns = retained.len();
+    let mut work = Vec::with_capacity(rows * columns);
+    for row in matrix {
+        for &column in retained {
+            work.push(BigInt::from(row[column]));
+        }
+    }
+
+    let mut rank = 0;
+    let mut previous_pivot = BigInt::one();
+    let mut pivot_columns = Vec::with_capacity(rows);
+    for column in 0..columns {
+        let Some(pivot_row) = (rank..rows).find(|&row| !work[row * columns + column].is_zero())
+        else {
+            continue;
+        };
+        if pivot_row != rank {
+            for swap_column in column..columns {
+                work.swap(
+                    rank * columns + swap_column,
+                    pivot_row * columns + swap_column,
+                );
+            }
+        }
+
+        let pivot = work[rank * columns + column].clone();
+        for row in (rank + 1)..rows {
+            let leading = work[row * columns + column].clone();
+            for eliminate_column in (column + 1)..columns {
+                let numerator = &work[row * columns + eliminate_column] * &pivot
+                    - &leading * &work[rank * columns + eliminate_column];
+                if rank == 0 {
+                    work[row * columns + eliminate_column] = numerator;
+                } else {
+                    let (quotient, remainder) = numerator.div_rem(&previous_pivot);
+                    if !remainder.is_zero() {
+                        return Err("nonexact BigInt Bareiss division; internal error".to_owned());
+                    }
+                    work[row * columns + eliminate_column] = quotient;
+                }
+            }
+            work[row * columns + column] = BigInt::zero();
+        }
+        previous_pivot = pivot;
+        pivot_columns.push(retained[column]);
+        rank += 1;
+        if rank == rows {
+            break;
+        }
+    }
+    Ok(RationalColumnBasis {
+        rank,
+        pivot_columns,
+    })
 }
 
 fn bareiss_determinant(
@@ -1007,12 +1120,111 @@ struct UnitEquationCore {
     largest_component_variables: usize,
     largest_component_message_variables: usize,
     largest_component_equations: usize,
+    wl_fingerprint: String,
+}
+
+fn mix64(mut value: u64) -> u64 {
+    value ^= value >> 30;
+    value = value.wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    value ^= value >> 27;
+    value = value.wrapping_mul(0x94d0_49bb_1331_11eb);
+    value ^ (value >> 31)
+}
+
+fn hash_color(seed: u128, neighbors: &mut [u128]) -> u128 {
+    neighbors.sort_unstable();
+    let mut left = mix64(seed as u64 ^ 0x243f_6a88_85a3_08d3);
+    let mut right = mix64((seed >> 64) as u64 ^ 0x1319_8a2e_0370_7344);
+    for &neighbor in neighbors.iter() {
+        left = mix64(left ^ neighbor as u64);
+        right = mix64(right ^ (neighbor >> 64) as u64);
+    }
+    ((right as u128) << 64) | left as u128
+}
+
+fn wl_core_fingerprint(
+    variable_colors: &[u64],
+    equation_colors: &[u64],
+    equation_variables: &[Vec<usize>],
+    variable_equations: &[Vec<usize>],
+    active_variables: &[bool],
+    active_equations: &[bool],
+) -> String {
+    let mut variable_hashes: Vec<u128> = variable_colors
+        .iter()
+        .map(|&color| {
+            ((mix64(color ^ 0xa409_3822_299f_31d0) as u128) << 64)
+                | mix64(color ^ 0x082e_fa98_ec4e_6c89) as u128
+        })
+        .collect();
+    let mut equation_hashes: Vec<u128> = equation_colors
+        .iter()
+        .map(|&color| {
+            ((mix64(color ^ 0x4528_21e6_38d0_1377) as u128) << 64)
+                | mix64(color ^ 0xbe54_66cf_34e9_0c6c) as u128
+        })
+        .collect();
+    let mut neighbors = Vec::new();
+    for _ in 0..32 {
+        let mut next_variables = variable_hashes.clone();
+        for variable in 0..variable_hashes.len() {
+            if !active_variables[variable] {
+                continue;
+            }
+            neighbors.clear();
+            neighbors.extend(
+                variable_equations[variable]
+                    .iter()
+                    .filter(|&&equation| active_equations[equation])
+                    .map(|&equation| equation_hashes[equation]),
+            );
+            next_variables[variable] = hash_color(variable_hashes[variable], &mut neighbors);
+        }
+        let mut next_equations = equation_hashes.clone();
+        for equation in 0..equation_hashes.len() {
+            if !active_equations[equation] {
+                continue;
+            }
+            neighbors.clear();
+            neighbors.extend(
+                equation_variables[equation]
+                    .iter()
+                    .filter(|&&variable| active_variables[variable])
+                    .map(|&variable| variable_hashes[variable]),
+            );
+            next_equations[equation] = hash_color(equation_hashes[equation], &mut neighbors);
+        }
+        variable_hashes = next_variables;
+        equation_hashes = next_equations;
+    }
+    let mut residual_colors = Vec::new();
+    residual_colors.extend(
+        variable_hashes
+            .iter()
+            .enumerate()
+            .filter(|(variable, _)| active_variables[*variable])
+            .map(|(_, &color)| color),
+    );
+    residual_colors.extend(
+        equation_hashes
+            .iter()
+            .enumerate()
+            .filter(|(equation, _)| active_equations[*equation])
+            .map(|(_, &color)| color),
+    );
+    let fingerprint = hash_color(
+        ((active_variables.iter().filter(|&&active| active).count() as u128) << 64)
+            | active_equations.iter().filter(|&&active| active).count() as u128,
+        &mut residual_colors,
+    );
+    format!("{fingerprint:032x}")
 }
 
 fn peel_unit_equations(
     variables: usize,
     message_variables: usize,
     equation_variables: &[Vec<usize>],
+    colors: Option<(&[u64], &[u64])>,
 ) -> UnitEquationCore {
     let equation_count = equation_variables.len();
     let mut variable_equations = vec![Vec::new(); variables];
@@ -1137,6 +1349,16 @@ fn peel_unit_equations(
             largest_component_message_variables.max(component_message_variables);
         largest_component_equations = largest_component_equations.max(component_equations);
     }
+    let wl_fingerprint = colors.map_or_else(String::new, |(variable_colors, equation_colors)| {
+        wl_core_fingerprint(
+            variable_colors,
+            equation_colors,
+            equation_variables,
+            &variable_equations,
+            &active_variables,
+            &active_equations,
+        )
+    });
     UnitEquationCore {
         peeled_variables: variables - residual_variables,
         variables: residual_variables,
@@ -1151,6 +1373,7 @@ fn peel_unit_equations(
         largest_component_variables,
         largest_component_message_variables,
         largest_component_equations,
+        wl_fingerprint,
     }
 }
 
@@ -1164,7 +1387,7 @@ fn unit_equation_core(matrix: &IntegerMatrix, retained: &[usize], prime: u64) ->
             }
         }
     }
-    peel_unit_equations(variables, variables, &equation_variables)
+    peel_unit_equations(variables, variables, &equation_variables, None)
 }
 
 struct SparseEncoderGraph {
@@ -1172,6 +1395,22 @@ struct SparseEncoderGraph {
     message_variables: usize,
     final_state_start: usize,
     base_equations: Vec<Vec<usize>>,
+    variable_colors: Vec<u64>,
+    base_equation_colors: Vec<u64>,
+    output_equation_color: u64,
+    local: IntegerMatrix,
+    blocks: usize,
+    schedule: Vec<u8>,
+    permutations: Vec<Vec<usize>>,
+    length: usize,
+}
+
+struct CircuitTrace {
+    signature: String,
+    layer_weights: Vec<usize>,
+    layer_runs: Vec<usize>,
+    layer_compositions: Vec<String>,
+    final_state: Vec<u64>,
 }
 
 impl SparseEncoderGraph {
@@ -1189,6 +1428,24 @@ impl SparseEncoderGraph {
         let variables = message_variables + state_layers * length;
         let state_start = |layer: usize| message_variables + layer * length;
         let mut base_equations = Vec::with_capacity(length * state_layers);
+        let mut base_equation_colors = Vec::with_capacity(length * state_layers);
+        let mut variable_colors = vec![0_u64; variables];
+        for block in 0..blocks {
+            for local_row in 0..local_rows {
+                variable_colors[block * local_rows + local_row] = 0x1000 + local_row as u64;
+            }
+        }
+        for layer in 0..state_layers {
+            for coordinate in 0..length {
+                variable_colors[state_start(layer) + coordinate] = 0x2000 + layer as u64;
+            }
+        }
+        let column_patterns: Vec<Vec<i128>> = (0..local_columns)
+            .map(|column| local.iter().map(|row| row[column]).collect())
+            .collect();
+        let mut unique_patterns = column_patterns.clone();
+        unique_patterns.sort_unstable();
+        unique_patterns.dedup();
 
         for block in 0..blocks {
             for local_column in 0..local_columns {
@@ -1201,6 +1458,10 @@ impl SparseEncoderGraph {
                     }
                 }
                 base_equations.push(equation);
+                let pattern_type = unique_patterns
+                    .binary_search(&column_patterns[local_column])
+                    .expect("local column pattern came from the unique pattern list");
+                base_equation_colors.push(0x1_0000 + pattern_type as u64);
             }
         }
 
@@ -1211,12 +1472,14 @@ impl SparseEncoderGraph {
             match operation {
                 b'A' => {
                     base_equations.push(vec![output, input]);
+                    base_equation_colors.push(0x2_0000 + 2 * layer as u64);
                     for coordinate in 1..length {
                         base_equations.push(vec![
                             output + coordinate,
                             output + coordinate - 1,
                             input + coordinate,
                         ]);
+                        base_equation_colors.push(0x2_0001 + 2 * layer as u64);
                     }
                 }
                 b'P' => {
@@ -1228,6 +1491,7 @@ impl SparseEncoderGraph {
                     }
                     for (coordinate, &source) in permutation.iter().enumerate() {
                         base_equations.push(vec![output + coordinate, input + source]);
+                        base_equation_colors.push(0x3_0000 + layer as u64);
                     }
                     permutation_index += 1;
                 }
@@ -1242,26 +1506,151 @@ impl SparseEncoderGraph {
             message_variables,
             final_state_start: state_start(schedule.len()),
             base_equations,
+            variable_colors,
+            base_equation_colors,
+            output_equation_color: 0x4_0000,
+            local: local.clone(),
+            blocks,
+            schedule: schedule.bytes().collect(),
+            permutations: permutations.to_vec(),
+            length,
         })
     }
 
     fn core(&self, retained: &[usize]) -> UnitEquationCore {
         let mut equations = self.base_equations.clone();
+        let mut equation_colors = self.base_equation_colors.clone();
         equations.reserve(retained.len());
+        equation_colors.reserve(retained.len());
         for &coordinate in retained {
             equations.push(vec![self.final_state_start + coordinate]);
+            equation_colors.push(self.output_equation_color);
         }
-        peel_unit_equations(self.variables, self.message_variables, &equations)
+        peel_unit_equations(
+            self.variables,
+            self.message_variables,
+            &equations,
+            Some((&self.variable_colors, &equation_colors)),
+        )
+    }
+
+    fn trace(&self, message: &[u64], prime: u64) -> Result<CircuitTrace, String> {
+        if message.len() != self.message_variables {
+            return Err("message length mismatch in sparse circuit trace".to_owned());
+        }
+        let local_rows = self.local.len();
+        let local_columns = self.local[0].len();
+        let mut state = vec![0_u64; self.length];
+        for block in 0..self.blocks {
+            for local_column in 0..local_columns {
+                let mut symbol = 0_u64;
+                for (local_row, row) in self.local.iter().enumerate() {
+                    let term = modular_multiply(
+                        message[block * local_rows + local_row],
+                        integer_mod(row[local_column], prime),
+                        prime,
+                    );
+                    symbol = ((symbol as u128 + term as u128) % prime as u128) as u64;
+                }
+                state[block * local_columns + local_column] = symbol;
+            }
+        }
+
+        let scale = message
+            .iter()
+            .copied()
+            .find(|&symbol| symbol != 0)
+            .map(|symbol| modular_power(symbol, prime - 2, prime))
+            .ok_or_else(|| "cannot trace the zero message".to_owned())?;
+        let normalized_message: Vec<u64> = message
+            .iter()
+            .map(|&symbol| modular_multiply(symbol, scale, prime))
+            .collect();
+        let mut states = Vec::with_capacity(self.schedule.len() + 1);
+        states.push(state.clone());
+        let mut permutation_index = 0;
+        for &operation in &self.schedule {
+            match operation {
+                b'A' => {
+                    for coordinate in 1..self.length {
+                        state[coordinate] = ((state[coordinate] as u128
+                            + state[coordinate - 1] as u128)
+                            % prime as u128) as u64;
+                    }
+                }
+                b'P' => {
+                    let permutation = &self.permutations[permutation_index];
+                    let previous = state.clone();
+                    for (coordinate, &source) in permutation.iter().enumerate() {
+                        state[coordinate] = previous[source];
+                    }
+                    permutation_index += 1;
+                }
+                _ => unreachable!("schedule was validated"),
+            }
+            states.push(state.clone());
+        }
+
+        let layer_weights: Vec<usize> = states
+            .iter()
+            .map(|layer| layer.iter().filter(|&&symbol| symbol != 0).count())
+            .collect();
+        let layer_runs: Vec<usize> = states
+            .iter()
+            .map(|layer| {
+                layer
+                    .iter()
+                    .enumerate()
+                    .filter(|&(coordinate, symbol)| {
+                        *symbol != 0 && (coordinate == 0 || layer[coordinate - 1] == 0)
+                    })
+                    .count()
+            })
+            .collect();
+        let layer_compositions: Vec<String> = states
+            .iter()
+            .map(|layer| {
+                let normalized: Vec<u64> = layer
+                    .iter()
+                    .map(|&symbol| modular_multiply(symbol, scale, prime))
+                    .collect();
+                value_composition(&normalized)
+            })
+            .collect();
+        let mut signature = format!("m={}", value_composition(&normalized_message));
+        for layer in 0..states.len() {
+            write!(
+                signature,
+                "|L{layer}:w{}:r{}:{}",
+                layer_weights[layer], layer_runs[layer], layer_compositions[layer]
+            )
+            .expect("writing to a string cannot fail");
+        }
+        Ok(CircuitTrace {
+            signature,
+            layer_weights,
+            layer_runs,
+            layer_compositions,
+            final_state: state,
+        })
     }
 }
 
-struct LossDiagnostics {
+struct WitnessDiagnostics {
     class: &'static str,
     message_weight: usize,
     value_composition: String,
+    trace_signature: String,
+    trace_layer_weights: Vec<usize>,
+    trace_layer_runs: Vec<usize>,
+    trace_layer_compositions: Vec<String>,
+    binary_rank: usize,
+    rational_rank: usize,
+    smith_2_nullity: usize,
     smith_p_nullity: usize,
     certificate_columns: Vec<usize>,
-    certificate_determinant: BigInt,
+    certificate_determinant: Option<BigInt>,
+    certificate_is_odd: Option<bool>,
     certificate_p_valuation: usize,
     maximal_minor_count: u64,
     top_divisor: Option<BigInt>,
@@ -1293,7 +1682,7 @@ fn value_composition(message: &[u64]) -> String {
     output
 }
 
-fn diagnose_loss(
+fn diagnose_witness(
     matrix: &IntegerMatrix,
     factor_graph: &SparseEncoderGraph,
     prime: u64,
@@ -1301,20 +1690,16 @@ fn diagnose_loss(
     binary_distance: usize,
     witness: &ModularWitness,
     max_minors: u64,
-) -> Result<Option<LossDiagnostics>, String> {
-    if distance >= binary_distance {
-        return Ok(None);
-    }
+) -> Result<WitnessDiagnostics, String> {
     let dimension = matrix.len();
+    let trace = factor_graph.trace(&witness.message, prime)?;
+    if trace.final_state != witness.codeword {
+        return Err("sparse circuit trace does not match the generator codeword".to_owned());
+    }
     let retained = retained_coordinates(matrix[0].len(), witness.deleted_mask);
     let full_mask = (1_u64 << matrix[0].len()) - 1;
     let retained_mask = full_mask ^ witness.deleted_mask;
     let binary_rank = rank_mod_mask(matrix, retained_mask, 2);
-    if binary_rank != dimension {
-        return Err(format!(
-            "loss witness deletes {distance} coordinates below binary distance {binary_distance}, but retained binary rank is {binary_rank}"
-        ));
-    }
     let prime_rank = rank_mod_mask(matrix, retained_mask, prime);
     if prime_rank == dimension {
         return Err(format!(
@@ -1322,23 +1707,77 @@ fn diagnose_loss(
         ));
     }
 
-    let certificate_columns = independent_columns_mod_two(matrix, &retained)?;
-    let certificate_determinant = bareiss_determinant(matrix, &certificate_columns)?;
+    let rational_basis = independent_columns_rational(matrix, &retained)?;
+    let rational_rank = rational_basis.rank;
+    if distance < binary_distance && binary_rank != dimension {
+        return Err(format!(
+            "witness deletes {distance} coordinates below binary distance {binary_distance}, but retained binary rank is {binary_rank}"
+        ));
+    }
+
+    let class = if rational_rank != dimension {
+        "structural_dependency"
+    } else if binary_rank != dimension {
+        "shared_modular_dependency"
+    } else if distance < binary_distance {
+        "distance_beating_p_torsion"
+    } else {
+        "nonbeating_p_torsion"
+    };
+
     let prime_big = BigInt::from(prime);
-    if certificate_determinant.is_zero()
-        || certificate_determinant.is_even()
-        || (&certificate_determinant % &prime_big) != BigInt::zero()
-    {
-        return Err("invalid torsion certificate; internal error".to_owned());
-    }
-    let certificate_p_valuation = prime_valuation(&certificate_determinant, prime);
-    let (maximal_minor_count, top_divisor) =
-        top_determinantal_divisor(matrix, &retained, max_minors)?;
-    if let Some(divisor) = &top_divisor
-        && (divisor.is_zero() || divisor.is_even() || (divisor % &prime_big) != BigInt::zero())
-    {
-        return Err("invalid top determinantal divisor; internal error".to_owned());
-    }
+    let (
+        certificate_columns,
+        certificate_determinant,
+        certificate_is_odd,
+        certificate_p_valuation,
+        maximal_minor_count,
+        top_divisor,
+    ) = if rational_rank == dimension {
+        let certificate_columns = if binary_rank == dimension {
+            independent_columns_mod_two(matrix, &retained)?
+        } else {
+            rational_basis.pivot_columns
+        };
+        let determinant = bareiss_determinant(matrix, &certificate_columns)?;
+        if determinant.is_zero() || (&determinant % &prime_big) != BigInt::zero() {
+            return Err("invalid prime-torsion certificate; internal error".to_owned());
+        }
+        let determinant_is_odd = determinant.is_odd();
+        if determinant_is_odd != (binary_rank == dimension) {
+            return Err("torsion certificate has inconsistent parity; internal error".to_owned());
+        }
+        let valuation = prime_valuation(&determinant, prime);
+        let (minor_count, top_divisor) = top_determinantal_divisor(matrix, &retained, max_minors)?;
+        if let Some(divisor) = &top_divisor
+            && (divisor.is_zero()
+                || (divisor % &prime_big) != BigInt::zero()
+                || divisor.is_odd() != (binary_rank == dimension))
+        {
+            return Err("invalid top determinantal divisor; internal error".to_owned());
+        }
+        (
+            certificate_columns,
+            Some(determinant),
+            Some(determinant_is_odd),
+            valuation,
+            minor_count,
+            top_divisor,
+        )
+    } else {
+        (
+            Vec::new(),
+            None,
+            None,
+            0,
+            if retained.len() < dimension {
+                0
+            } else {
+                binomial(retained.len(), dimension)
+            },
+            Some(BigInt::zero()),
+        )
+    };
 
     let retained_core = unit_equation_core(matrix, &retained, prime);
     if retained_core.variables == 0 {
@@ -1346,14 +1785,9 @@ fn diagnose_loss(
     }
     let factor_core = factor_graph.core(&retained);
     if factor_core.message_variables == 0 {
-        return Err("loss witness has no message variable in the sparse factor core".to_owned());
+        return Err("witness has no message variable in the sparse factor core".to_owned());
     }
-    let class = if factor_core.isolated_message_variables != 0 {
-        "factor_core_with_isolated_messages"
-    } else {
-        "factor_unit_equation_core"
-    };
-    Ok(Some(LossDiagnostics {
+    Ok(WitnessDiagnostics {
         class,
         message_weight: witness
             .message
@@ -1361,15 +1795,23 @@ fn diagnose_loss(
             .filter(|&&symbol| symbol != 0)
             .count(),
         value_composition: value_composition(&witness.message),
+        trace_signature: trace.signature,
+        trace_layer_weights: trace.layer_weights,
+        trace_layer_runs: trace.layer_runs,
+        trace_layer_compositions: trace.layer_compositions,
+        binary_rank,
+        rational_rank,
+        smith_2_nullity: dimension - binary_rank,
         smith_p_nullity: dimension - prime_rank,
         certificate_columns,
         certificate_determinant,
+        certificate_is_odd,
         certificate_p_valuation,
         maximal_minor_count,
         top_divisor,
         retained_core,
         factor_core,
-    }))
+    })
 }
 
 fn profile_text(profile: &[usize]) -> String {
@@ -1423,9 +1865,141 @@ struct FieldResult<'a> {
     field: &'a str,
     distance: usize,
     profile: &'a [usize],
+    support_spectrum: &'a [usize],
     binary_distance: usize,
     witness: Option<&'a ModularWitness>,
-    diagnostics: Option<&'a LossDiagnostics>,
+    diagnostics: Option<&'a WitnessDiagnostics>,
+}
+
+#[derive(Default)]
+struct DiagnosticsCsv {
+    witness_class: String,
+    message_weight: String,
+    value_composition: String,
+    trace_signature: String,
+    trace_layer_weights: String,
+    trace_layer_runs: String,
+    trace_layer_compositions: String,
+    binary_rank: String,
+    rational_rank: String,
+    smith_2_nullity: String,
+    smith_p_nullity: String,
+    certificate_columns: String,
+    certificate_determinant: String,
+    certificate_is_odd: String,
+    certificate_p_valuation: String,
+    maximal_minor_count: String,
+    top_divisor_computed: String,
+    top_determinantal_divisor: String,
+    retained_peeled_variables: String,
+    retained_core_variables: String,
+    retained_core_equations: String,
+    retained_core_edges: String,
+    retained_core_isolated_variables: String,
+    factor_peeled_variables: String,
+    factor_core_variables: String,
+    factor_core_message_variables: String,
+    factor_core_equations: String,
+    factor_core_edges: String,
+    factor_core_isolated_variables: String,
+    factor_core_isolated_message_variables: String,
+    factor_core_components: String,
+    factor_core_message_components: String,
+    factor_core_cycle_rank: String,
+    factor_core_largest_component_variables: String,
+    factor_core_largest_component_message_variables: String,
+    factor_core_largest_component_equations: String,
+    factor_core_wl_fingerprint: String,
+    core_family_signature: String,
+}
+
+impl From<&WitnessDiagnostics> for DiagnosticsCsv {
+    fn from(diagnostics: &WitnessDiagnostics) -> Self {
+        Self {
+            witness_class: diagnostics.class.to_owned(),
+            message_weight: diagnostics.message_weight.to_string(),
+            value_composition: diagnostics.value_composition.clone(),
+            trace_signature: diagnostics.trace_signature.clone(),
+            trace_layer_weights: diagnostics
+                .trace_layer_weights
+                .iter()
+                .map(usize::to_string)
+                .collect::<Vec<_>>()
+                .join(";"),
+            trace_layer_runs: diagnostics
+                .trace_layer_runs
+                .iter()
+                .map(usize::to_string)
+                .collect::<Vec<_>>()
+                .join(";"),
+            trace_layer_compositions: diagnostics.trace_layer_compositions.join("|"),
+            binary_rank: diagnostics.binary_rank.to_string(),
+            rational_rank: diagnostics.rational_rank.to_string(),
+            smith_2_nullity: diagnostics.smith_2_nullity.to_string(),
+            smith_p_nullity: diagnostics.smith_p_nullity.to_string(),
+            certificate_columns: diagnostics
+                .certificate_columns
+                .iter()
+                .map(usize::to_string)
+                .collect::<Vec<_>>()
+                .join(";"),
+            certificate_determinant: diagnostics
+                .certificate_determinant
+                .as_ref()
+                .map(ToString::to_string)
+                .unwrap_or_default(),
+            certificate_is_odd: diagnostics
+                .certificate_is_odd
+                .map(|value| value.to_string())
+                .unwrap_or_default(),
+            certificate_p_valuation: diagnostics.certificate_p_valuation.to_string(),
+            maximal_minor_count: diagnostics.maximal_minor_count.to_string(),
+            top_divisor_computed: diagnostics.top_divisor.is_some().to_string(),
+            top_determinantal_divisor: diagnostics
+                .top_divisor
+                .as_ref()
+                .map(ToString::to_string)
+                .unwrap_or_default(),
+            retained_peeled_variables: diagnostics.retained_core.peeled_variables.to_string(),
+            retained_core_variables: diagnostics.retained_core.variables.to_string(),
+            retained_core_equations: diagnostics.retained_core.equations.to_string(),
+            retained_core_edges: diagnostics.retained_core.edges.to_string(),
+            retained_core_isolated_variables: diagnostics
+                .retained_core
+                .isolated_variables
+                .to_string(),
+            factor_peeled_variables: diagnostics.factor_core.peeled_variables.to_string(),
+            factor_core_variables: diagnostics.factor_core.variables.to_string(),
+            factor_core_message_variables: diagnostics.factor_core.message_variables.to_string(),
+            factor_core_equations: diagnostics.factor_core.equations.to_string(),
+            factor_core_edges: diagnostics.factor_core.edges.to_string(),
+            factor_core_isolated_variables: diagnostics.factor_core.isolated_variables.to_string(),
+            factor_core_isolated_message_variables: diagnostics
+                .factor_core
+                .isolated_message_variables
+                .to_string(),
+            factor_core_components: diagnostics.factor_core.components.to_string(),
+            factor_core_message_components: diagnostics.factor_core.message_components.to_string(),
+            factor_core_cycle_rank: diagnostics.factor_core.cycle_rank.to_string(),
+            factor_core_largest_component_variables: diagnostics
+                .factor_core
+                .largest_component_variables
+                .to_string(),
+            factor_core_largest_component_message_variables: diagnostics
+                .factor_core
+                .largest_component_message_variables
+                .to_string(),
+            factor_core_largest_component_equations: diagnostics
+                .factor_core
+                .largest_component_equations
+                .to_string(),
+            factor_core_wl_fingerprint: diagnostics.factor_core.wl_fingerprint.clone(),
+            core_family_signature: format!(
+                "{}|{}",
+                diagnostics.factor_core.wl_fingerprint, diagnostics.trace_signature
+            ),
+        }
+    }
 }
 
 fn append_result(csv: &mut String, context: &CsvSample<'_>, result: FieldResult<'_>) {
@@ -1435,6 +2009,13 @@ fn append_result(csv: &mut String, context: &CsvSample<'_>, result: FieldResult<
     let relative = distance as f64 / context.length as f64;
     let distance_gap = distance as i64 - binary_distance as i64;
     let normalized_gap = distance_gap as f64 / context.length as f64;
+    let support_spectrum = result
+        .support_spectrum
+        .iter()
+        .skip(1)
+        .map(usize::to_string)
+        .collect::<Vec<_>>()
+        .join(";");
     let (deleted_coordinates, message, codeword) = result.witness.map_or_else(
         || (String::new(), String::new(), String::new()),
         |witness| {
@@ -1445,13 +2026,21 @@ fn append_result(csv: &mut String, context: &CsvSample<'_>, result: FieldResult<
             )
         },
     );
-    let (
-        loss_class,
+    let DiagnosticsCsv {
+        witness_class,
         message_weight,
         value_composition,
+        trace_signature,
+        trace_layer_weights,
+        trace_layer_runs,
+        trace_layer_compositions,
+        binary_rank,
+        rational_rank,
+        smith_2_nullity,
         smith_p_nullity,
         certificate_columns,
         certificate_determinant,
+        certificate_is_odd,
         certificate_p_valuation,
         maximal_minor_count,
         top_divisor_computed,
@@ -1474,96 +2063,15 @@ fn append_result(csv: &mut String, context: &CsvSample<'_>, result: FieldResult<
         factor_core_largest_component_variables,
         factor_core_largest_component_message_variables,
         factor_core_largest_component_equations,
-    ) = result.diagnostics.map_or_else(
-        || {
-            (
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-            )
-        },
-        |diagnostics| {
-            (
-                diagnostics.class.to_owned(),
-                diagnostics.message_weight.to_string(),
-                diagnostics.value_composition.clone(),
-                diagnostics.smith_p_nullity.to_string(),
-                diagnostics
-                    .certificate_columns
-                    .iter()
-                    .map(usize::to_string)
-                    .collect::<Vec<_>>()
-                    .join(";"),
-                diagnostics.certificate_determinant.to_string(),
-                diagnostics.certificate_p_valuation.to_string(),
-                diagnostics.maximal_minor_count.to_string(),
-                diagnostics.top_divisor.is_some().to_string(),
-                diagnostics
-                    .top_divisor
-                    .as_ref()
-                    .map(ToString::to_string)
-                    .unwrap_or_default(),
-                diagnostics.retained_core.peeled_variables.to_string(),
-                diagnostics.retained_core.variables.to_string(),
-                diagnostics.retained_core.equations.to_string(),
-                diagnostics.retained_core.edges.to_string(),
-                diagnostics.retained_core.isolated_variables.to_string(),
-                diagnostics.factor_core.peeled_variables.to_string(),
-                diagnostics.factor_core.variables.to_string(),
-                diagnostics.factor_core.message_variables.to_string(),
-                diagnostics.factor_core.equations.to_string(),
-                diagnostics.factor_core.edges.to_string(),
-                diagnostics.factor_core.isolated_variables.to_string(),
-                diagnostics
-                    .factor_core
-                    .isolated_message_variables
-                    .to_string(),
-                diagnostics.factor_core.components.to_string(),
-                diagnostics.factor_core.message_components.to_string(),
-                diagnostics.factor_core.cycle_rank.to_string(),
-                diagnostics
-                    .factor_core
-                    .largest_component_variables
-                    .to_string(),
-                diagnostics
-                    .factor_core
-                    .largest_component_message_variables
-                    .to_string(),
-                diagnostics
-                    .factor_core
-                    .largest_component_equations
-                    .to_string(),
-            )
-        },
-    );
+        factor_core_wl_fingerprint,
+        core_family_signature,
+    } = result
+        .diagnostics
+        .map(DiagnosticsCsv::from)
+        .unwrap_or_default();
     writeln!(
         csv,
-        "{sample},{field},{length},{dimension},{schedule},{seed},{distance},{relative:.12},{binary_distance},{distance_gap},{normalized_gap:.12},\"{profile}\",\"{deleted_coordinates}\",\"{message}\",\"{codeword}\",\"{permutations}\",{loss_class},{message_weight},\"{value_composition}\",{smith_p_nullity},\"{certificate_columns}\",{certificate_determinant},{certificate_p_valuation},{maximal_minor_count},{top_divisor_computed},{top_determinantal_divisor},{retained_peeled_variables},{retained_core_variables},{retained_core_equations},{retained_core_edges},{retained_core_isolated_variables},{factor_peeled_variables},{factor_core_variables},{factor_core_message_variables},{factor_core_equations},{factor_core_edges},{factor_core_isolated_variables},{factor_core_isolated_message_variables},{factor_core_components},{factor_core_message_components},{factor_core_cycle_rank},{factor_core_largest_component_variables},{factor_core_largest_component_message_variables},{factor_core_largest_component_equations}",
+        "{sample},{field},{length},{dimension},{schedule},{seed},{distance},{relative:.12},{binary_distance},{distance_gap},{normalized_gap:.12},\"{profile}\",\"{support_spectrum}\",\"{deleted_coordinates}\",\"{message}\",\"{codeword}\",\"{permutations}\",{witness_class},{message_weight},\"{value_composition}\",\"{trace_signature}\",\"{trace_layer_weights}\",\"{trace_layer_runs}\",\"{trace_layer_compositions}\",{binary_rank},{rational_rank},{smith_2_nullity},{smith_p_nullity},\"{certificate_columns}\",{certificate_determinant},{certificate_is_odd},{certificate_p_valuation},{maximal_minor_count},{top_divisor_computed},{top_determinantal_divisor},{retained_peeled_variables},{retained_core_variables},{retained_core_equations},{retained_core_edges},{retained_core_isolated_variables},{factor_peeled_variables},{factor_core_variables},{factor_core_message_variables},{factor_core_equations},{factor_core_edges},{factor_core_isolated_variables},{factor_core_isolated_message_variables},{factor_core_components},{factor_core_message_components},{factor_core_cycle_rank},{factor_core_largest_component_variables},{factor_core_largest_component_message_variables},{factor_core_largest_component_equations},{factor_core_wl_fingerprint},\"{core_family_signature}\"",
         sample = context.sample,
         length = context.length,
         dimension = context.dimension,
@@ -1633,12 +2141,12 @@ fn run(config: &Config) -> Result<String, String> {
     }
 
     let mut csv = String::from(
-        "sample,field,n,k,schedule,sample_seed,distance,relative_distance,binary_distance,distance_gap,normalized_gap,profile,deleted_coordinates,message,codeword,permutations,loss_class,message_weight,value_composition,smith_p_nullity,certificate_columns,certificate_determinant,certificate_p_valuation,maximal_minor_count,top_divisor_computed,top_determinantal_divisor,retained_peeled_variables,retained_core_variables,retained_core_equations,retained_core_edges,retained_core_isolated_variables,factor_peeled_variables,factor_core_variables,factor_core_message_variables,factor_core_equations,factor_core_edges,factor_core_isolated_variables,factor_core_isolated_message_variables,factor_core_components,factor_core_message_components,factor_core_cycle_rank,factor_core_largest_component_variables,factor_core_largest_component_message_variables,factor_core_largest_component_equations\n",
+        "sample,field,n,k,schedule,sample_seed,distance,relative_distance,binary_distance,distance_gap,normalized_gap,profile,support_spectrum,deleted_coordinates,message,codeword,permutations,witness_class,message_weight,value_composition,trace_signature,trace_layer_weights,trace_layer_runs,trace_layer_compositions,binary_rank,rational_rank,smith_2_nullity,smith_p_nullity,certificate_columns,certificate_determinant,certificate_is_odd,certificate_p_valuation,maximal_minor_count,top_divisor_computed,top_determinantal_divisor,retained_peeled_variables,retained_core_variables,retained_core_equations,retained_core_edges,retained_core_isolated_variables,factor_peeled_variables,factor_core_variables,factor_core_message_variables,factor_core_equations,factor_core_edges,factor_core_isolated_variables,factor_core_isolated_message_variables,factor_core_components,factor_core_message_components,factor_core_cycle_rank,factor_core_largest_component_variables,factor_core_largest_component_message_variables,factor_core_largest_component_equations,factor_core_wl_fingerprint,core_family_signature\n",
     );
     for sample in 0..config.samples {
         let seed = sample_seed(config.seed, sample);
         let (encoder, permutations) = build_encoder(&local, config.blocks, &config.schedule, seed)?;
-        let factor_graph = if config.classify_losses {
+        let factor_graph = if config.classify_witnesses {
             Some(SparseEncoderGraph::new(
                 &local,
                 config.blocks,
@@ -1657,7 +2165,8 @@ fn run(config: &Config) -> Result<String, String> {
             permutations: &permutations,
         };
         if config.distance_only {
-            let (binary_distance, binary_witness) = minimum_distance_by_messages(&encoder, 2)?;
+            let binary = enumerate_messages(&encoder, 2, config.support_spectrum)?;
+            let binary_distance = binary.distance;
             append_result(
                 &mut csv,
                 &csv_sample,
@@ -1665,15 +2174,17 @@ fn run(config: &Config) -> Result<String, String> {
                     field: "F2",
                     distance: binary_distance,
                     profile: &[],
+                    support_spectrum: &binary.support_spectrum,
                     binary_distance,
-                    witness: Some(&binary_witness),
+                    witness: Some(&binary.witness),
                     diagnostics: None,
                 },
             );
             for &prime in &config.primes {
-                let (distance, witness) = minimum_distance_by_messages(&encoder, prime)?;
-                let diagnostics = if config.classify_losses {
-                    diagnose_loss(
+                let enumeration = enumerate_messages(&encoder, prime, config.support_spectrum)?;
+                let distance = enumeration.distance;
+                let diagnostics = if config.classify_witnesses {
+                    Some(diagnose_witness(
                         &encoder,
                         factor_graph
                             .as_ref()
@@ -1681,9 +2192,9 @@ fn run(config: &Config) -> Result<String, String> {
                         prime,
                         distance,
                         binary_distance,
-                        &witness,
+                        &enumeration.witness,
                         config.max_minors,
-                    )?
+                    )?)
                 } else {
                     None
                 };
@@ -1694,8 +2205,9 @@ fn run(config: &Config) -> Result<String, String> {
                         field: &format!("F{prime}"),
                         distance,
                         profile: &[],
+                        support_spectrum: &enumeration.support_spectrum,
                         binary_distance,
-                        witness: Some(&witness),
+                        witness: Some(&enumeration.witness),
                         diagnostics: diagnostics.as_ref(),
                     },
                 );
@@ -1711,6 +2223,7 @@ fn run(config: &Config) -> Result<String, String> {
                     field: "F2",
                     distance: binary_distance,
                     profile: &binary_profile,
+                    support_spectrum: &[],
                     binary_distance,
                     witness: Some(&binary_witness),
                     diagnostics: None,
@@ -1720,8 +2233,8 @@ fn run(config: &Config) -> Result<String, String> {
                 let (profile, masks) = profile_mod_with_masks(&encoder, prime);
                 let distance = distance_from_profile(&profile, dimension);
                 let witness = modular_witness(&encoder, prime, masks[distance]);
-                let diagnostics = if config.classify_losses {
-                    diagnose_loss(
+                let diagnostics = if config.classify_witnesses {
+                    Some(diagnose_witness(
                         &encoder,
                         factor_graph
                             .as_ref()
@@ -1731,7 +2244,7 @@ fn run(config: &Config) -> Result<String, String> {
                         binary_distance,
                         &witness,
                         config.max_minors,
-                    )?
+                    )?)
                 } else {
                     None
                 };
@@ -1742,6 +2255,7 @@ fn run(config: &Config) -> Result<String, String> {
                         field: &format!("F{prime}"),
                         distance,
                         profile: &profile,
+                        support_spectrum: &[],
                         binary_distance,
                         witness: Some(&witness),
                         diagnostics: diagnostics.as_ref(),
@@ -1760,6 +2274,7 @@ fn run(config: &Config) -> Result<String, String> {
                         field: "Q",
                         distance,
                         profile: &profile,
+                        support_spectrum: &[],
                         binary_distance,
                         witness: None,
                         diagnostics: None,
@@ -1870,18 +2385,23 @@ mod tests {
         for prime in [2, 3, 5, 7] {
             let profile_distance =
                 distance_from_profile(&profile_mod_with_masks(&encoder, prime).0, 2);
-            let (enumerated_distance, witness) =
-                minimum_distance_by_messages(&encoder, prime).unwrap();
-            assert_eq!(enumerated_distance, profile_distance);
+            let enumeration = minimum_distance_by_messages::<false>(&encoder, prime).unwrap();
+            assert_eq!(enumeration.distance, profile_distance);
             assert_eq!(
-                witness
+                enumeration
+                    .witness
                     .codeword
                     .iter()
                     .filter(|&&symbol| symbol != 0)
                     .count(),
-                enumerated_distance
+                enumeration.distance
             );
         }
+
+        let spectrum_encoder = vec![vec![1, 0, 1], vec![0, 1, 1]];
+        let enumeration = minimum_distance_by_messages::<true>(&spectrum_encoder, 3).unwrap();
+        assert_eq!(enumeration.distance, 2);
+        assert_eq!(enumeration.support_spectrum, vec![4, 2, 2]);
     }
 
     #[test]
@@ -1895,8 +2415,18 @@ mod tests {
         let full_mask = 0b1_1111;
         assert_eq!(rank_mod_mask(&generator, full_mask, 2), 4);
         assert_eq!(rank_mod_mask(&generator, full_mask, 3), 4);
-        assert_eq!(minimum_distance_by_messages(&generator, 2).unwrap().0, 2);
-        assert_eq!(minimum_distance_by_messages(&generator, 3).unwrap().0, 1);
+        assert_eq!(
+            minimum_distance_by_messages::<false>(&generator, 2)
+                .unwrap()
+                .distance,
+            2
+        );
+        assert_eq!(
+            minimum_distance_by_messages::<false>(&generator, 3)
+                .unwrap()
+                .distance,
+            1
+        );
     }
 
     #[test]
@@ -1931,23 +2461,23 @@ mod tests {
             vec![1, 1, 0, 1, 1],
             vec![1, 1, 1, 0, 1],
         ];
-        let (binary_distance, _) = minimum_distance_by_messages(&generator, 2).unwrap();
-        let (distance, witness) = minimum_distance_by_messages(&generator, 3).unwrap();
+        let binary = minimum_distance_by_messages::<false>(&generator, 2).unwrap();
+        let ternary = minimum_distance_by_messages::<false>(&generator, 3).unwrap();
         let factor_graph = SparseEncoderGraph::new(&generator, 1, "", &[]).unwrap();
-        let diagnostics = diagnose_loss(
+        let diagnostics = diagnose_witness(
             &generator,
             &factor_graph,
             3,
-            distance,
-            binary_distance,
-            &witness,
+            ternary.distance,
+            binary.distance,
+            &ternary.witness,
             100,
         )
-        .unwrap()
         .unwrap();
         assert_eq!(diagnostics.smith_p_nullity, 1);
         assert_eq!(diagnostics.certificate_columns, vec![0, 1, 2, 3]);
-        assert_eq!(diagnostics.certificate_determinant, BigInt::from(-3));
+        assert_eq!(diagnostics.certificate_determinant, Some(BigInt::from(-3)));
+        assert_eq!(diagnostics.certificate_is_odd, Some(true));
         assert_eq!(diagnostics.certificate_p_valuation, 1);
         assert_eq!(diagnostics.maximal_minor_count, 1);
         assert_eq!(diagnostics.top_divisor, Some(BigInt::from(3)));
@@ -1956,7 +2486,7 @@ mod tests {
         assert_eq!(diagnostics.retained_core.equations, 4);
         assert_eq!(diagnostics.retained_core.edges, 12);
         assert_eq!(diagnostics.factor_core.message_variables, 4);
-        assert_eq!(diagnostics.class, "factor_unit_equation_core");
+        assert_eq!(diagnostics.class, "distance_beating_p_torsion");
     }
 
     #[test]
@@ -1968,26 +2498,80 @@ mod tests {
         assert_eq!(peeled.equations, 0);
 
         let encoder = vec![vec![1, 3, 6]];
-        let (binary_distance, _) = minimum_distance_by_messages(&encoder, 2).unwrap();
-        let (distance, witness) = minimum_distance_by_messages(&encoder, 3).unwrap();
+        let binary = minimum_distance_by_messages::<false>(&encoder, 2).unwrap();
+        let ternary = minimum_distance_by_messages::<false>(&encoder, 3).unwrap();
         let local = vec![vec![1, 1, 1]];
         let factor_graph = SparseEncoderGraph::new(&local, 1, "AA", &[]).unwrap();
-        let diagnostics = diagnose_loss(
+        let diagnostics = diagnose_witness(
             &encoder,
             &factor_graph,
             3,
-            distance,
-            binary_distance,
-            &witness,
+            ternary.distance,
+            binary.distance,
+            &ternary.witness,
             100,
         )
-        .unwrap()
         .unwrap();
         assert_eq!(diagnostics.top_divisor, Some(BigInt::from(3)));
         assert_eq!(diagnostics.retained_core.variables, 1);
         assert_eq!(diagnostics.retained_core.equations, 0);
         assert_eq!(diagnostics.retained_core.isolated_variables, 1);
         assert!(diagnostics.factor_core.message_variables > 0);
+    }
+
+    #[test]
+    fn witness_diagnostics_separate_all_algebraic_classes() {
+        let local = vec![vec![1, 1, 1]];
+        let cases = [
+            (
+                10_451_216_379_200_822_465,
+                "distance_beating_p_torsion",
+                2,
+                2,
+                Some(true),
+            ),
+            (
+                10_858_953_248_184_931_039,
+                "nonbeating_p_torsion",
+                2,
+                2,
+                Some(true),
+            ),
+            (
+                11_924_559_415_567_153_392,
+                "shared_modular_dependency",
+                1,
+                2,
+                Some(false),
+            ),
+            (
+                3_927_521_153_984_068_587,
+                "structural_dependency",
+                1,
+                1,
+                None,
+            ),
+        ];
+        for (seed, expected_class, binary_rank, rational_rank, certificate_is_odd) in cases {
+            let (generator, permutations) = build_encoder(&local, 2, "PAPA", seed).unwrap();
+            let binary = minimum_distance_by_messages::<false>(&generator, 2).unwrap();
+            let ternary = minimum_distance_by_messages::<false>(&generator, 3).unwrap();
+            let factor_graph = SparseEncoderGraph::new(&local, 2, "PAPA", &permutations).unwrap();
+            let diagnostics = diagnose_witness(
+                &generator,
+                &factor_graph,
+                3,
+                ternary.distance,
+                binary.distance,
+                &ternary.witness,
+                100,
+            )
+            .unwrap();
+            assert_eq!(diagnostics.class, expected_class);
+            assert_eq!(diagnostics.binary_rank, binary_rank);
+            assert_eq!(diagnostics.rational_rank, rational_rank);
+            assert_eq!(diagnostics.certificate_is_odd, certificate_is_odd);
+        }
     }
 
     #[test]
