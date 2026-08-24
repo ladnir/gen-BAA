@@ -107,6 +107,11 @@ class SparseSpacingTests(unittest.TestCase):
         self.assertLess(196, 198)
         self.assertLess(660**2 * 7**3, 531**3)
 
+    def test_septic_sparse_constant_at_nine_over_five_hundred(self) -> None:
+        self.assertLess(4 * 4_419, 133**2)
+        self.assertLess(196, 198)
+        self.assertLess(264**2 * 133**3, 5_505**3)
+
     def test_quinary_sparse_constant_at_deterministic_cutoff(self) -> None:
         self.assertTrue(ladder_integer_check(5, 7))
         self.assertEqual(least_ladder_denominator_root(5), 7)

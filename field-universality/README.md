@@ -62,8 +62,9 @@ a factor of four. The least certified roots begin with `m=7,8,10,10` for
 `p=5,7,11,13`, respectively, and give distances of order `p^(-4/5)`. In
 particular, the field-uniform criterion alone gives the quinary bound `1/49`.
 A separately verified sign-orbit bulk certificate raises the proved quinary
-distance to `1/20`. These constants do not locate the true prime-field
-thresholds.
+distance to `1/20`. The same method, closed under field-multiplication
+automorphisms, raises the septic bound from `1/64` to `9/500`. These constants
+do not locate the true prime-field thresholds.
 
 For repetition three over `F_3`, the project now proves
 
@@ -168,10 +169,12 @@ enumerator. Binary minimum distance alone is not a sufficient hypothesis.
    already proved through `0.26`.
 2. Certify a positive ternary bulk type at `0.197` and locate the first-moment
    transition above `0.196`.
-3. Establish the rank/cogirth formulation as an independent algebraic view of
+3. Raise the proved `F_7` bound from `9/500` and determine how certificate size
+   scales with the number of sign orbits.
+4. Establish the rank/cogirth formulation as an independent algebraic view of
    characteristic-specific failures.
-4. Investigate the matching upper bound required for coupled universality.
-5. Extract checkable enumerator hypotheses for blockwise BAA base codes only
+5. Investigate the matching upper bound required for coupled universality.
+6. Extract checkable enumerator hypotheses for blockwise BAA base codes only
    after the repetition-based theorem is complete.
 
 The first-moment proof resolves the uniform quantifier for the ternary
@@ -351,6 +354,13 @@ python scripts/verify_sign_orbit_bulk.py \
   --delta 1/20 --eta 1/60 --max-boxes 8000 \
   --maximum-cut-pairs 16 --precision 80
 
+python scripts/sparse_spacing_bound.py \
+  --prime 7 --repetition 3 --delta 0.018 --eta 0.0625
+
+python scripts/verify_sign_orbit_bulk.py \
+  --prime 7 --delta 9/500 --eta 1/16 --max-boxes 500 \
+  --maximum-cut-pairs 96 --automorphism-cuts --precision 80
+
 python scripts/optimize_sign_orbit_bulk.py \
   --prime 5 --repetition 3 --delta 0.05 --eta 0.016666666666666666
 
@@ -367,6 +377,13 @@ python scripts/diagnose_entropy_dual.py \
 
 python scripts/search_entropy_dual_cover.py \
   --prime 5 --repetition 3 --delta 0.196 --eta 0.0001 --max-boxes 100
+
+python scripts/optimize_lifted_orbit_bulk.py \
+  --prime 5 --repetition 3 --delta 0.1323 --eta 0.0005
+
+python scripts/search_full_symbol_cover.py \
+  --prime 5 --repetition 3 --delta 0.1323 --eta 0.0005 \
+  --maximum-cut-pairs 32 --max-boxes 1000
 ```
 
 The first command searches the full vector-composition problem. The second
@@ -386,8 +403,8 @@ at cutoff `0.0001`.
 
 The sparse commands report the constants in the exact ternary and quinary
 proofs. The sign-orbit verifier proves the bulk half of the quinary `1/20`
-theorem with directed logarithm intervals and exact rational LP duals. The
-prime-ladder verifier independently checks the all-integer
+and septic `9/500` theorems with directed logarithm intervals and exact
+rational LP duals. The prime-ladder verifier independently checks the all-integer
 criterion and its least passing denominator. The displayed floating-point
 values from the sparse script are diagnostic.
 
@@ -395,7 +412,10 @@ The sign-orbit optimizer and floating cover are certificate-design tools.
 Their output is not a proof; only the exact verifier may discharge the bulk
 condition.
 
-The last two commands develop the full-composition certificate. They use
+The entropy-dual commands develop the full-composition certificate. They use
 floating-point optimization to design entropy-dual cuts and a box cover.
 Their negative output would still require the independent interval checker
 described in `CLEAN_THEORY.md`.
+
+The lifted-orbit and full-symbol commands diagnose the remaining quinary gap.
+They are numerical design tools. Their output cannot certify a theorem.

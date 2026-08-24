@@ -16,6 +16,7 @@ from verify_sign_orbit_bulk import (
     log_upper,
     make_layout,
     negative_log_upper,
+    orbit_automorphisms,
     phase_one_reference,
     secant_upper,
     structural_equalities,
@@ -31,6 +32,17 @@ class SignOrbitVerifierTests(unittest.TestCase):
         layout = make_layout(5)
         self.assertEqual(layout.orbits, ((0,), (1, 4), (2, 3)))
         self.assertEqual(len(layout.triples), 13)
+
+    def test_septic_orbit_automorphisms(self) -> None:
+        layout = make_layout(7)
+        self.assertEqual(len(layout.orbits), 4)
+        automorphisms = orbit_automorphisms(layout)
+        self.assertEqual(len(automorphisms), 3)
+        self.assertTrue(all(permutation[0] == 0 for permutation in automorphisms))
+        self.assertEqual(
+            {tuple(sorted(permutation[1:])) for permutation in automorphisms},
+            {(1, 2, 3)},
+        )
 
     def test_directed_logarithm_bounds(self) -> None:
         self.assertGreater(log_upper(Fraction(2)), Fraction(69, 100))

@@ -124,6 +124,12 @@ def search(args: argparse.Namespace) -> dict[str, object]:
         "delta": args.delta,
         "eta": args.eta,
         "minimum_gap_found": float(best.fun),
+        "exponent_before_symmetrization": bulk.exponent(
+            best.x, layout, args.repetition
+        ),
+        "exponent_after_symmetrization": (
+            bulk.exponent(best.x, layout, args.repetition) + float(best.fun)
+        ),
         "message_nonzero_fraction": 1.0 - float(best.x[layout.mu.start]),
         "output_nonzero_fraction": 1.0 - float(best.x[layout.zeta.start]),
         "optimizer_success": bool(best.success),

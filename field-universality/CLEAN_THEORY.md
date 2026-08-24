@@ -28,9 +28,10 @@ This note develops eight ingredients:
 
 For ternary repetition-three codes, the sparse and bulk bounds prove relative
 distance `0.196`. A sign-orbit certificate proves quinary relative distance
-`0.05`. The spacing bound and deterministic floor also prove a positive
-relative distance over every fixed prime. Stronger bounds beyond these rungs
-still require full-composition analysis.
+`0.05` and septic relative distance `0.018`. The spacing bound and
+deterministic floor also prove a positive relative distance over every fixed
+prime. Stronger bounds beyond these rungs still require full-composition
+analysis.
 
 ## 2. Ensemble and probability space
 
@@ -590,25 +591,20 @@ in different transitions are jointly consistent. A negative maximum therefore
 certifies the full exponent. A positive maximum need not identify a full-field
 counterexample.
 
-**Proposition 7 (certified quinary bulk bounds).** For repetition three, the
-sign-orbit exponent satisfies
+**Proposition 7 (certified odd-field sign-orbit bounds).** For repetition
+three, the sign-orbit exponent is negative on each domain in the following
+table.
 
-```text
-max hat(Psi)_{5,3} < 0
-```
+| field | message cutoff | output fraction | certified upper bound |
+|---:|---:|---:|---:|
+| `F_5` | `1/40` | `1/25` | `-0.0000161798496159` |
+| `F_5` | `1/60` | `1/20` | `-0.0000011386223254` |
+| `F_7` | `1/16` | `9/500` | `-0.0001159627871096` |
 
-on each domain in the following table.
-
-| message cutoff | output fraction | certified upper bound |
-|---:|---:|---:|
-| `1/40` | `1/25` | `-0.0000161798496159` |
-| `1/60` | `1/20` | `-0.0000011386223254` |
-
-**Proof.** The verifier `scripts/verify_sign_orbit_bulk.py` covers the nine
-orbit-composition coordinates with rational boxes. Cross-entropy inequalities
-upper-bound the two positive joint-entropy terms. Rational secants upper-bound
-the convex `x log x` terms on each box. The resulting problem is a linear
-program.
+**Proof.** The verifier `scripts/verify_sign_orbit_bulk.py` covers the orbit
+compositions with rational boxes. Cross-entropy inequalities upper-bound the
+two positive joint-entropy terms. Rational secants upper-bound the convex
+`x log x` terms on each box. The resulting problem is a linear program.
 
 The floating solver proposes cuts and dual variables. Directed 80-digit
 intervals enclose every logarithm. The verifier rounds the enclosures outward
@@ -616,10 +612,28 @@ to rational coefficients and repairs each proposed dual to exact feasibility.
 It discards a structurally infeasible box only after an exact rational phase-I
 dual proves positive constraint violation.
 
-For the two rows, the covers close after 1,848 and 5,433 splits. The verifier
-checks two and ten infeasible children, respectively. The run summaries are
-recorded in `results/quinary-sign-orbit-bulk-0.04-eta-0.025.json` and
-`results/quinary-sign-orbit-bulk-0.05-eta-1-over-60.json`. ∎
+For the septic row, the verifier closes every entropy cut under multiplication
+by `F_7^*/{+1,-1}`. This operation supplies all three images of each nonzero
+orbit without changing the bound.
+
+The covers close after 1,848, 5,433, and 155 splits. The verifier checks two,
+ten, and ten infeasible children, respectively. The run summaries are recorded
+in `results/quinary-sign-orbit-bulk-0.04-eta-0.025.json`,
+`results/quinary-sign-orbit-bulk-0.05-eta-1-over-60.json`, and
+`results/septic-sign-orbit-bulk-0.018-eta-0.0625.json`. ∎
+
+The orbit relaxation does not reach the binary benchmark over `F_5`. At
+`delta=0.1323` and `eta=0.0005`, its numerical maximum is `0.0465302489`.
+Requiring both coarse transitions to admit one full-symbol lift leaves this
+value unchanged. Thus liftability is not the missing constraint. The loss
+comes from discarding conditional sign information in the two mutual
+information terms.
+
+At the same endpoint, the full-symbol optimizer returns `-0.0006005618`.
+The most negative symmetrization gap found has value `-0.1374837842`, but its
+full exponent is `-0.4863645818`. These are numerical diagnostics, not
+certificates. They motivate a future split between a near-symmetric region and
+an asymmetric region with a large negative exponent.
 
 ### 3.5 Certified ternary optimization
 
@@ -700,7 +714,7 @@ on each of the following domains:
 domain. The supporting-hyperplane bound described above is valid on every
 box. For the six rows, the primary verifier closes the covers after 312, 315,
 789, 57, 219, and 233 box splits. The largest remaining box bound is the value
-in the last column. The primary certificate used by Theorem 18 is recorded in
+in the last column. The primary certificate used by Theorem 19 is recorded in
 `results/ternary-bulk-0.196-eta-0.0001.json`. The independent checker closes
 another 789-split cover and obtains the same upper bound to the displayed
 precision. Its result is recorded in
@@ -1067,6 +1081,28 @@ After squaring, the last inequality is
 
 or `149410800 < 149721291`.
 
+The septic certificate uses `delta=9/500` and `eta=1/16`, so `R_0=48`.
+Since `sqrt(4419)<133/2`,
+
+```text
+L_delta > 367/133,
+3/((R_0-3)L_delta) < 133/5505.
+```
+
+Using `e<11/4` gives
+
+```text
+Q_{7,3,delta}(R_0) < 264(133/5505)^(3/2) < 1.
+```
+
+After squaring, the last inequality is
+
+```text
+264^2 * 133^3 < 5505^3,
+```
+
+or `163969388352 < 166829162625`.
+
 Consequently, the sparse first moment vanishes through output fraction `0.2`
 over `F_3` and through output fraction `0.26` over `F_5`.
 
@@ -1140,7 +1176,7 @@ Q_{p,3,delta}(R_0)
 ```
 
 Squaring the last inequality gives exactly the integer hypothesis. Proposition
-12 excludes low-output words from messages of support at most `4K/m^2`.
+14 excludes low-output words from messages of support at most `4K/m^2`.
 Lemma 15 excludes every larger support deterministically. ∎
 
 The criterion is nonempty for every fixed prime. For example, when `m>=4`,
@@ -1181,7 +1217,23 @@ Theorem 17 is a rigorous positive-distance result, not a claim that `1/20` is
 the quinary threshold. The full-composition problem remains relevant to the
 much stronger binary-threshold comparison.
 
-**Theorem 18 (ternary BAA distance at 0.196).** Set `delta_*:=49/250`. For the
+**Theorem 18 (septic BAA distance at `9/500`).** For the repetition-three
+addition-only BAA ensemble over `F_7`,
+
+```text
+Pr[d_min <= floor(9N/500)] -> 0.
+```
+
+**Proof.** Proposition 14 makes the expected number of low-weight words from
+messages of support at most `K/16` tend to zero. Lemma 6 and Proposition 7
+make the expected number from larger supports exponentially small. Markov's
+inequality completes the proof. ∎
+
+Theorem 18 improves the field-uniform septic bound from `1/64` to `9/500`.
+The improvement is modest, but it certifies that the bulk method transfers
+beyond `F_5`.
+
+**Theorem 19 (ternary BAA distance at 0.196).** Set `delta_*:=49/250`. For the
 repetition-three BAA ensemble over `F_3`,
 
 ```text
@@ -1194,7 +1246,7 @@ expected number from larger supports exponentially small at the same cutoff
 and output fraction. Markov's inequality completes the proof. ∎
 
 Kliewer et al. report `0.1323` to four decimal places as the binary
-repetition-three lower bound. Theorem 18 therefore gives a stronger certified
+repetition-three lower bound. Theorem 19 therefore gives a stronger certified
 lower bound for the ternary ensemble. This comparison proves one-sided
 threshold inheritance. It does not prove equality of the binary and ternary
 relative distances. See [Kliewer et al., *Coding Theorems for Repeat Multiple
@@ -1258,7 +1310,7 @@ length 36, the mean weights for `s=1,...,12` are
 
 The beating events occur at the sparse edge of this curve. The typical
 nonbeating minimum moves toward larger support as `N` grows. This separation
-motivated the proof split used by Theorem 18.
+motivated the proof split used by Theorem 19.
 
 1. Bound every support below a fixed small linear cutoff with the random
    spacing estimate.
@@ -1300,7 +1352,7 @@ reset has the smaller fixed-span scale `N^(2-5)=N^-3`.
 The exact first moment suggests a theorem stated at a deterministic threshold,
 not at the random coupled binary distance.
 
-**Proposition 19 (sparse--bulk reduction).** Fix `r`, `p`, `delta>0`, and
+**Proposition 20 (sparse--bulk reduction).** Fix `r`, `p`, `delta>0`, and
 `eta>0`. Let `Z_p^s(delta N)` count nonzero messages of support less than
 `eta K` whose encoded word has weight at most `delta N`, and let
 `Z_p^bulk(delta N)` count the remaining low-weight messages. If
@@ -1337,9 +1389,9 @@ Pr[d_p <= delta N]
 The reduction is elementary; proving its two hypotheses is the substantive
 problem. It motivates the following ensemble-specific conjecture.
 
-**Conjecture 20 (BAA threshold inheritance).** For the `PAPA`
+**Conjecture 21 (BAA threshold inheritance).** For the `PAPA`
 repetition-`r` ensemble and every fixed odd prime `p`, there are `eta>0` and
-`delta_p>0` such that Proposition 19 applies for every `delta<delta_p`.
+`delta_p>0` such that Proposition 20 applies for every `delta<delta_p`.
 Moreover, `delta_p` is at least the proved binary distance threshold for the
 same repetition factor.
 
@@ -1349,8 +1401,8 @@ Suppose the binary repetition-`r` RAA ensemble satisfies
 Pr[d_2 < delta N] -> 0.
 ```
 
-If Conjecture 20 covers this `delta`, Proposition 19 gives the odd-field bound.
-If `d_2/N` converges in probability to `delta_2` and Conjecture 20 applies for
+If Conjecture 21 covers this `delta`, Proposition 20 gives the odd-field bound.
+If `d_2/N` converges in probability to `delta_2` and Conjecture 21 applies for
 every `delta<delta_2`, the two bounds imply
 
 ```text
@@ -1369,13 +1421,17 @@ This formulation separates two mathematical tasks.
 Neither task requires samplewise field monotonicity. Neither task claims that
 the binary and prime-field limiting distances are equal.
 
-For `p=r=3`, Theorem 18 completes both tasks at output fraction `0.196` using
+For `p=r=3`, Theorem 19 completes both tasks at output fraction `0.196` using
 cutoff `eta=0.0001`. Proposition 14 already covers sparse output fractions
 through `0.2`; the certified bulk exponent is now the limiting step.
 
 For `p=5` and `r=3`, Theorem 17 completes both tasks at output fraction
 `0.05` using cutoff `eta=1/60`. Raising this bound toward the binary benchmark
 requires a tighter orbit relaxation or a full-symbol certificate.
+
+For `p=7` and `r=3`, Theorem 18 completes both tasks at output fraction
+`9/500` using cutoff `eta=1/16`. The certificate closes entropy cuts under the
+three multiplicative automorphisms of the nonzero sign orbits.
 
 ## 9. Remaining counterexample search
 
@@ -1391,7 +1447,8 @@ The multistart searches found no positive bulk exponent below output fraction
 `0.13` for `p=3` or `p=5`. Proposition 8 strengthens the ternary observation:
 with cutoff `eta=0.01`, no ternary bulk counterexample exists through output
 fraction `0.19`. Proposition 7 rigorously excludes quinary bulk counterexamples
-through output fraction `0.05`. The stronger quinary search remains numerical.
+through output fraction `0.05` and septic bulk counterexamples through
+`9/500`. The stronger searches remain numerical.
 
 For an uncertified prime, a positive exponent below a proved binary threshold
 would identify a possible counterexample without a blind search over
@@ -1406,7 +1463,8 @@ reflects real codewords or only correlations.
    first-moment transition between `0.196` and `0.197`.
 3. Evaluate or certify the bulk exponent for further primes and the repetition
    factors used by the binary RAA theorem.
-4. Search the bulk optimization for a positive-exponent type below that
+4. Raise the septic certificate beyond `9/500` using automorphism-closed cuts.
+5. Search the bulk optimization for a positive-exponent type below that
    threshold.
 
 These obligations form a coherent proof program. New finite traps matter only

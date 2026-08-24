@@ -290,16 +290,54 @@ def rational_distribution(values: np.ndarray, bits: int) -> tuple[Fraction, ...]
     return tuple(Fraction(weight, total) for weight in weights)
 
 
-def cut_from_point(point: np.ndarray, layout: Layout, bits: int) -> Cut:
-    stages = []
+def orbit_automorphisms(layout: Layout) -> tuple[tuple[int, ...], ...]:
+    orbit_of = {}
+    for index, orbit in enumerate(layout.orbits):
+        for value in orbit:
+            orbit_of[value] = index
+    permutations = set()
+    for multiplier in range(1, layout.prime):
+        permutation = tuple(
+            orbit_of[(multiplier * orbit[0]) % layout.prime]
+            for orbit in layout.orbits
+        )
+        permutations.add(permutation)
+    return tuple(sorted(permutations))
+
+
+def cuts_from_point(
+    point: np.ndarray, layout: Layout, bits: int, close_automorphisms: bool
+) -> tuple[Cut, ...]:
+    stage_pairs = []
     for gamma in (layout.gamma1, layout.gamma2):
         pair = rational_distribution(pair_distribution(point, layout, gamma), bits)
-        coefficients = []
-        for increment, source, _ in layout.triples:
-            probability = pair[increment * layout.orbit_count + source]
-            coefficients.append(negative_log_upper(probability))
-        stages.append(tuple(coefficients))
-    return Cut(stages[0], stages[1])
+        stage_pairs.append(pair)
+    permutations = (
+        orbit_automorphisms(layout)
+        if close_automorphisms
+        else (tuple(range(layout.orbit_count)),)
+    )
+    cuts = []
+    for permutation in permutations:
+        stages = []
+        for pair in stage_pairs:
+            image = [ZERO] * len(pair)
+            for increment in range(layout.orbit_count):
+                for source in range(layout.orbit_count):
+                    image[
+                        permutation[increment] * layout.orbit_count
+                        + permutation[source]
+                    ] = pair[increment * layout.orbit_count + source]
+            stages.append(
+                tuple(
+                    negative_log_upper(
+                        image[increment * layout.orbit_count + source]
+                    )
+                    for increment, source, _ in layout.triples
+                )
+            )
+        cuts.append(Cut(stages[0], stages[1]))
+    return tuple(cuts)
 
 
 def uniform_cut(layout: Layout) -> Cut:
@@ -540,6 +578,7 @@ def box_bound(
     repetition: int,
     maximum_cut_pairs: int,
     cut_bits: int,
+    close_automorphisms: bool,
 ) -> Bound | None:
     box = tighten(raw_box, layout.orbit_count)
     if box is None:
@@ -551,16 +590,17 @@ def box_bound(
         return None
     if reference is None:
         raise RuntimeError("phase-I returned neither a point nor a certificate")
-    cuts = (inherited + (cut_from_point(reference, layout, cut_bits),))[
-        -maximum_cut_pairs:
-    ]
+    cuts = (
+        inherited
+        + cuts_from_point(reference, layout, cut_bits, close_automorphisms)
+    )[-maximum_cut_pairs:]
     first = evaluate(box, cuts, layout, equality, target, repetition)
     if first is None:
         return None
     _, _, witness = first
-    cuts = (cuts + (cut_from_point(witness, layout, cut_bits),))[
-        -maximum_cut_pairs:
-    ]
+    cuts = (
+        cuts + cuts_from_point(witness, layout, cut_bits, close_automorphisms)
+    )[-maximum_cut_pairs:]
     second = evaluate(box, cuts, layout, equality, target, repetition)
     if second is None:
         return None
@@ -594,6 +634,7 @@ def search(args: argparse.Namespace) -> dict[str, object]:
         args.repetition,
         args.maximum_cut_pairs,
         args.cut_bits,
+        args.automorphism_cuts,
     )
     if initial is None:
         raise RuntimeError("initial orbit domain is infeasible")
@@ -638,6 +679,7 @@ def search(args: argparse.Namespace) -> dict[str, object]:
                 args.repetition,
                 args.maximum_cut_pairs,
                 args.cut_bits,
+                args.automorphism_cuts,
             )
             if bounded is None:
                 infeasible_boxes += 1
@@ -671,10 +713,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--precision", type=int, default=80)
     parser.add_argument("--cut-bits", type=int, default=30)
     parser.add_argument("--maximum-cut-pairs", type=int, default=16)
+    parser.add_argument(
+        "--automorphism-cuts",
+        action="store_true",
+        help="close each entropy cut under field-multiplication automorphisms",
+    )
     parser.add_argument("--max-boxes", type=int, default=10_000)
     args = parser.parse_args()
-    if args.prime != 5:
-        parser.error("the current sign-orbit theorem is specialized to p=5")
+    if args.prime not in (5, 7):
+        parser.error("the current verifier supports p=5 and p=7")
     if args.repetition != 3:
         parser.error("the current verifier is specialized to repetition three")
     if not ZERO < args.delta < Fraction(1, 2):
@@ -697,6 +744,7 @@ def main() -> None:
             "eta": str(args.eta),
             "interval_precision": args.precision,
             "cut_denominator_bits": args.cut_bits,
+            "automorphism_cuts": args.automorphism_cuts,
             "arithmetic": "directed intervals and exact rational LP duals",
         }
     )

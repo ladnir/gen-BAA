@@ -1,0 +1,23 @@
+{
+  "arithmetic": "directed intervals and exact rational LP duals",
+  "automorphism_cuts": true,
+  "boxes_remaining": 146,
+  "boxes_split": 155,
+  "command": "python scripts/verify_sign_orbit_bulk.py --prime 7 --delta 9/500 --eta 1/16 --max-boxes 500 --maximum-cut-pairs 96 --automorphism-cuts --precision 80",
+  "cut_denominator_bits": 30,
+  "delta": "9/500",
+  "eta": "1/16",
+  "infeasible_boxes_checked_exactly": 10,
+  "interval_precision": 80,
+  "maximum_cut_pairs": 96,
+  "maximum_queue_size": 146,
+  "prime": 7,
+  "repetition": 3,
+  "status": "verified negative sign-orbit cover",
+  "upper_bound": -0.0001159627871095747,
+  "upper_bound_denominator": "618970019642690137449562112000",
+  "upper_bound_denominator_bits": 99,
+  "upper_bound_is_exactly_negative": true,
+  "upper_bound_numerator": "-71777488615034544984591037",
+  "upper_bound_numerator_bits": 86
+}

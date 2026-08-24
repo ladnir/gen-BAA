@@ -266,6 +266,34 @@ def main() -> None:
                 and rational_left < rational_right
             ),
         }
+    elif (
+        prime == 7
+        and repetition == 3
+        and delta <= 0.018
+        and eta <= 0.0625 * (1.0 + endpoint_tolerance)
+    ):
+        # At delta=9/500, sqrt(4*delta*(1-delta)) < 133/500,
+        # so exp(D)-1 > 367/133.  With eta<=1/16 and e<11/4,
+        # Q<1 reduces to the exact integer comparison below.
+        rational_left = 264**2 * 133**3
+        rational_right = 5_505**3
+        rational_certificate = {
+            "domain": (
+                "p = 7, r = 3, 0 < delta <= 9/500, "
+                "and 0 < eta <= 1/16"
+            ),
+            "base_upper_bound": 1.0,
+            "sqrt_check": {"left": 4 * 4_419, "right": 133**2, "passes": 17_676 < 17_689},
+            "e_check": {"left": 196, "right": 198, "passes": 196 < 198},
+            "spacing_ratio": {"numerator": 133, "denominator": 5_505},
+            "left": rational_left,
+            "right": rational_right,
+            "passes": (
+                17_676 < 17_689
+                and 196 < 198
+                and rational_left < rational_right
+            ),
+        }
     elif prime == 5 and repetition == 3 and delta <= 0.05 and eta <= 0.0001:
         # For delta <= 1/20, sqrt(4*delta*(1-delta)) <= sqrt(19)/10
         # and sqrt(19) < 5.  Hence exp(D)-1 > 1.  Together with
