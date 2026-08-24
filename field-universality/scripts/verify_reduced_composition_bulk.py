@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import argparse
 import heapq
+import itertools
 import json
 from dataclasses import dataclass
 from fractions import Fraction
+from functools import lru_cache
 
 import numpy as np
 from mpmath import iv
@@ -147,21 +149,171 @@ def cut_lower_bound(
     state_support: Interval,
     crossing: Interval,
 ) -> Fraction:
-    joint = support_joint_intervals(
-        increment_support, state_support, crossing
+    best: Fraction | None = None
+    for increment_vertex in simplex_vertices(increment):
+        for state_vertex in simplex_vertices(state):
+            target_nonzero = sum(
+                cut.target[target] * state_vertex[target - 1]
+                for target in range(1, 5)
+            )
+            row_zero = cut.exponential_minus_one[0][0].upper
+            row_state = sum(
+                cut.exponential_minus_one[1][target].upper
+                * state_vertex[target - 1]
+                for target in range(1, 5)
+            )
+            row_increment = sum(
+                cut.exponential_minus_one[2][target].upper
+                * increment_vertex[target - 1]
+                for target in range(1, 5)
+            )
+            row_both = ZERO
+            for difference in range(1, 5):
+                for source in range(1, 5):
+                    target = (source + difference) % 5
+                    row_both += (
+                        cut.exponential_minus_one[3][target].upper
+                        * increment_vertex[difference - 1]
+                        * state_vertex[source - 1]
+                    )
+            constant = cut.cell[0] + cut.target[0] - row_zero
+            increment_coefficient = (
+                -cut.cell[1]
+                + cut.cell[3]
+                + row_state
+                - row_both
+            )
+            state_coefficient = (
+                -cut.cell[0]
+                + cut.cell[1]
+                + target_nonzero
+                - cut.target[0]
+                + row_zero
+                - row_state
+            )
+            crossing_coefficient = (
+                -cut.cell[0]
+                + cut.cell[1]
+                + cut.cell[2]
+                - cut.cell[3]
+                + row_zero
+                - row_state
+                - row_increment
+                + row_both
+            )
+            for support_vertex in support_vertices(
+                increment_support, state_support, crossing
+            ):
+                lower = constant + sum(
+                    (
+                        coefficient * coordinate
+                        for coefficient, coordinate in zip(
+                            (
+                                increment_coefficient,
+                                state_coefficient,
+                                crossing_coefficient,
+                            ),
+                            support_vertex,
+                            strict=True,
+                        )
+                    ),
+                    ZERO,
+                )
+                best = lower if best is None else min(best, lower)
+    if best is None:
+        raise RuntimeError("conditional simplex has no vertices")
+    return best
+
+
+@lru_cache(maxsize=16_384)
+def simplex_vertices(
+    values: tuple[Interval, ...]
+) -> tuple[tuple[Fraction, ...], ...]:
+    vertices: set[tuple[Fraction, ...]] = set()
+    for free_index in range(4):
+        fixed = [index for index in range(4) if index != free_index]
+        for choices in itertools.product((0, 1), repeat=3):
+            vertex = [ZERO] * 4
+            for index, choice in zip(fixed, choices, strict=True):
+                vertex[index] = (
+                    values[index].upper if choice else values[index].lower
+                )
+            vertex[free_index] = ONE - sum(
+                (vertex[index] for index in fixed), ZERO
+            )
+            if (
+                values[free_index].lower
+                <= vertex[free_index]
+                <= values[free_index].upper
+            ):
+                vertices.add(tuple(vertex))
+    return tuple(sorted(vertices))
+
+
+@lru_cache(maxsize=16_384)
+def support_vertices(
+    increment: Interval, state: Interval, crossing: Interval
+) -> tuple[tuple[Fraction, Fraction, Fraction], ...]:
+    # Every constraint has the form a*A+b*B+c*x <= d.
+    constraints = (
+        ((-ONE, ZERO, ZERO), -increment.lower),
+        ((ONE, ZERO, ZERO), increment.upper),
+        ((ZERO, -ONE, ZERO), -state.lower),
+        ((ZERO, ONE, ZERO), state.upper),
+        ((ZERO, ZERO, -ONE), -crossing.lower),
+        ((ZERO, ZERO, ONE), crossing.upper),
+        ((ONE, -ONE, -ONE), ZERO),
+        ((-ONE, ZERO, TWO), ZERO),
+        ((ZERO, ONE, ONE), ONE),
     )
-    full_state = full_state_distribution(state_support, state)
-    value = dot_interval(cut.cell, joint) + dot_interval(
-        cut.target, full_state
-    )
-    reference = conditional_reference_cells(increment, state, joint)
-    correction = Interval(ZERO, ZERO)
-    for row in range(4):
-        for target in range(5):
-            correction += reference[row][target] * cut.exponential_minus_one[
-                row
-            ][target]
-    return (value - correction).lower
+    vertices: set[tuple[Fraction, Fraction, Fraction]] = set()
+    for active in itertools.combinations(constraints, 3):
+        matrix = tuple(row for row, _ in active)
+        target = tuple(bound for _, bound in active)
+        solution = solve_three_by_three(matrix, target)
+        if solution is None:
+            continue
+        if all(
+            sum(
+                (coefficient * coordinate for coefficient, coordinate in zip(row, solution, strict=True)),
+                ZERO,
+            )
+            <= bound
+            for row, bound in constraints
+        ):
+            vertices.add(solution)
+    if not vertices:
+        raise RuntimeError("support polytope has no vertices")
+    return tuple(sorted(vertices))
+
+
+def solve_three_by_three(
+    matrix: tuple[tuple[Fraction, Fraction, Fraction], ...],
+    target: tuple[Fraction, Fraction, Fraction],
+) -> tuple[Fraction, Fraction, Fraction] | None:
+    augmented = [list(row) + [value] for row, value in zip(matrix, target, strict=True)]
+    for column in range(3):
+        pivot = next(
+            (row for row in range(column, 3) if augmented[row][column] != ZERO),
+            None,
+        )
+        if pivot is None:
+            return None
+        augmented[column], augmented[pivot] = augmented[pivot], augmented[column]
+        pivot_value = augmented[column][column]
+        augmented[column] = [value / pivot_value for value in augmented[column]]
+        for row in range(3):
+            if row == column:
+                continue
+            factor = augmented[row][column]
+            if factor != ZERO:
+                augmented[row] = [
+                    value - factor * pivot_entry
+                    for value, pivot_entry in zip(
+                        augmented[row], augmented[column], strict=True
+                    )
+                ]
+    return tuple(augmented[row][3] for row in range(3))
 
 
 def binary_divergence_at(probability: Fraction, reference: Fraction) -> Fraction:

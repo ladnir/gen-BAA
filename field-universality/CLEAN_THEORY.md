@@ -702,11 +702,79 @@ Directed intervals enclose the exponential coefficients and every entropy.
 
 At the numerical quinary maximizer, a degenerate rational box receives the
 exact upper bound `-0.0014613008557`, matching the numerical two-level value.
-The regression test checks this point certificate. The global cover remains
-open: after 1,000 boxes, the current exact upper bound is `0.4747874`. Broad
-conditional-composition boxes still make the KL dual cuts uninformative.
-This is now a cover-refinement problem, not a missing inequality or a
-transition-dimension problem.
+The regression test checks this point certificate. The global 14-variable
+cover remains open: after 1,000 boxes, normalization-aware simplex-vertex
+cuts give the exact upper bound `0.4393419`. Broad conditional-composition
+boxes still make the KL dual cuts uninformative.
+
+The conditional compositions can in fact be removed. First use field
+multiplication to choose a canonical message law with
+
+```text
+mu^+_1 >= mu^+_d  for every d!=0.
+```
+
+Fix a middle symbol `j` and a first-stage Fenchel cut. On the branch
+`beta^+=delta_j`, let `c_d(A,B,x)` be the resulting affine cut value when the
+nonzero increment is `d`. For arbitrary nonnegative order multipliers
+`lambda_d`, set
+
+```text
+c'_1 = c_1-sum_(d!=1) lambda_d,
+c'_d = c_d+lambda_d  (d!=1).
+```
+
+The canonical inequalities and the entropy conjugate give
+
+```text
+A H(mu^+)/3-sum_d mu^+_d c_d
+  <= A/3 log sum_(d!=0) exp(-3c'_d/A).              [ordered conjugate]
+```
+
+Indeed, subtracting
+`sum_(d!=1) lambda_d(mu^+_d-mu^+_1)` can only increase the objective on the
+canonical simplex. Unconstrained entropy maximization then proves the
+displayed log-sum-exp formula.
+
+There is no positive entropy term for `beta^+` or `zeta^+`. After a cut is
+fixed, their remaining dependence is multilinear. Its maximum over the two
+simplexes is therefore attained at a pair
+`(beta^+,zeta^+)=(delta_j,delta_k)`. The finite branches may use different
+valid cuts and different order multipliers. Thus they need not share the
+weaker orbit-averaged cut.
+
+This gives a five-variable upper bound. For each `(j,k)`, combine an ordered
+first-stage conjugate with a second-stage affine cut, then maximize over the
+`(p-1)^2` branches. Only `(A,B,C,x_1,x_2)` remain. For fixed certificates,
+the ordered conjugate is a convex perspective of log-sum-exp. Its maximum on
+a rational support polytope occurs at a vertex. The checker therefore uses
+directed point evaluations at finitely many support vertices instead of wide
+exponential intervals.
+
+The script `scripts/verify_eliminated_composition_bulk.py` implements this
+reduction for `F_5`. At the quinary numerical maximizer, rational single-cut
+branch certificates give the exact upper bound `-0.00138189`; the true
+two-level value there is `-0.00146130`. At the four diagnostic support scales
+`A=0.002,0.01,0.05,0.26`, the corresponding numerical branch envelopes are
+respectively
+
+```text
+-0.00138189, -0.00461658, -0.01173108, -0.05332647.
+```
+
+The active first-stage certificates are usually single multiplicative images
+of one reference cut. For the second stage, nonzero symbol pairs split into
+orbits indexed by the ratio `k/j`. This is the first mechanism in the bulk
+analysis whose complexity grows linearly, rather than quadratically, in the
+number of nonzero field elements. The present exact checker nevertheless
+keeps all sixteen quinary branches separate until exact orbit invariance of
+the rationalized cut bank is certified.
+
+The five-variable global cover is not yet closed. Its current implementation
+uses exact rational verification for every proposed cut mixture, but the cut
+bank is still too sparse on broad off-maximizer support boxes. This is now a
+support-space certificate-generation problem; no conditional-composition
+boxes remain.
 
 This observation gives a quantitative proof split. On the domain
 

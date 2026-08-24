@@ -112,8 +112,16 @@ conditionally independent. Data processing first to cancellation and then to
 the nonzero target symbol gives an explicit two-level lower bound. Applied to
 both stages, it produces a rigorous composition-only upper bound with
 `3p+2` variables. Numerical maximization is negative at the binary endpoint
-for `p=5,7,11`; exact global certification of this reduced bound is now the
-main bulk obligation.
+for `p=5,7,11`.
+
+For `F_5`, canonicalizing the largest nonzero message mass and applying the
+entropy conjugate removes the remaining conditional compositions. The middle
+and output laws reduce to sixteen symbol branches, each of which may use its
+own valid KL cut. This leaves only the five support variables
+`(A,B,C,x_1,x_2)`. Rational branch certificates give the exact upper bound
+`-0.00138189` at the numerical maximizer, close to the reduced value
+`-0.00146130`. The global five-variable cover, rather than the original
+14-variable cover, is now the main bulk obligation.
 
 For repetition three over `F_3`, the project now proves
 
@@ -461,6 +469,10 @@ python scripts/optimize_conditional_product_bound.py \
   --restarts 32
 
 python scripts/verify_reduced_composition_bulk.py \
+  --prime 5 --delta 1323/10000 --eta 1/500 \
+  --max-boxes 1000 --precision 80
+
+python scripts/verify_eliminated_composition_bulk.py \
   --prime 5 --delta 1323/10000 --eta 1/500 \
   --max-boxes 1000 --precision 80
 
