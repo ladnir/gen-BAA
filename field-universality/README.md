@@ -130,3 +130,53 @@ belong under `field-universality/`. In particular:
 - do not describe numerical evidence as a theorem; and
 - do not transfer a claim to the BAA paper before its assumptions and proof
   status are explicit.
+
+## Exact experiment harness
+
+The Rust program in this directory constructs the encoder once over the
+integers. It reduces that same matrix over `F_2`, each requested odd prime
+field, and the rationals. Every field therefore receives exactly the same local
+map and permutation sample.
+
+For each field, the program exhaustively evaluates every coordinate-deletion
+set and reports the worst-support rank profile and exact minimum distance. This
+is exponential in the global length and is intended for small, certified
+instances. A work-budget guard prevents accidental large runs.
+
+The schedule is explicit. For example, `APAP` denotes
+
+```text
+B -> accumulator -> permutation 1 -> accumulator -> permutation 2,
+```
+
+whereas `PAPA` denotes
+
+```text
+B -> permutation 1 -> accumulator -> permutation 2 -> accumulator.
+```
+
+Build and test the harness with
+
+```text
+cd field-universality
+cargo test --release
+```
+
+Run the default coupled experiment with
+
+```text
+cargo run --release -- \
+  --local examples/repetition3.matrix \
+  --blocks 2 \
+  --schedule APAP \
+  --samples 10 \
+  --primes 3,5 \
+  --output results/repetition3-apap.csv
+```
+
+Each CSV row records the field, exact distance, normalized distance, binary
+baseline, signed distance gap, normalized gap, complete deletion-rank profile,
+sample seed, and every permutation. The modular and rational rank routines
+reuse flat row-major workspaces throughout the exhaustive subset loop. The
+rational routine uses checked fraction-free elimination. If an intermediate
+exceeds `i128`, the program stops instead of returning an uncertified result.
