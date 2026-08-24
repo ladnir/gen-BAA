@@ -75,6 +75,19 @@ than two and every fixed field. Exact sparse-spacing specializations meet the
 lower endpoint of every certified slab. This is a proved field-uniform tangent
 mechanism, not yet a proof for the remaining bulk domains.
 
+The support analysis also gives one field-uniform theorem. For every fixed odd
+prime `p`, the expected number of low-output codewords whose message support is
+at most
+
+```text
+K / (60 (p-1)^2)
+```
+
+tends to zero at output fraction `1323/10000`. The proof combines the
+support-indicator bound above `K/(100(p-1)^2)` with the exact random-spacing
+estimate below it. `scripts/verify_uniform_support_slab.py` checks all
+constants using rational arithmetic.
+
 For repetition three over `F_3`, the project now proves
 
 ```text
@@ -397,6 +410,8 @@ python scripts/search_full_symbol_cover.py \
 python scripts/verify_support_indicator_bulk.py \
   --prime 5 --repetition 3 --delta 1323/10000 \
   --eta 1/2000 --cutoff 1/500 --precision 80
+
+python scripts/verify_uniform_support_slab.py
 
 python scripts/verify_sign_orbit_bulk.py \
   --prime 5 --delta 1323/10000 --eta 1/500 \

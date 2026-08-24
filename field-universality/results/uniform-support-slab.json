@@ -1,0 +1,35 @@
+{
+  "arithmetic": "integer and rational comparisons only",
+  "checks": {
+    "e_lower_series": true,
+    "log_one_over_radicand_gt_three_quarters": true,
+    "spacing_denominator_gt_nineteen_fortieth": true,
+    "slabs_overlap": true,
+    "sparse_base_squared": true,
+    "support_margin": true
+  },
+  "delta": "1323/10000",
+  "e_lower_series": "65/24",
+  "e_upper": "11/4",
+  "log_lower_check": {
+    "denominator": "25000000000000000000000000000000",
+    "numerator": "23115102417413817184294286561811"
+  },
+  "radicand": "11479671/25000000",
+  "spacing_denominator_check": {
+    "left_denominator": "25000000",
+    "left_numerator": "39960734751",
+    "right": "1600"
+  },
+  "sparse_base_squared_upper": {
+    "denominator": "435691903941",
+    "numerator": "309760000000"
+  },
+  "sparse_endpoint": "1/(100*(p-1)^2)",
+  "status": "verified all-primes support-slab constants",
+  "support_endpoint": "1/(60*(p-1)^2)",
+  "support_margin_lower": {
+    "denominator": "128",
+    "numerator": "135"
+  }
+}

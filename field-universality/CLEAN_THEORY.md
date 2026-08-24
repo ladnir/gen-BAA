@@ -412,6 +412,96 @@ For every fixed field and repetition factor `r>2`, the leading coefficient is
 negative. At repetition three it is `-1/6`. This is a field-uniform tangent
 mechanism; the field size enters only the linear term `A log(p-1)/r`.
 
+The tangent mechanism gives a uniform theorem, not only an asymptotic
+expansion.
+
+**Theorem (all-primes small-message slab).** Let `p` be an odd prime and set
+`q:=p-1`. In the repetition-three addition-only BAA ensemble, the expected
+number of codewords with
+
+```text
+0 < message support <= K/(60 q^2),
+output support <= (1323/10000) N
+```
+
+tends to zero.
+
+**Proof.** Set `delta_0:=1323/10000` and
+
+```text
+Lambda := log(1/(4 delta_0(1-delta_0))).
+```
+
+The conditional distribution of the state indicator given a nonzero
+increment is uniform when the crossing parameter is `a/2`. Therefore,
+
+```text
+J(a,b)
+ >= a D(Bernoulli(1/2) || Bernoulli(b))
+  = (a/2) log(1/(4b(1-b))).
+```
+
+For `C<=delta_0`, the support-indicator lemma and `1-B<=1` give
+
+```text
+Psi_{p,3}
+ <= (h(A)+A log q)/3
+    -(A/2)log(1/(4B))-(B/2)Lambda.
+```
+
+Minimizing the last two terms over positive `B`, then using
+`h(A)<=A log(e/A)`, yields
+
+```text
+Psi_{p,3}/A
+ <= (1/6)log(q^2 A)-1/6-(1/2)log(Lambda/4).
+```
+
+The integer checks recorded below imply `Lambda>3/4`. If
+`q^2 A<=1/60`, the right-hand side is strictly less than
+
+```text
+-(1/6) log(e * 60 * (3/16)^3) < 0.
+```
+
+For the last inequality, the exponential series gives `e>8/3`, and
+
+```text
+(8/3) * 60 * (3/16)^3 = 135/128 > 1.
+```
+
+This proves a negative bulk exponent on every closed slab bounded away from
+`A=0`.
+
+It remains to cover the sparse endpoint. Take `eta:=1/(100q^2)`. The spacing
+bound of Section 4 has squared geometric base at most
+
+```text
+309760000000 / 435691903941 < 1.
+```
+
+Here we used `q>=2`, `e<11/4`, and
+`exp(D(1/2 || delta_0))-1>19/40`. Hence the sparse expected count below
+`eta K` tends to zero. The bulk exponent handles
+
+```text
+eta <= A <= 1/(60q^2).
+```
+
+The union bound proves the theorem. ∎
+
+All transcendental constants in this proof reduce to integer comparisons.
+The bound `e<11/4` and
+
+```text
+(11/4)^3 * (4 delta_0(1-delta_0))^4 < 1
+```
+
+imply `Lambda>3/4`. The script
+`scripts/verify_uniform_support_slab.py` checks these comparisons and the two
+rational margins. Its output is recorded in
+`results/uniform-support-slab.json`.
+
 At `r=3` and `C<=1323/10000`, the checker
 `scripts/verify_support_indicator_bulk.py` gives the following exact ladder.
 
@@ -1560,7 +1650,8 @@ reflects real codewords or only correlations.
 ## 10. Immediate proof obligations
 
 1. Raise the quinary bulk certificate from `0.05` toward the binary benchmark
-   `0.1323` using the full-symbol transition polytope.
+   `0.1323` on the remaining domain above the all-primes support slab, using
+   the full-symbol transition polytope.
 2. Certify a positive ternary bulk type at `delta=0.197`, then locate the
    first-moment transition between `0.196` and `0.197`.
 3. Evaluate or certify the bulk exponent for further primes and the repetition
