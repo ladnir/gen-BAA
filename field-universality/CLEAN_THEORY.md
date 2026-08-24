@@ -1,17 +1,19 @@
-# A sparse-core theory for addition-only RAA codes
+# A sparse-core theory for addition-only BAA codes
 
 ## 1. Current thesis
 
 The experiments no longer suggest equality of coupled binary and prime-field
-distances. They suggest a cleaner two-regime theory.
+distances. They suggest a cleaner theorem for one explicit BAA ensemble.
 
 Sparse messages create characteristic-specific traps with polynomially small
-probability. Bulk messages obey a vector-composition first moment. A proof of
-one-sided distance inheritance should treat these regimes separately.
+probability. Bulk messages obey a vector-composition first moment. A proof that
+this ensemble inherits a certified binary distance threshold should treat
+these regimes separately.
 
 The central obstruction is not the existence of odd-characteristic torsion.
 Most successful samples contain such torsion above the binary minimum. The
-desired theorem must instead exclude torsion below a fixed linear threshold.
+desired theorem must instead exclude torsion below a certified binary linear
+threshold.
 
 This note develops five ingredients:
 
@@ -47,6 +49,23 @@ E_{P_1,P_2} := A P_2 A P_1 B_r.
 
 All probabilities and expectations below are over `(P_1,P_2)`. A coupled
 binary comparison uses the same realized permutations in characteristic two.
+
+Let `delta_bin(r)` be a proved binary relative-distance threshold for this
+ensemble. The target theorem is
+
+```text
+for every fixed odd prime p and every delta<delta_bin(r),
+Pr[d_min(im E_{P_1,P_2}) <= delta N] -> 0 as K -> infinity.
+```
+
+The image and minimum distance in this statement are taken over `F_p`. The
+statement transfers a certified threshold. It does not assert samplewise
+distance monotonicity or equality of limiting distances.
+
+The repetition map is part of the theorem, not a placeholder for an unknown
+binary encoder. A later blockwise extension must control the base code through
+its finite symbol-composition enumerator. Binary minimum distance alone cannot
+provide that control.
 
 For a word `u`, define its composition by
 
@@ -466,21 +485,24 @@ on each of the following domains:
 
 | message cutoff | output fraction | certified upper bound |
 |---:|---:|---:|
+| 0.0001 | 0.13 | -0.0000033185 |
 | 0.01 | 0.13  | -0.0001378250 |
 | 0.01 | 0.19  | -0.0000053629 |
 | 0.05 | 0.195 | -0.0000275872 |
 
 **Proof.** Corollary 5 reduces the full ternary problem to the sign-symmetric
 domain. The supporting-hyperplane bound described above is valid on every
-box. For the three rows, the verifier closes the covers after 57, 219, and 233
-box splits. The largest remaining box bound is the value in the last column.
-The interval verifier is part of the certificate. ∎
+box. For the four rows, the verifier closes the covers after 312, 57, 219, and
+233 box splits. The largest remaining box bound is the value in the last
+column. The interval verifier is part of the certificate. The certificate used
+by Theorem 13 is recorded in
+`results/ternary-bulk-0.13-eta-0.0001.json`. ∎
 
 The first row lies below the binary numerical transition near `0.132`. The
 second row shows that the ternary bulk margin is much larger. Proposition 6
 does not control message supports below the stated cutoff.
 
-## 4. Exact sparse-trap count
+## 4. Sparse path theory
 
 The first moment has a sparse boundary that is invisible to a normalized
 entropy calculation. The dominant ternary trap has an elementary exact count.
@@ -566,6 +588,215 @@ leaves a nonzero accumulator state after its last increment. A bounded span
 then creates a long suffix rather than a bounded first-stage word. Further
 message cancellations are necessary.
 
+### 4.1 Random spacings
+
+The one-block calculation does not control several active message symbols.
+A uniform argument must sum over every support size below the bulk cutoff.
+The following spacing identity supplies that argument.
+
+Fix an ordered list of `t` nonzero increments. Place the increments at a
+uniform `t`-subset of the `N` coordinates. Let `S_i` be the accumulator state
+after increment `i`. Define
+
+```text
+a := |{i : S_i != 0}|.
+```
+
+The state `S_i` persists from increment `i` until the next increment. Let `H`
+be the resulting accumulator weight.
+
+**Lemma 9 (spacing distribution).** Conditional on the increment order,
+
+```text
+Pr[H=w]
+  = binom(w-1,a-1) binom(N-w,t-a) / binom(N,t).
+```
+
+Consequently,
+
+```text
+Pr[H<=d] = Pr[X>=a],
+```
+
+where `X` is hypergeometric with population size `N`, marked-set size `d`,
+and sample size `t`.
+
+**Proof.** Let `g_0>=0` be the number of coordinates before the first
+increment. For `1<=i<=t`, let `g_i>=1` be the number of coordinates on which
+the state after increment `i` persists. These gaps satisfy
+
+```text
+g_0+g_1+...+g_t=N.
+```
+
+The accumulator weight is the sum of the `a` gaps whose states are nonzero.
+There are `binom(w-1,a-1)` ways to choose those positive gaps with sum `w`.
+The initial gap and the remaining `t-a` positive gaps can be chosen in
+`binom(N-w,t-a)` ways. Division by `binom(N,t)` proves the first formula.
+Summing over `w<=d` and applying Vandermonde's identity gives the
+hypergeometric tail. ∎
+
+The formula depends on the increment values only through `a`. A nonzero
+increment cannot take state zero to state zero. Therefore, zero states cannot
+occur consecutively in `(S_1,...,S_t)`, and
+
+```text
+a >= ceil(t/2).
+```
+
+For `0<delta<1/2`, define
+
+```text
+c_delta := D(1/2 || delta)
+         = -1/2 log(4 delta(1-delta)).
+```
+
+**Lemma 10 (one-accumulator lower tail).** Let `d<=delta N`. For every fixed
+nonzero increment order,
+
+```text
+Pr[H<=d] <= exp(-c_delta t).
+```
+
+**Proof.** Lemma 9 identifies the probability with a hypergeometric upper
+tail. If `X` counts marked elements in a sample without replacement, then
+
+```text
+E[exp(theta X)]
+  <= (1-d/N+(d/N)exp(theta))^t.
+```
+
+Maclaurin's inequality for elementary symmetric means proves this moment
+bound. Chernoff optimization gives
+
+```text
+Pr[X>=a] <= exp(-t D(a/t || d/N)).
+```
+
+The binary divergence increases in its first argument above `d/N` and
+decreases in its second argument below `a/t`. Since `a/t>=1/2` and
+`d/N<=delta<1/2`, the last exponent is at most `-c_delta t`. ∎
+
+Applying Lemma 10 after the second interleaver gives a factor
+`exp(-c_delta H)`. The next lemma averages that factor over the first
+interleaver without discarding the rarity of a small first-stage weight.
+
+For integers `x>=a`, write `(x)_a:=x(x-1)...(x-a+1)`.
+
+**Lemma 11 (spacing Laplace bound).** In the setting of Lemma 9, for every
+`c>0`,
+
+```text
+E[exp(-cH)]
+  <= (t)_a/(N)_a * (exp(c)-1)^(-a).
+```
+
+**Proof.** Lemma 9 and monotonicity of the second binomial coefficient give
+
+```text
+E[exp(-cH)]
+ <= binom(N-a,t-a)/binom(N,t)
+    * sum_{w=a}^infinity binom(w-1,a-1) exp(-cw).
+```
+
+The binomial ratio equals `(t)_a/(N)_a`. The negative-binomial generating
+function evaluates the sum as `(exp(c)-1)^(-a)`. ∎
+
+### 4.2 Uniform ternary sparse bound
+
+Return to repetition three over `F_3`. Let `Z_{3,s}(d)` count messages of
+support exactly `s` whose encoded words have weight at most `d`.
+
+**Proposition 12 (uniform sparse first moment).** Set
+
+```text
+delta := 0.13,
+eta := 0.0001,
+d := floor(delta N).
+```
+
+Then
+
+```text
+sum_{1<=s<=eta K} E[Z_{3,s}(d)] = o(1).
+```
+
+**Proof.** Fix a nonzero message of support `s`. Its repeated word has
+`t=3s` nonzero increments. Condition on their value order after `P_1`. If the
+first accumulator has weight `H`, Lemma 10 bounds the conditional probability
+over `P_2` by `exp(-c_delta H)`. Lemma 11 averages this bound over the first
+transition positions.
+
+Let `a` be the number of nonzero first-stage intervals. We have
+`a>=ceil(t/2)`. Successive bounds from Lemma 11 have ratio
+
+```text
+(t-a)/((N-a)(exp(c_delta)-1)).
+```
+
+This ratio is less than one for `t<=eta N`. Hence the largest bound occurs at
+`a=ceil(t/2)`, and
+
+```text
+Pr[encoded weight <= d]
+ <= [t/((N-t)(exp(c_delta)-1))]^(t/2).
+```
+
+There are `2^s binom(K,s)` ternary messages of support `s`. The estimate
+`binom(K,s)<=(eK/s)^s` therefore gives
+
+```text
+E[Z_{3,s}(d)] <= Q(N/s)^s,
+
+Q(R)
+ := 2eR/3 * [3/((R-3)(exp(c_delta)-1))]^(3/2).
+```
+
+The cutoff implies `R=N/s>=30000`. For `delta=13/100`,
+
+```text
+exp(c_delta)-1 = 50/sqrt(1131)-1 > 8/17.
+```
+
+Using `e<3` gives
+
+```text
+Q(R) < 2R [51/(8(R-3))]^(3/2).
+```
+
+The right-hand side decreases for `R>=30000` and is less than `1/5` at
+`R=30000`. After squaring, the last claim is the integer inequality
+
+```text
+100 * 30000^2 * 51^3 < 512 * 29997^3.
+```
+
+For each fixed `s`, `Q(N/s)` tends to zero. For all supported `s`, the terms
+are dominated by `(1/5)^s`. Split the sum at a fixed support bound and then
+send that bound to infinity. The dominated geometric tail proves the claim.
+∎
+
+Proposition 12 controls every support below the smaller bulk cutoff; it is not
+only a sublinear-support statement.
+
+**Theorem 13 (ternary BAA distance at 0.13).** For the repetition-three BAA
+ensemble over `F_3`,
+
+```text
+Pr[d_min <= floor(0.13 N)] -> 0.
+```
+
+**Proof.** Proposition 12 makes the expected number of low-weight words with
+message support at most `0.0001 K` tend to zero. Proposition 6 makes the
+expected number from larger supports exponentially small at the same cutoff
+and output fraction. Markov's inequality completes the proof. ∎
+
+The published binary repetition-three RAA analysis gives `0.1323` as a lower
+bound on its asymptotic distance growth coefficient. Thus Theorem 13 proves a
+common certified guarantee of `0.13` for the binary and ternary ensembles. See
+[Kliewer et al., *Coding Theorems for Repeat Multiple Accumulate
+Codes*](https://arxiv.org/abs/0810.3422), Table I.
+
 ## 5. What successful samples contain
 
 The exact classifier assigns each odd-field minimum witness to one of four
@@ -624,13 +855,12 @@ length 36, the mean weights for `s=1,...,12` are
 
 The beating events occur at the sparse edge of this curve. The typical
 nonbeating minimum moves toward larger support as `N` grows. This separation
-supports the following proof split.
+motivated the proof split used by Theorem 13.
 
-1. Bound message supports `s=o(N)` with exact path counts and polynomial
-   embedding costs.
-2. Bound message supports `s=Theta(N)` with the vector-composition first
+1. Bound every support below a fixed small linear cutoff with the random
+   spacing estimate.
+2. Bound every support above that cutoff with the vector-composition first
    moment from Theorem 3.
-3. Choose an overlap between the two bounds for intermediate supports.
 
 ## 7. Schedule and resonance
 
@@ -662,12 +892,12 @@ beating fractions are `0.013` over `F_3` and `0` over `F_5` in 1,000 samples.
 For `p=3`, one repetition-five block does not reset. For `p=5`, a one-block
 reset has the smaller fixed-span scale `N^(2-5)=N^-3`.
 
-## 8. Candidate theorem
+## 8. General sparse--bulk reduction
 
 The exact first moment suggests a theorem stated at a deterministic threshold,
 not at the random coupled binary distance.
 
-**Proposition 9 (sparse--bulk reduction).** Fix `r`, `p`, `delta>0`, and
+**Proposition 14 (sparse--bulk reduction).** Fix `r`, `p`, `delta>0`, and
 `eta>0`. Let `Z_p^s(delta N)` count nonzero messages of support less than
 `eta K` whose encoded word has weight at most `delta N`, and let
 `Z_p^bulk(delta N)` count the remaining low-weight messages. If
@@ -704,9 +934,9 @@ Pr[d_p <= delta N]
 The reduction is elementary; proving its two hypotheses is the substantive
 problem. It motivates the following ensemble-specific conjecture.
 
-**Conjecture 10 (odd-field threshold bound).** For the `PAPA`
+**Conjecture 15 (BAA threshold inheritance).** For the `PAPA`
 repetition-`r` ensemble and every fixed odd prime `p`, there are `eta>0` and
-`delta_p>0` such that Proposition 9 applies for every `delta<delta_p`.
+`delta_p>0` such that Proposition 14 applies for every `delta<delta_p`.
 Moreover, `delta_p` is at least the proved binary distance threshold for the
 same repetition factor.
 
@@ -716,8 +946,8 @@ Suppose the binary repetition-`r` RAA ensemble satisfies
 Pr[d_2 < delta N] -> 0.
 ```
 
-If Conjecture 10 covers this `delta`, Proposition 9 gives the odd-field bound.
-If `d_2/N` converges in probability to `delta_2` and Conjecture 10 applies for
+If Conjecture 15 covers this `delta`, Proposition 14 gives the odd-field bound.
+If `d_2/N` converges in probability to `delta_2` and Conjecture 15 applies for
 every `delta<delta_2`, the two bounds imply
 
 ```text
@@ -737,8 +967,9 @@ Neither task requires samplewise field monotonicity. Neither task claims that
 the binary and prime-field limiting distances are equal.
 
 For `p=r=3`, Proposition 6 completes the bulk task through `delta=0.19` with
-cutoff `eta=0.01`. At any smaller threshold, the prime-field hypothesis in
-Proposition 9 now depends only on its sparse bound.
+cutoff `eta=0.01`. Theorem 13 completes both tasks at output fraction `0.13`
+using cutoff `eta=0.0001`. At larger ternary thresholds, Proposition 14 still
+requires a sparse bound with matching constants.
 
 ## 9. Remaining counterexample search
 
@@ -762,14 +993,14 @@ reflects real codewords or only correlations.
 
 ## 10. Immediate proof obligations
 
-1. Extend Proposition 6 toward the numerical ternary transition near `0.196`
-   and reproduce the directed-interval certificate independently.
-2. Prove a uniform sparse bound for supports `s<=eta N`, with `eta` tending to
-   zero after `N` tends to infinity.
-3. Evaluate or certify the bulk exponent for further primes and the repetition
+1. Reproduce the `eta=0.0001`, `delta=0.13` interval certificate with an
+   independent verifier.
+2. Push Theorem 13 from `0.13` to the exact published binary threshold that
+   will be cited in the final statement.
+3. Optimize Proposition 12's constants only if the larger output threshold
+   requires a smaller cutoff.
+4. Evaluate or certify the bulk exponent for further primes and the repetition
    factors used by the binary RAA theorem.
-4. Compare the resulting prime-field threshold with a proved binary threshold,
-   not only with numerical samples.
 5. Search the bulk optimization for a positive-exponent type below that
    threshold.
 

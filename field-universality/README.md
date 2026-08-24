@@ -1,4 +1,4 @@
-# Field Universality for Addition-Only Encoders
+# Field Inheritance for Addition-Only BAA Codes
 
 This directory contains an independent research project on addition-only linear
 encoders over finite fields. It does not form part of the BAA paper or the
@@ -7,10 +7,22 @@ an explicit later decision.
 
 ## Question
 
-Fix a family of binary local maps `B_N`, a constant number of additive linear
-transforms, and independent uniform coordinate permutations. Interpret the same
-integer circuit over a field `F`, without random diagonal multipliers, and let
-`C_{F,N}` be its row-space code.
+This project studies one concrete ensemble. Fix a repetition factor `r` and
+set `N=rK`. The map `B_r` repeats each message symbol `r` times. Two
+independent uniform permutations separate `B_r` from two prefix accumulators:
+
+```text
+F^K --B_r--> F^N --P_1--> F^N --A--> F^N --P_2--> F^N --A--> F^N.
+```
+
+We call this the repetition-based BAA ensemble. Its encoder is
+
+```text
+E_{P_1,P_2} := A P_2 A P_1 B_r.
+```
+
+The same sampled permutations and the same integer circuit define a code over
+every prime field. No random diagonal multipliers are used.
 
 The central question is whether an odd-prime implementation inherits the
 binary ensemble's relative-distance threshold. Exact equality is no longer
@@ -34,18 +46,50 @@ field universality. [`CLEAN_THEORY.md`](CLEAN_THEORY.md) develops the current
 sparse--bulk theory, including an exact vector-composition enumerator and a
 finite-dimensional bulk exponent.
 
-## Conjecture hierarchy
+## Current theorem
 
-The first target is one-sided distance inheritance. For every fixed odd prime
-`p` and every `epsilon > 0`,
+For repetition three over `F_3`, the project now proves
 
 ```text
-Pr[Delta_{p,N} < Delta_{2,N} - epsilon] -> 0.
+Pr[Delta_{3,N} <= 0.13] -> 0.
+```
+
+The proof uses a directed interval certificate for message supports of at
+least `0.0001 K`. An exact random-spacing argument covers every smaller
+support. The sparse estimate sums over all ternary messages and does not
+assume random diagonal multipliers.
+
+The bulk certificate is stored in
+[`results/ternary-bulk-0.13-eta-0.0001.json`](results/ternary-bulk-0.13-eta-0.0001.json).
+
+This theorem establishes a concrete inherited distance guarantee. It does not
+yet prove inheritance at every value below the published binary threshold of
+`0.1323`; see [Kliewer et al., *Coding Theorems for Repeat Multiple Accumulate
+Codes*](https://arxiv.org/abs/0810.3422), Table I.
+
+## Conjecture hierarchy
+
+Let `delta_bin(r)` be a proved binary relative-distance threshold for this
+ensemble. The first target is threshold inheritance. For every fixed odd prime
+`p` and every `delta < delta_bin(r)`,
+
+```text
+Pr[Delta_{p,N} <= delta] -> 0.
 ```
 
 This statement is sufficient for the intended application: an encoder over a
-prime field would inherit the binary relative-distance guarantee while using
-only additions, permutations, and fixed local binary maps.
+prime field would inherit the certified binary distance guarantee while using
+only additions, permutations, and the fixed repetition map.
+
+If the binary relative distance also converges to `delta_bin(r)`, threshold
+inheritance implies the coupled one-sided statement
+
+```text
+Pr[Delta_{p,N} < Delta_{2,N} - epsilon] -> 0
+```
+
+for every `epsilon>0`. The convergence assumption is necessary for this
+deduction; two unrelated lower bounds do not compare the realized distances.
 
 The stronger coupled-universality conjecture was the original motivation:
 
@@ -55,8 +99,8 @@ Delta_{p,N} - Delta_{2,N} -> 0 in probability.
 
 The experiments and bulk optimization do not currently support this stronger
 statement. It remains useful as a falsifiable comparison, not as the main
-proof target. Generalization beyond the two-accumulator circuit should wait
-until the sparse and bulk bounds are proved in this model.
+proof target. Generalization beyond the repetition-based, two-accumulator
+circuit should wait until the sparse and bulk bounds are proved in this model.
 
 ## Rank formulation
 
@@ -88,30 +132,27 @@ weight two over `F_2` and weight one over `F_3`.
 
 The conjectures must therefore quantify over the random interleavers. Initial
 work will also fix `p` before taking `N -> infinity`. Uniformity over primes,
-adversarial characteristics, deterministic interleavers, and arbitrary binary
-local maps are outside the first scope.
+adversarial characteristics, deterministic interleavers, and unknown binary
+base encoders are outside the first scope.
 
-The local maps must preserve dimension and minimum distance over the fields
-being compared. This property is an assumption until proved for a particular
-family.
+A later extension may replace `B_r` with a fixed blockwise base code. Such an
+extension must state checkable hypotheses on its finite symbol-composition
+enumerator. Binary minimum distance alone is not a sufficient hypothesis.
 
 ## Proof program
 
-1. Prove exact distance preservation for scalar extension from `F_2` to
-   `F_{2^r}`. This gives a baseline theorem and isolates the odd-characteristic
-   obstruction.
-2. Establish the rank/cogirth formulation for the complete encoder circuit.
-3. Prove field-independent rank for supports whose backward constraint graph
-   can be eliminated by degree-one peeling.
-4. Bound the probability of a non-peelable low-weight residual core.
-5. Prove one-sided distance inheritance uniformly over all supports below a
-   target relative weight.
-6. Investigate the matching upper bound required for coupled universality.
-7. Generalize only after the two-layer model is understood.
+1. Reproduce the `0.13` bulk certificate with an independent verifier.
+2. Push the ternary constant to the exact published binary threshold.
+3. Extend the spacing proof and bulk certificate to further odd primes.
+4. Establish the rank/cogirth formulation as an independent algebraic view of
+   characteristic-specific failures.
+5. Investigate the matching upper bound required for coupled universality.
+6. Extract checkable enumerator hypotheses for blockwise BAA base codes only
+   after the repetition-based theorem is complete.
 
-The uniform quantifier over exponentially many supports is the main obstacle.
-A fixed-support rank theorem is useful but does not by itself imply a distance
-theorem.
+The first-moment proof resolves the uniform quantifier for the ternary
+`0.13` theorem. Rank and residual-core diagnostics remain useful for finding
+counterexamples, but the theorem does not depend on a uniform rank comparison.
 
 ## Experimental program
 
@@ -253,7 +294,10 @@ python scripts/optimize_symmetric_ternary.py \
   --repetition 3 --delta 0.195 --eta 0.05
 
 python scripts/certify_symmetric_ternary.py \
-  --delta 0.19 --eta 0.01 --precision 80
+  --delta 0.13 --eta 0.0001 --precision 80
+
+python scripts/sparse_spacing_bound.py \
+  --delta 0.13 --eta 0.0001
 ```
 
 The first command searches the full vector-composition problem. The second
@@ -267,5 +311,8 @@ For `F_3`, the theory note proves that sign symmetrization is without loss.
 The certificate script then covers the reduced three-dimensional outer domain
 with deterministic entropy bounds. Its default 80-digit arithmetic adds a
 directed interval around every arithmetic operation and logarithm. The command
-above certifies a negative bulk exponent through output fraction `0.19` for
-message supports of at least one percent.
+above certifies the bulk half of the `0.13` theorem at cutoff `0.0001`. A
+separate certificate reaches output fraction `0.19` at cutoff `0.01`.
+
+The final command reports the constants in the exact sparse proof. The proof
+uses integer inequalities; the displayed floating-point values are diagnostic.

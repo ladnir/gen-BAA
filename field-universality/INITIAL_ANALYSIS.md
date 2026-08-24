@@ -2,27 +2,33 @@
 
 ## 1. Current conclusion
 
-Consider an integer generator matrix obtained from binary local maps,
-permutations, and prefix accumulators. Reduce the same matrix over
-`F_2` and `F_p`, using the same sampled permutations.
+Consider the repetition-based BAA encoder
+
+```text
+E_{P_1,P_2} := A P_2 A P_1 B_r.
+```
+
+Reduce the same integer circuit over `F_2` and `F_p`, using the same sampled
+permutations.
 
 The initial evidence does not support asymptotic equality of the two relative
 distances. For the standard two-interleaver schedule, odd-characteristic and
 rational distances are usually larger than the binary distance. The observed
 gap does not shrink over the exact lengths currently accessible.
 
-The evidence does support a weaker and more useful target:
+The evidence supports a weaker and more useful target. If `delta_bin(r)` is a
+proved binary threshold, then
 
 ```text
-for every fixed odd prime p and every epsilon > 0,
-Pr[d_p < d_2 - epsilon N] -> 0.
+for every fixed odd prime p and every delta < delta_bin(r),
+Pr[d_p <= delta N] -> 0.
 ```
 
-No asymptotic counterexample to this one-sided statement has been found for
-the standard two-interleaver schedule and a field-stable local code. Small
-instances do contain samples with `d_p < d_2`. Their minimum words are usually
-sparse-message alignment events. Their absolute deficit remains small as the
-length grows.
+The project now proves this threshold statement for `p=r=3` and
+`delta=0.13`. Small instances still contain samples with `d_3<d_2`. Their
+minimum words are usually sparse-message alignment events, but an exact
+spacing bound shows that the total probability of all such low-weight words
+tends to zero.
 
 This distinction matters for the application. One-sided inheritance would
 permit an addition-only prime-field encoder to use the binary distance
@@ -31,10 +37,11 @@ distance. A larger prime-field distance is beneficial.
 
 ## 2. Model and schedule convention
 
-Let `B_N` be an integer matrix with entries in `{0,1}`. Let `A_N` be the
-inclusive prefix-sum matrix. Let `P_1,P_2` be independent uniform permutation
-matrices. Vectors are row vectors, and operations are listed in execution
-order.
+The central model sets `B_N=B_r`, where `B_r` is the repetition-`r` map and
+`N=rK`. Let `A_N` be the inclusive prefix-sum matrix. Let `P_1,P_2` be
+independent uniform permutation matrices. Vectors are row vectors, and
+operations are listed in execution order. Later experiments with other local
+maps are counterexample probes, not part of Conjecture A.
 
 The standard repeat--accumulate--accumulate schedule is
 
@@ -395,9 +402,8 @@ d_3(G_L)/(4L+1) -> 0.
 
 This is a proved asymptotic counterexample for unrestricted binary matrices.
 Its rate tends to zero, and its local distance is not field-stable. It does not
-refute Conjecture A, which fixes a positive-rate, field-stable local code and a
-specific random encoder architecture. It shows that those hypotheses are
-substantive.
+refute Conjecture A, which fixes the positive-rate repetition map and the
+`PAPA` random encoder architecture. It shows that this scope is substantive.
 
 A fixed-rate extension appears plausible. Choose `K` growing and sample dense
 binary columns of an odd weight `w` divisible by `p`. Every sampled column lies
@@ -538,18 +544,22 @@ Theorem 4.
 These results support addition-only encoding as a serious separate ensemble.
 They do not support exact binary/prime-field equality.
 
-## 13. Revised conjecture hierarchy
+## 13. Scoped conjecture hierarchy
 
-### Conjecture A: one-sided relative-distance inheritance
+### Conjecture A: threshold inheritance for repetition-based BAA
 
-Fix an odd prime `p`, a field-stable local binary code, and the standard
-two-interleaver schedule. For every `epsilon>0`,
+Fix an odd prime `p`, a repetition factor `r`, and the `PAPA` schedule. Let
+`delta_bin(r)` be a proved binary relative-distance threshold for this
+ensemble. For every `delta<delta_bin(r)`,
 
 ```text
-Pr[d_p < d_2 - epsilon N] -> 0.
+Pr[d_p <= delta N] -> 0.
 ```
 
-This is the main target.
+This is the main target. It makes no claim about unknown binary base encoders.
+Binary minimum distance does not control odd-field cancellation. A later
+blockwise extension must impose explicit hypotheses on the base code's finite
+symbol-composition enumerator.
 
 ### Conjecture B: strict odd-field improvement
 
@@ -587,8 +597,8 @@ Two-sided profile equality is not expected.
 
 ## 14. Proof program
 
-1. Prove Lemma 1 and the deletion-set equivalences in the eventual Lean
-   development for this project.
+1. Fix repetition `B_r` as the only base map in the first theorem. Do not hide
+   a general base-code assumption inside the notation.
 2. Express every retained-column rank loss as torsion in a backward sparse
    constraint matrix. Separate the peelable part from its residual core.
 3. Prove that peeling creates unit minors. All field dependence must then live
@@ -600,10 +610,12 @@ Two-sided profile equality is not expected.
    accumulator. Do not import the scalar weighted enumerator silently.
 6. For linear message weights, derive a type-based first moment that retains
    symbol composition. Compare its exponent with the binary exponent.
-7. Seek a uniform bound on `p`-torsion cores below the binary distance. A
+7. Seek a uniform bound on `p`-torsion cores below `delta_bin(r) N`. A
    successful bound would prove Conjecture A.
-8. In parallel, search for a planted residual core whose entropy exceeds its
-   placement cost. Such a construction would refute Conjecture A.
+8. Search for a planted residual core whose entropy exceeds its placement
+   cost. Such a construction would refute Conjecture A.
+9. After Conjecture A is settled, identify sufficient enumerator conditions
+   for a fixed blockwise base code and test them on the BAA local codes.
 
 ## 15. Experimental next steps
 

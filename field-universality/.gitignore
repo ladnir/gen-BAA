@@ -1,5 +1,6 @@
 /target/
 /results/*
 !/results/.gitkeep
+!/results/ternary-bulk-0.13-eta-0.0001.json
 __pycache__/
 *.pyc
