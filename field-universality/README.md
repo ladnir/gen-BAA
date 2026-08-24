@@ -341,6 +341,10 @@ python scripts/sparse_spacing_bound.py \
 python scripts/sparse_spacing_bound.py \
   --prime 5 --repetition 3 --delta 0.26 --eta 0.00001
 
+python scripts/verify_prime_ladder.py --prime 5
+
+python scripts/verify_prime_ladder.py --prime 7
+
 python scripts/diagnose_entropy_dual.py \
   --prime 5 --repetition 3 --delta 0.196 --eta 0.0001
 
@@ -364,8 +368,9 @@ intervals. Both implementations certify the bulk half of the `0.196` theorem
 at cutoff `0.0001`.
 
 The two sparse commands report the constants in the exact ternary and quinary
-proofs. The proofs use integer inequalities; the displayed floating-point
-values are diagnostic.
+proofs. The prime-ladder verifier independently checks the all-integer
+criterion and its least passing denominator. The displayed floating-point
+values from the sparse script are diagnostic.
 
 The last two commands develop the full-composition certificate. They use
 floating-point optimization to design entropy-dual cuts and a box cover.
