@@ -127,8 +127,9 @@ The exact checker proposes fresh cuts on off-curve support boxes and verifies
 their rationalized potentials independently. It bounds the complete convex
 surrogate on vertices of the joint five-dimensional support polytope, so the
 support and conditional penalties cannot be maximized at incompatible
-points. The current 100-box exact upper bound is `0.09312368`; the cover is
-improving but is not yet a theorem at `0.1323`.
+points. Combining this surrogate with the proved support-only bound and a
+bounded inherited cut bank gives the current 100-box exact upper bound
+`0.00846858`. The cover is improving but is not yet a theorem at `0.1323`.
 
 For repetition three over `F_3`, the project now proves
 

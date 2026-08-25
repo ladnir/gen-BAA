@@ -30,6 +30,10 @@ from verify_conditional_product_bulk import (
     make_cut,
 )
 from verify_reduced_composition_bulk import support_vertices
+from verify_support_indicator_bulk import (
+    Box as SupportBox,
+    box_bound as support_indicator_box_bound,
+)
 
 
 @dataclass(frozen=True)
@@ -49,6 +53,8 @@ class Bound:
     value: Fraction
     box: Box
     split_dimension: int
+    cuts: tuple[Cut, ...]
+    certificates: tuple[Certificate, ...]
 
 
 def candidate_certificate() -> Certificate:
@@ -211,6 +217,52 @@ def local_certificate(
     return cuts + tuple(new_cuts), Certificate(
         tuple(first_weights), tuple(multiplier_rows)
     )
+
+
+def trim_certificate_bank(
+    cuts: tuple[Cut, ...],
+    certificates: tuple[Certificate, ...],
+    local_history: int = 5,
+) -> tuple[tuple[Cut, ...], tuple[Certificate, ...]]:
+    static_cut_count = 32
+    static_certificate_count = 4
+    if len(certificates) <= static_certificate_count + local_history:
+        return cuts, certificates
+    retained_certificates = certificates[:static_certificate_count] + certificates[
+        -local_history:
+    ]
+    local_indices = sorted(
+        {
+            cut_index
+            for certificate in retained_certificates[static_certificate_count:]
+            for weights in certificate.first_weights
+            for cut_index, _ in weights
+        }
+    )
+    retained_cuts = cuts[:static_cut_count] + tuple(
+        cuts[index] for index in local_indices
+    )
+    index_map = {index: index for index in range(static_cut_count)}
+    index_map.update(
+        {
+            old_index: static_cut_count + offset
+            for offset, old_index in enumerate(local_indices)
+        }
+    )
+
+    def remap(certificate: Certificate) -> Certificate:
+        return Certificate(
+            tuple(
+                tuple(
+                    (index_map[cut_index], weight)
+                    for cut_index, weight in weights
+                )
+                for weights in certificate.first_weights
+            ),
+            certificate.order_multipliers,
+        )
+
+    return retained_cuts, tuple(remap(certificate) for certificate in retained_certificates)
 
 
 def tighten(raw: Box, eta: Fraction, delta: Fraction) -> Box | None:
@@ -833,11 +885,11 @@ def support_upper(box: Box) -> Fraction:
     return upper
 
 
-def joint_envelope_upper(
+def joint_envelope_bounds(
     box: Box,
     cuts: tuple[Cut, ...],
     certificates: tuple[Certificate, ...],
-) -> Fraction:
+) -> tuple[Fraction, Fraction]:
     vertices = joint_support_vertices(box)
     support_coefficients = support_surrogate_data(vertices)
     support_values = tuple(
@@ -861,13 +913,16 @@ def joint_envelope_upper(
     }
     first_cache: dict[tuple[int, int, tuple[Fraction, ...]], Fraction] = {}
     second_cache: dict[tuple[int, int, tuple[Fraction, ...]], Fraction] = {}
-    best: Fraction | None = None
+    best_full: Fraction | None = None
+    best_conditional: Fraction | None = None
     for middle_symbol in range(1, 5):
         for output_symbol in range(1, 5):
-            branch: Fraction | None = None
+            branch_full: Fraction | None = None
+            branch_conditional: Fraction | None = None
             weights = second_mixtures[(middle_symbol, output_symbol)]
             for certificate_index, certificate in enumerate(certificates):
-                certificate_upper: Fraction | None = None
+                certificate_full: Fraction | None = None
+                certificate_conditional: Fraction | None = None
                 for vertex_index, vertex in enumerate(vertices):
                     first_vertex = (vertex[0], vertex[1], vertex[3])
                     first_key = (
@@ -905,29 +960,47 @@ def joint_envelope_upper(
                             ),
                             ZERO,
                         )
-                    value = (
-                        support_values[vertex_index]
-                        + first_cache[first_key]
-                        - second_cache[second_key]
+                    conditional = (
+                        first_cache[first_key] - second_cache[second_key]
                     )
-                    certificate_upper = (
-                        value
-                        if certificate_upper is None
-                        else max(certificate_upper, value)
+                    full = support_values[vertex_index] + conditional
+                    certificate_full = (
+                        full
+                        if certificate_full is None
+                        else max(certificate_full, full)
                     )
-                if certificate_upper is None:
+                    certificate_conditional = (
+                        conditional
+                        if certificate_conditional is None
+                        else max(certificate_conditional, conditional)
+                    )
+                if certificate_full is None or certificate_conditional is None:
                     raise RuntimeError("empty joint support polytope")
-                branch = (
-                    certificate_upper
-                    if branch is None
-                    else min(branch, certificate_upper)
+                branch_full = (
+                    certificate_full
+                    if branch_full is None
+                    else min(branch_full, certificate_full)
                 )
-            if branch is None:
+                branch_conditional = (
+                    certificate_conditional
+                    if branch_conditional is None
+                    else min(branch_conditional, certificate_conditional)
+                )
+            if branch_full is None or branch_conditional is None:
                 raise RuntimeError("empty first-stage certificate bank")
-            best = branch if best is None else max(best, branch)
-    if best is None:
+            best_full = (
+                branch_full
+                if best_full is None
+                else max(best_full, branch_full)
+            )
+            best_conditional = (
+                branch_conditional
+                if best_conditional is None
+                else max(best_conditional, branch_conditional)
+            )
+    if best_full is None or best_conditional is None:
         raise RuntimeError("empty symbol branch set")
-    return best
+    return best_full, best_conditional
 
 
 def box_bound(
@@ -940,6 +1013,7 @@ def box_bound(
     box = tighten(raw, eta, delta)
     if box is None:
         return None
+    cuts, certificates = trim_certificate_bank(cuts, certificates)
     proposed = local_certificate(box, cuts)
     if proposed is None:
         active_cuts = cuts
@@ -947,8 +1021,22 @@ def box_bound(
     else:
         active_cuts, certificate = proposed
         active_certificates = certificates + (certificate,)
-    value = joint_envelope_upper(
+    full_upper, conditional_upper = joint_envelope_bounds(
         box, active_cuts, active_certificates
+    )
+    support_result = support_indicator_box_bound(
+        SupportBox(box.lower[:3], box.upper[:3]),
+        5,
+        3,
+        True,
+    )
+    if support_result is None:
+        return None
+    local_support_upper = support_result[0]
+    value = min(
+        full_upper,
+        Fraction(1, 10_000) + conditional_upper,
+        local_support_upper + conditional_upper,
     )
     scores = []
     for index, (lower, upper) in enumerate(zip(box.lower, box.upper, strict=True)):
@@ -959,6 +1047,8 @@ def box_bound(
         value,
         box,
         max(range(5), key=scores.__getitem__),
+        active_cuts,
+        active_certificates,
     )
 
 
@@ -1000,7 +1090,13 @@ def search(args: argparse.Namespace) -> dict[str, object]:
                 "maximum_queue_size": maximum_queue,
             }
         for child in split(current.box, current.split_dimension):
-            bounded = box_bound(child, cuts, certificates, args.eta, args.delta)
+            bounded = box_bound(
+                child,
+                current.cuts,
+                current.certificates,
+                args.eta,
+                args.delta,
+            )
             if bounded is None:
                 continue
             heapq.heappush(queue, (-bounded.value, identifier, bounded))
@@ -1011,6 +1107,12 @@ def search(args: argparse.Namespace) -> dict[str, object]:
     return {
         "status": "exact eliminated-composition cover incomplete",
         "current_upper_bound": float(-queue[0][0]) if queue else None,
+        "current_upper_bound_numerator": (
+            str(queue[0][2].value.numerator) if queue else None
+        ),
+        "current_upper_bound_denominator": (
+            str(queue[0][2].value.denominator) if queue else None
+        ),
         "current_upper_bound_is_exact": bool(queue),
         "boxes_split": splits,
         "boxes_remaining": len(queue),
@@ -1019,8 +1121,10 @@ def search(args: argparse.Namespace) -> dict[str, object]:
             {
                 "lower": [str(value) for value in worst.box.lower],
                 "upper": [str(value) for value in worst.box.upper],
-                "joint_surrogate_upper": float(worst.value),
+                "hybrid_upper": float(worst.value),
                 "split_dimension": worst.split_dimension,
+                "active_cuts": len(worst.cuts),
+                "active_certificates": len(worst.certificates),
             }
             if worst is not None
             else None
@@ -1052,6 +1156,9 @@ def main() -> None:
             "eta": str(args.eta),
             "interval_precision": args.precision,
             "arithmetic": "exact rationals and directed transcendental intervals",
+            "support_bound_dependency": (
+                "verify_support_indicator_bulk.py proves Phi < 1/10000"
+            ),
         }
     )
     print(json.dumps(result, indent=2, sort_keys=True))

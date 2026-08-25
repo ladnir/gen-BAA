@@ -792,8 +792,22 @@ at a vertex of the joint five-dimensional feasibility polytope. Evaluating
 the complete surrogate at those vertices avoids maximizing its support and
 conditional pieces at incompatible points. With local cut proposals and this
 joint-vertex bound, the exact upper bound after 100 boxes is `0.09312368`.
-The remaining positive value is a cover status, not evidence for a positive
-bulk exponent.
+
+The proved global support estimate supplies a second envelope. On every box,
+the full exponent is at most both the coupled surrogate and
+
+```text
+1/10000 + (conditional message entropy - two KL payments).
+```
+
+The checker also propagates locally verified cuts down the branch-and-bound
+tree. It retains the five most recent local certificates, so every active bank
+has at most 56 cuts and ten branch certificates. With this bounded inherited
+bank and the two-envelope minimum, the exact upper bound after 100 boxes is
+`0.00846858`. Retaining the full ancestral bank gives the stronger 300-box
+diagnostic `0.00271039`, but its replay cost grows with depth. Neither positive
+value is evidence for a positive bulk exponent; both are incomplete-cover
+bounds.
 
 This observation gives a quantitative proof split. On the domain
 
