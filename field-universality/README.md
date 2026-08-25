@@ -123,6 +123,13 @@ own valid KL cut. This leaves only the five support variables
 `-0.00146130`. The global five-variable cover, rather than the original
 14-variable cover, is now the main bulk obligation.
 
+The exact checker proposes fresh cuts on off-curve support boxes and verifies
+their rationalized potentials independently. It bounds the complete convex
+surrogate on vertices of the joint five-dimensional support polytope, so the
+support and conditional penalties cannot be maximized at incompatible
+points. The current 100-box exact upper bound is `0.09312368`; the cover is
+improving but is not yet a theorem at `0.1323`.
+
 For repetition three over `F_3`, the project now proves
 
 ```text

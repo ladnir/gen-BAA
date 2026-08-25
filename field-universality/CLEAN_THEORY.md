@@ -776,6 +776,25 @@ bank is still too sparse on broad off-maximizer support boxes. This is now a
 support-space certificate-generation problem; no conditional-composition
 boxes remain.
 
+Two further reductions improve that cover. A first-stage cut designed at the
+center of a support box is only a proposal: the checker rationalizes its
+potentials and verifies the resulting inequality independently. At the first
+off-curve obstruction, where `A` and `B` are near `0.25` and `x_1` is near
+`0.002`, one such cut lowers the local ordered conjugate from `0.2908` to
+`-1.1020`.
+
+The checker also keeps the support and conditional terms coupled. After the
+two positive joint entropies are replaced by cross-entropy tangents, the
+complete surrogate is convex in `(A,B,C,x_1,x_2)`: negative binary entropy is
+convex, the ordered log-sum-exp term is a convex perspective, and every cut
+term is affine. Its maximum on a rational support box is therefore attained
+at a vertex of the joint five-dimensional feasibility polytope. Evaluating
+the complete surrogate at those vertices avoids maximizing its support and
+conditional pieces at incompatible points. With local cut proposals and this
+joint-vertex bound, the exact upper bound after 100 boxes is `0.09312368`.
+The remaining positive value is a cover status, not evidence for a positive
+bulk exponent.
+
 This observation gives a quantitative proof split. On the domain
 
 ```text
