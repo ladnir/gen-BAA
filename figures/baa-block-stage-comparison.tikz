@@ -1,0 +1,30 @@
+\begin{tikzpicture}[
+    flow/.style={-{Latex[length=2mm,width=1.3mm]},line width=0.5pt}
+]
+    \node[align=center] (original) {%
+        \textsc{Original BAA}\\[2mm]
+        $\displaystyle
+        G_{\mathrm{orig}}=
+        \begin{bmatrix}
+            G_1 & 0   & \cdots & 0 \\
+            0   & G_2 &        & \vdots \\
+            \vdots &  & \ddots & 0 \\
+            0 & \cdots & 0 & G_t
+        \end{bmatrix}$
+    };
+
+    \node[align=center,right=35mm of original] (chosen) {%
+        \textsc{Chosen-block BAA}\\[2mm]
+        $\displaystyle
+        G_{\mathrm{out}}=
+        \begin{bmatrix}
+            G_0 & 0   & \cdots & 0 \\
+            0   & G_0 &        & \vdots \\
+            \vdots &  & \ddots & 0 \\
+            0 & \cdots & 0 & G_0
+        \end{bmatrix}$
+    };
+
+    \draw[flow] (original.east) -- node[above,font=\scriptsize,align=center]
+        {fix and reuse $G_0$} (chosen.west);
+\end{tikzpicture}

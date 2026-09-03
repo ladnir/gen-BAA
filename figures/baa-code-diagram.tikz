@@ -1,0 +1,29 @@
+\begin{tikzpicture}[
+    stage/.style={
+        draw=black!70,
+        fill=black!2,
+        line width=0.45pt,
+        minimum width=12mm,
+        minimum height=9mm,
+        inner sep=2pt,
+        font=\normalsize
+    },
+    endpoint/.style={font=\small},
+    flow/.style={-{Latex[length=1.8mm,width=1.2mm]},line width=0.45pt},
+    node distance=7mm
+]
+    \node[endpoint] (input) {input};
+    \node[stage,right=of input] (block) {$B$};
+    \node[stage,right=of block] (permone) {$\Pi_1$};
+    \node[stage,right=of permone] (accone) {$A$};
+    \node[stage,right=of accone] (permtwo) {$\Pi_2$};
+    \node[stage,right=of permtwo] (acctwo) {$A$};
+    \node[endpoint,right=of acctwo] (output) {codeword};
+
+    \draw[flow] (input) -- (block);
+    \draw[flow] (block) -- (permone);
+    \draw[flow] (permone) -- (accone);
+    \draw[flow] (accone) -- (permtwo);
+    \draw[flow] (permtwo) -- (acctwo);
+    \draw[flow] (acctwo) -- (output);
+\end{tikzpicture}
