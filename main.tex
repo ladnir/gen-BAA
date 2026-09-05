@@ -1,16 +1,40 @@
 \documentclass[runningheads,envcountsame,envcountsect]{llncs}
 
+% Set to 1 for an anonymous submission and to 0 for the full version.
+\providecommand{\submission}{0}
+
 \let\vec\relax
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 \usepackage[hidelinks]{hyperref}
 \usepackage{cite}
+\ifnum\submission=1
+\hypersetup{
+  pdftitle={Chosen-Block BAA Codes: Finite-Length Analysis and a Large-Field Rank Obstruction},
+  pdfauthor={Anonymous Authors}
+}
+\else
 \hypersetup{
   pdftitle={Chosen-Block BAA Codes: Finite-Length Analysis and a Large-Field Rank Obstruction},
   pdfauthor={Stanislav Peceny and Peter Rindal}
 }
+\fi
+
+\newcommand{\todotemplate}[3]{%
+  \textcolor{#2}{\textbf{[#1:} #3\textbf{]}}%
+}
+\ifnum\submission=1
+  \newcommand{\stan}[1]{}
+  \newcommand{\peter}[1]{}
+\else
+  \newcommand{\stan}[1]{\todotemplate{Stan}{brown}{#1}}
+  \newcommand{\peter}[1]{\todotemplate{Peter}{red}{#1}}
+\fi
 
 \newcommand{\F}{\mathbb F}
 \newcommand{\wt}{\operatorname{wt}}
@@ -21,148 +45,360 @@
 \newcommand{\cC}{\mathcal C}
 \newcommand{\cG}{\mathcal G}
 \newcommand{\cS}{\mathcal S}
+\newcommand{\eqnumlabel}[1]{%
+  \refstepcounter{equation}\tag{\theequation}\label{#1}%
+}
 
-\title{Chosen-Block BAA Codes: Finite-Length Analysis and a Large-Field Rank
-Obstruction}
+\title{Chosen-Block BAA Codes: Fast, Near the Gilbert--Varshamov Bound, and Field-Agnostic}
 \titlerunning{Chosen-Block BAA Codes}
-\author{Stanislav Peceny \and Peter Rindal}
-\authorrunning{S. Peceny and P. Rindal}
-\institute{}
+\ifnum\submission=1
+  \author{Anonymous Authors}
+  \authorrunning{Anonymous Authors}
+  \institute{}
+\else
+  \author{Stanislav Peceny\inst{1} \and Peter Rindal\inst{2}}
+  \authorrunning{S. Peceny and P. Rindal}
+  \institute{Stealth Software Technologies, Inc. \and Category Labs}
+\fi
 
 
 \begin{document}
 \raggedbottom
+\emergencystretch=2em
 \maketitle
 
 \begin{abstract}
-BAA codes combine a block-diagonal outer code, two interleavers, and two
-prefix-sum accumulators.  This paper studies a variant
-in which every outer block uses the same certified short code.  Over $\F_2$,
-the exact finite-length first moment is obtained by composing the local weight
-enumerator with two accumulator kernels.  For extended Golay,
-$\operatorname{RM}(2,5)$, and an explicit BCH subcode, numerical optimization
-places the relative-distance transition between $95.5\%$ and $99.4\%$ of the
-binary Gilbert--Varshamov (GV) bound.  The large-field analysis must instead
-group words by support: a single support may carry a large projective family,
-which makes the ordinary word enumerator a poor code-generation statistic.
-Charging cancellation constraints against shortening dimension gives an
-explicit finite union bound.  A backward parity-check matrix also reveals a
-coefficient-independent obstruction.  Its generic rank is a layered
-path-packing optimum, and the local capacities in that problem can saturate.
-For rate-$1/2$ and rate-$1/4$ Reed--Solomon blocks, the numerical structural
-transitions are $0.30842$ and $0.60938$, compared with large-field GV values of
-$0.49219$ and $0.74358$.  These numbers are diagnostics, not converses for a
-typical code.  A Lean 4 formalization checks the finite algebraic and
-combinatorial results, the named local codes, and the generic-rank theorem.  It
-also exposed three local statement errors, all corrected in the paper; none
-affects the finite proof strategy.
-\keywords{linear codes \and block--accumulate--accumulate codes \and
-minimum distance \and pseudorandom correlation generators \and Lean}
+Block--Accumulate--Accumulate (BAA) codes (CRYPTO 2026) apply a small linear map to each block,
+followed by two random permutation--prefix-sum rounds.  They provide state-of-the-art encoding for pseudorandom correlation generators and code-based zero-knowledge, where high minimum distance and fast encoding are both important.
+
+\qquad We study chosen-block BAA, which repeats a certified short code instead
+of sampling a new local map in every block.  Over $\F_2$, we propagate its
+complete weight distribution exactly through both random rounds, obtaining
+finite-length expected low-weight counts and explicit sampling-failure bounds.
+The original asymptotic proof also applies because it fixes the outer block map
+and requires only that each activated block contribute output weight greater
+than four.  At rate $1/2$, the extended quadratic-residue block gives a
+relative-distance threshold of $0.11$, or $99.99\%$ of the binary
+Gilbert--Varshamov (GV) distance.  At $k\approx2^{20}$, our implemented Golay
+and extended BCH (equivalently Reed--Muller) constituents take $24$--$27$~ms on
+one thread, making them $1.22\times$--$1.34\times$ faster than a rerun of the
+original BAA code, with minor code changes, on the same machine.  Multithreaded
+chosen-block latency is below $6$~ms.
+
+\qquad Over larger fields $\F_q$, symbols can cancel in prefix sums and many
+codewords share a support.  We give a probability bound accounting for both
+effects and prove a structural limitation: some permutation patterns force a
+low-weight codeword regardless of the nonzero coordinate scalings.  For the
+rate-$1/2$ and rate-$1/4$ instances studied, the estimated relative-distance
+ transitions are $62.7\%$ and $81.9\%$ of the corresponding $q$-ary GV
+ distances.  These values are diagnostic: they estimate rank-deficient supports
+ in expectation, not typical-code upper bounds.  We implement the rate-$1/2$
+ construction over $\F_{2^{128}}$ and compare it with weighted RAA at the same
+ $k=2^{20}$ under practical $20$- and $40$-bit sparse-security targets.  At the
+ $20$-bit target the two selected ensembles coincide and take $21.763$ and
+ $21.483$~ms on one CPU thread.  At the $40$-bit target, rate-$1/2$
+ chosen-block BAA takes $23.337$~ms versus $38.398$~ms for rate-$1/3$ RAA, a
+ $1.65\times$ speedup.  Lean~4 verifies the finite counting and structural
+ results and the constituent codes.
+\keywords{linear codes \and block--accumulate--accumulate codes \and pseudorandom correlation generators \and zero-knowledge
+proofs \and Lean}
 \end{abstract}
 
+\ifnum\submission=0
+  \begingroup
+    \makeatletter
+    \setcounter{tocdepth}{2}
+    \let\l@title\@gobbletwo
+    \let\l@author\@gobbletwo
+    \tableofcontents
+    \makeatother
+  \endgroup
+  \clearpage
+\fi
 
 \section{Introduction}
 
-Many cryptographic protocols now depend on fast linear codes.  Pseudorandom
-correlation generators expand short seeds into OT, VOLE, and multiplication
-correlations by multiplying with a structured matrix.  Proximity tests and
-code-switching compilers use the same kind of encoder in polynomial commitments
-and SNARKs.  At the vector lengths used in these systems, the structure and
-constant factors of the encoder matter as much as its asymptotic complexity.
+Fast linear codes are used in two main cryptographic settings.  In
+syndrome-decoding-based pseudorandom correlation generators (PCGs), a
+noninteractive local step multiplies shares of a sparse noise vector by a
+structured generator matrix.  This step helps expand short seeds into OTs,
+VOLEs, or multiplication correlations~\cite{bcgi18,bcg19pcg}.  High minimum
+distance prevents any nontrivial linear test from depending on only a few noise
+coordinates, as required by the associated syndrome-decoding assumption.  At
+cryptographic vector lengths of roughly a million coordinates, this
+matrix--vector product is often the main local computational
+bottleneck~\cite{baa26}.
+
+In code-based succinct arguments and their zero-knowledge variants, the prover
+encodes a witness vector as part of a polynomial commitment, and a
+proximity test checks that the committed word is close to a valid codeword.
+The code's distance supplies the separation needed for soundness, while its
+encoding cost contributes directly to prover time
+~\cite{orion22,brakedown23,blaze25,era26,blindraa26}.  The same two properties
+also appear in private server-aided proving.  There, a
+repeat--accumulate--accumulate (RAA) code can provide a masking layer for
+encrypted multi-scalar multiplication: its distance determines the linear-test
+security parameters, and multiplication by the code contributes to the
+client's cost~\cite{outsourcing26}.
+
+These applications do not all require codes over the same field.  Binary codes
+directly serve syndrome-decoding-based PCGs.  A binary matrix can also be used
+over a binary extension field by applying it coordinatewise to the binary
+representation of each field element.  Blaze does this with RAA, then uses code
+switching to reduce a multilinear-evaluation claim to a proximity claim for the
+resulting packed RAA code~\cite{blaze25}.
+Other PCGs and proof systems instead require encoders that are linear over
+larger or arbitrary finite fields
+~\cite{lxyy25,brakedown23,fieldEA24,outsourcing26,era26,blindraa26}.  A fast
+binary encoder therefore does not resolve the nonbinary setting.  Moreover,
+protocol instances often contain $2^{20}$ or more symbols.  Even among $O(n)$
+encoders, memory traffic and the constant work per symbol can determine the
+practical cost.
 
 Block--Accumulate codes were introduced by Kolesnikov, Peceny, Rachuri,
 Raghuraman, Rindal, and Shah as an implementation-friendly turbo-like family for
-PCGs and zero knowledge~\cite{baa26}.  Their main BA-3 construction has the
-serial form
+PCGs and zero knowledge~\cite{baa26}.  For a code with dimension $k$ and length
+$n$, their main two-accumulator construction, called BA-3, first
+applies a random systematic block-diagonal map
+$\mathbf B\in\F_2^{k\times n}$, whose small local blocks
+are sampled independently, and then applies two interleaved prefix-sum
+accumulators:
 \[
-    B\Pi_1A\Pi_2A,
+    \mathbf B\Pi_1A\Pi_2A,
 \]
-where $B$ is a sampled block-diagonal outer map, $\Pi_1,\Pi_2$ are random
-interleavers, and $A$ is an accumulator.  That construction comes with detailed
-enumeration methods, an asymptotic linear-distance theorem, and efficient CPU
-and GPU implementations.  Its field-linear extension uses random nonzero
-weighters around the accumulators.  The same paper observes that its local-
-distance condition can be enforced by selecting a good subcode and repeating
-it in every block.  This paper develops that suggestion at finite length and
-asks a second question: over a cryptographic-size field, how close can the
-same scalar recursion come to the $q$-ary GV distance?
+where $\Pi_1,\Pi_2$ are random interleavers and $A$ is an accumulator.  The
+composition is shown in Figure~\ref{fig:baa-code-diagram}.
 
-\paragraph{Results.}
-The main results separate finite theorems from asymptotic and numerical claims.
+\begin{figure}[b]
+    \centering
+    \resizebox{\linewidth}{!}{\input{figures/baa-code-diagram.tikz}}
+    \caption{The BAA encoder.  The block-diagonal map $\mathbf B$ is followed by two
+    permutation--accumulator rounds.  Here $\Pi_i$ permutes coordinates and
+    $A$ computes prefix sums.}
+    \label{fig:baa-code-diagram}
+\end{figure}
 
-\begin{enumerate}
-    \item Starting from the fixed-block specialization suggested in the
-    original BAA paper, every map after the repeated local code is made
-    explicit as a linear equivalence.  The resulting code has deterministic
-    dimension over every finite field, and constant block size gives $O(N)$
-    encoding.
+The original BAA work analyzes the binary construction using detailed
+enumeration, proves an asymptotic linear-distance theorem, gives efficient CPU
+and GPU implementations, and reports a proof-of-concept integration with Blaze
+over a binary extension field.  It also sketches an extension over $\F_p$ that
+places random nonzero diagonal scalings, called weighters, around the
+accumulators.  These scalings randomize the nonzero coordinate values
+conditional on their support, so the proposed weight analysis does not depend
+on the original symbol values.  The original work does not analyze that
+setting in detail.  Finally, it observes that the local-distance condition can
+be enforced by selecting a good subcode and repeating it in every block.  This
+paper develops that suggestion at finite length and asks a second question:
+over a large finite field $\F_q$, where $q$ is the field size, how close can the
+ same two-accumulator architecture come to the $q$-ary Gilbert--Varshamov (GV)
+ distance?  This question is relevant both to PCGs that generate correlations
+ over finite fields and to proof systems that encode directly over their
+ computation field.  We also ask whether the resulting large-field encoder is
+ practically faster than weighted RAA when both are tuned to the same message
+ dimension, target relative distance, and dominant sparse-security scale.
 
-    \item Over $\F_2$, the local weight enumerator and binary accumulator
-    transition give an exact finite-length first moment.  The best blocks
-    considered here reach $96.5\%$ of binary GV at rate $1/2$ and $99.4\%$ at
-    rate $1/4$ in the numerical optimization.
+\subsection{Contributions}
+\label{sec:contributions}
 
-    \item Over large fields, exact accumulator traces account for support
-    placement, and local shortening dimension accounts for projective freedom.
-    The resulting union bound is finite and explicit.
+We distinguish concrete finite-length results from asymptotic conclusions
+throughout.  Our main contributions are as follows.
 
-    \item A backward parity-check matrix has generic rank equal to a layered
-    path-packing optimum with local block capacities.  The resulting structural
-    obstruction holds for every choice of diagonal coefficients.
+\begin{itemize}
+    \item We improve the original BAA construction with chosen-block
+    BAA, which replaces independently sampled local maps by repeated copies of
+    one certified short code.  The construction preserves
+    the chosen constituent's rate, retains $O(n)$ encoding, and removes
+    per-block local-matrix randomness.  Over $\F_2$, the original
+    linear-distance theorem applies to any chosen
+    constituent of distance greater than four.
 
-    \item The finite core is machine checked in Lean 4, including the Golay,
-    Reed--Muller, BCH, and Reed--Solomon constructions.  The formalization also
-    proves an endpoint-refined container formula.
-\end{enumerate}
+    \item Over $\F_2$, we combine the local weight enumerator with the binary
+    accumulator transition to obtain exact finite-length expected counts of
+    low-weight codewords, and hence explicit bounds on the probability that a
+    sampled code has small minimum distance.  Unlike the original calculation,
+    these bounds apply directly to named, certifiable constituents.  Our best
+    rate-$1/2$ numerical transition, using the extended quadratic-residue
+    $[168,84,24]$ block, where $[m,\sigma,d]$ denotes local length, dimension,
+    and minimum distance, reaches $99.99\%$ of the binary GV distance; a compact
+    rate-$1/4$ BCH subcode reaches $99.4\%$ of its GV distance.
 
-The two alphabets behave differently.  Binary chosen-block BAA is close to its
-GV benchmark.  Large-field BAA has greater absolute symbol distance and smaller
-sparse tails, but it remains far from $q$-ary GV.  Since the rank obstruction
-does not depend on field values, neither a larger field nor sharper trace
-counting can remove it.  Approaching the large-field frontier appears to require
-another accumulator layer or a recursion with more state.
+    \item Over $\F_q$ with $q>2$, we give a finite-length low-weight bound that
+    accounts for cancellations inside the accumulators and avoids counting
+    scalar multiples as distinct bad events.  With $[16,8,9]$ and $[16,4,13]$
+    Reed--Solomon constituents, its estimated relative-distance transitions are
+    $0.305$ and $0.604$, respectively, or $62.0\%$ and $81.3\%$ of the
+    corresponding $q$-ary GV distances for $q=2^{128}$.
+
+    \item We identify a rank obstruction, independent of the coefficients, in
+    the two-accumulator architecture.  It exposes low-weight supports that remain
+    bad for every choice of nonzero scaling coefficients, so increasing the
+    field size or choosing better scalings cannot remove them.  The resulting
+    structural transitions are $0.308$ and $0.609$ at rates $1/2$ and $1/4$,
+    close to the preceding first-moment transitions and far from $q$-ary GV.
+    These structural values are diagnostic rather than typical-code upper
+    bounds, because concentration of the number of bad supports remains open.
+
+    \item We rerun the original BAA CPU code on our machine with minor code
+    changes and use it for a security-matched comparison at rate $1/2$ and
+    $n=2{,}097{,}024$.  At relative distance $0.10$ and code-sampling failure
+    target $2^{-20}$, chosen-block BAA with Golay and extended BCH
+    (equivalently Reed--Muller) constituents is $1.34\times$ and $1.22\times$
+    faster, respectively, on one CPU thread.  Both implementations run in less
+    than $6$~ms when multithreaded.
+
+    \item Over $\F_{2^{128}}$, we implement and optimize both chosen-block BAA
+    and weighted RAA at $k=2^{20}$.  A $20$-bit target selects RS $[2,1,2]$
+    BAA and repetition-$2$ RAA, both with a $27.34$-bit dominant sparse term;
+    the ensembles coincide and take $21.763$ and $21.483$~ms on one CPU thread.
+    A $40$-bit target selects RS $[4,2,3]$ BAA with $43.42$ bits and
+    repetition-$3$ RAA with $48.17$ bits.  Their times are $23.337$ and
+    $38.398$~ms, so BAA is $1.65\times$ faster at the higher target.
+
+    \item In Lean~4, we machine-check the exact finite-length identities behind
+    the binary and large-field bounds, the generic-rank characterization, and
+    the structural-container count.  We also verify the stated Golay,
+    Reed--Muller, BCH, and Reed--Solomon constituents.
+\end{itemize}
 
 \subsection{Technical overview}
 
-The local code enters the two analyses through different summaries.  In the
-binary proof, its weight enumerator counts outer words.  Over a larger field,
-its shortening dimensions count projective families on a fixed support.  The
-direct sum lifts either count to length $N$, and each random interleaver makes
-the next accumulator input uniform in its weight or support class.
+BAA combines a cheap block-diagonal outer encoding with two global
+permute--accumulate stages.  The original construction samples the local map in
+each block independently and analyzes the resulting binary ensemble.  We ask
+whether one carefully chosen short code can instead be reused in every block,
+ and whether the same architecture remains competitive when the ambient field
+ allows cancellations.  The binary answer is favorable: chosen constituents are
+ faster to encode in our comparison and can approach the binary GV distance.
+ Over large fields we obtain strong absolute symbol distance and a
+ $1.65\times$ single-thread speedup over weighted RAA at a practical $40$-bit
+ sparse-security target (and parity at a $20$-bit target), but
+ uncover an architectural obstruction that leaves a substantial gap to the
+ corresponding $q$-ary GV benchmark.
 
-In the binary case, the support determines every accumulator state.  An input
-of weight $w$ produces alternating zero-runs and one-runs, which gives an exact
-input--output enumerator.  Composing this enumerator twice yields the expected
-number of nonzero outputs below a target weight.  Markov's inequality converts
-that expectation into a minimum-distance failure bound.
+\paragraph{Construction.}
+Let $C_0$ be a fixed $[m,\sigma,d]_q$ code.  Chosen-block BAA first encodes
+$n/m$ independent input blocks with $C_0$, rather than sampling a new local map
+for every block as in the original BAA construction.  It then applies two independent
+permute--accumulate stages; over $\F_q$ with $q>2$, each stage also multiplies
+the coordinates by independent random nonzero field elements.  In symbols,
+\[
+    C_{\rm out}=C_0^{\oplus n/m},
+    \qquad
+    \cC_{\rm BAA}=\Acc M_2\Acc M_1(C_{\rm out}),
+\]
+where $M_i$ is the $i$th random permutation and scaling, and $\Acc$ maps a word
+to its running sums.  The permutations disperse the local supports, while the
+accumulators convert the resulting changes into stretches of running-sum state.
+All maps after the local encoding are invertible, so the
+resulting code has dimension $k=(n/m)\sigma$ and rate $\sigma/m$ for every
+sample.  For constant $m$ and $\sigma$, encoding remains linear in $n$.
 
-Over a larger field, the support does not determine the accumulator state.
-Several active symbols may cancel, and an $r$-dimensional shortening contains
-about $q^{r-1}$ projective candidates.  The finite bound fixes the exact outer
-support and both zero-return traces.  It charges only those cancellation
-equations that exceed the available projective dimension.
+Fixing $C_0$ removes the randomness in the local stage and makes the ensemble
+depend only on the two global stages.  It also lets us use a constituent whose
+distance, complete weight distribution, and implementation are known in
+advance.  In the binary case, the original asymptotic BAA proof already allows
+a fixed outer map and needs only that each active block contribute weight
+greater than four.  Thus every binary constituent used here retains the
+high-probability linear-distance guarantee.  Our finite-length analysis below
+determines how large that distance can be at the concrete lengths of interest.
 
-Trace counting still distinguishes many witnesses that lead to the same final
-support.  A backward parity-check matrix removes this multiplicity.
-After replacing the random diagonal entries by indeterminates, its rank becomes
-a two-layer path-packing problem.  Each local MDS block contributes only its
-parity-check rank as terminal capacity.  Saturated blocks therefore create
-low-weight containers for every specialization of the diagonal entries.
+\paragraph{Binary analysis.}
+Write $W_0(z)$ for the weight enumerator of $C_0$.  Because the outer code is a
+direct sum, its exact enumerator is $W_0(z)^{n/m}$.  Conditional on an input of
+weight $w$, a uniform interleaver makes its support uniform among the
+$w$-subsets of $[n]$.  Over $\F_2$, that support completely determines the
+accumulator trajectory: its state alternates between zero-runs and one-runs.
+Counting these runs gives the exact probability of every output weight.
+Composing this transition for the two accumulators and summing against the outer
+enumerator gives the exact expected number $\mu_{\rm bin}(n,L;C_0)$ of nonzero
+codewords of weight at most $L$.  Markov's inequality then gives the concrete
+sampling guarantee
+\[
+    \Prb[d_{\min}(\cC_{\rm BAA})\le L]
+    \le \mu_{\rm bin}(n,L;C_0).
+\]
+This calculation produces fixed-length failure bounds for a named constituent,
+rather than an average over newly sampled local matrices.  Optimizing its
+asymptotic exponent gives transitions of $0.105$ and $0.106$ for the compact
+Golay and extended BCH / $\operatorname{RM}(2,5)$ blocks, and $0.110$ for the
+longer $[168,84,24]$ quadratic-residue block.  The last is within
+$1.33\times10^{-5}$ of the binary rate-$1/2$ GV distance.
+
+\paragraph{Large-field analysis.}
+The binary argument does not extend by simply replacing the alphabet.  Over a
+larger field, different nonzero values on the same support can cancel in an
+accumulator, and all scalar multiples of a codeword describe the same bad
+direction.  We therefore summarize the local code by its \emph{shortening
+dimension}: for a support $S$, let $r$ be the dimension of the outer subcode
+whose nonzero coordinates are confined to $S$.  That shortening contains
+$(q^r-1)/(q-1)$ projective codeword directions.
+
+For each accumulator we additionally record its zero-return trace, the positions
+where its running sum returns to zero.  A prescribed return imposes a linear
+condition on a fresh random multiplier.  Consequently, the first $r-1$ such
+conditions can be absorbed by the projective degrees of freedom, whereas every
+additional condition costs a factor about $1/q$.  Combining this cancellation
+bound with exact support-placement counts for both accumulators yields a
+finite-length union bound for every $q>2$.  For Reed--Solomon constituents, the
+MDS shortening profile is explicit, so the bound reduces asymptotically to an
+entropy optimization.  At $q=2^{128}$ it gives estimated transitions $0.305$
+at rate $1/2$ and $0.604$ at rate $1/4$, compared with GV distances $0.492$ and
+$0.744$.
+
+\paragraph{Why the large-field gap persists.}
+The trace bound can count several internal cancellation patterns leading to the
+same final support.  To determine whether this multiplicity explains the gap to
+GV, we instead fix a proposed final support $T$ and propagate its parity checks
+backward through both accumulators.  A codeword supported in $T$ exists exactly
+when the resulting restricted parity-check matrix loses rank.  After replacing
+the random diagonal entries by indeterminates, we show that its generic rank
+equals a maximum path packing in a two-layer graph.  The parity-check rank of
+each local MDS block becomes a capacity on paths entering that block.
+
+If the two-step backward neighborhood of $T$ overloads these capacities, the
+matrix is rank deficient for every specialization of the diagonal entries.
+Such a \emph{structural container} therefore contains a nonzero codeword no
+matter how the nonzero scaling coefficients are chosen.  We derive an exact
+expected count of these containers over the two permutations.  Its estimated
+transitions, $0.308$ and $0.609$, lie only $0.003$ and $0.005$ above the
+large-field trace transitions, but well below $q$-ary GV.  A concentration
+theorem is still needed to turn these structural transitions into typical-code
+upper bounds.  Nevertheless, the obstruction identifies the two-accumulator
+architecture, rather than the field size or the choice of local MDS code, as
+the likely source of the observed gap.
+
+\paragraph{Implementation and verification.}
+At $n=2{,}097{,}024$, the chosen Golay and Reed--Muller implementations take
+$24.412$ and $26.794$~ms on one CPU thread, compared with $32.769$~ms for our
+security-matched rerun of original BAA; their multithreaded latencies are below
+ $6$~ms.  Over $\F_{2^{128}}$ at $k=2^{20}$, the selected $20$-bit BAA and RAA
+ profiles take $21.763$ and $21.483$~ms on one thread; at the $40$-bit target,
+ chosen-block BAA takes $23.337$~ms versus $38.398$~ms for weighted RAA.
+ Finally, our Lean~4 development checks the finite combinatorial
+identities, probability bounds, constituent-code facts, and generic-rank
+results on which the analysis rests.
 
 \paragraph{Scope.}
-The finite enumerators, probability inequalities, code parameters, and rank
-identities are exact.  The entropy limits, sparse-tail estimates, and numerical
-transitions are not machine checked.  Neither are the cost model or the claimed
-concentration of structural containers.  The paper labels these claims as
-derivations, computations, or open problems rather than theorems.
+Our concrete identities, probability inequalities, code parameters, and rank
+identities are exact.  The asymptotic estimates and numerically optimized
+ distance transitions are not machine-checked, and concentration of structural
+ containers remains open.  The large-field RAA comparison matches dominant
+ sparse contributions rather than complete finite-length failure bounds.  The
+ implementation timings are measurements on the reported platform.  The coding results are application-neutral: we do not claim
+a new PCG reduction or zero-knowledge protocol.  The binary results target
+systems built from binary matrices, while the large-field results target
+applications that require an encoder linear over their computation field.
 
 \paragraph{Organization.}
-Section~\ref{sec:construction} defines the ensemble.  Sections~\ref{sec:binary}
-and~\ref{sec:large-field} give the binary and large-field analyses.
+Section~\ref{sec:preliminaries} reviews the coding and cryptographic background,
+and Section~\ref{sec:construction} defines the ensemble.
+Sections~\ref{sec:binary} and~\ref{sec:large-field} give the binary and
+large-field analyses.
 Section~\ref{sec:rank-containers} develops the structural obstruction, and
-Section~\ref{sec:numerics} evaluates the concrete local codes.
-Section~\ref{sec:implications} discusses design consequences, while
-Section~\ref{sec:lean} describes the machine-checked proof.
+Section~\ref{sec:numerics} gives the concrete distance evaluation and its design
+implications.
+Section~\ref{sec:implementation} describes the implementation and reports its
+performance, while Section~\ref{sec:lean} describes the machine-checked proof.
 
 \subsection{Related work}
 
@@ -180,18 +416,40 @@ Koller, and Costello gave coding theorems for repeat-multiple-accumulate codes,
 including punctured and multi-accumulator ensembles approaching binary
 GV~\cite{kliewer08}.
 
-Weighted nonbinary RA codes were introduced by Yang~\cite{yang04}; Rosnes and
-Graell i Amat derived exact nonbinary accumulator enumerators and asymptotic
-distance results for weighted nonbinary repeat-multiple-accumulate
-codes~\cite{rosnes11}.  Akhiani and Zhang prove constant relative distance up
+Yang introduced weighted nonbinary RA codes for iterative decoding over
+$\F_q$~\cite{yang04}.  Rosnes and Graell i Amat then derived exact
+nonbinary accumulator enumerators and gave conditions under which a typical
+weighted repeat-multiple-accumulate code has linear minimum distance; they
+checked the required positive distance threshold numerically for the reported
+field sizes~\cite{rosnes11}.  Abbaszadeh et al. give an
+arbitrary-field distance calculation for unscaled RAA, but extrapolate its
+finite-size evaluation to the zk-SNARK instance lengths of interest
+~\cite{outsourcing26}.  Akhiani and Zhang prove constant relative distance up
 to $1/2$ with high probability for RAA codes over sufficiently large finite
 fields, improving on the corresponding binary guarantee~\cite{akhiani26}.
 Khabbazian obtains sharp minimum-distance lower tails for scaled RAA: when
-$r\geq 4$, $0<\delta\leq 1/2$, and $q-1\geq \gamma N$, the failure
-probability is $\Theta_{r,\delta,\gamma}(N^{1-r})$~\cite{khabbazian26}.
-The projective surplus-cancellation bound used here follows this line of work.
-A chosen local block adds a complication: its supports can have many
-shortening dimensions, whereas every repetition support has dimension one.
+$r\geq 4$, $0<\delta\leq 1/2$, and $q-1\geq \gamma n$, the failure
+probability is $\Theta_{r,\delta,\gamma}(n^{1-r})$~\cite{khabbazian26}.
+In the complementary fixed-field regime, Huang et al. prove that for every
+fixed $q\geq 3$, a weighted RAA ensemble has some constant relative distance
+with failure $o(1/n)$ once the repetition factor exceeds a $q$-dependent
+ threshold~\cite{blindraa26}.  Our large-field bound follows this line of work:
+ it identifies scalar multiples and charges only the cancellation equations left
+ after the codeword direction's available degrees of freedom are exhausted.
+ A chosen local block adds a complication: its supports can have many
+ shortening dimensions, whereas every repetition support has dimension one.
+ Our implementation comparison uses the randomly scaled RAA ensemble of
+ Khabbazian~\cite{khabbazian26}.  We specialize the same projective
+ support/trace count to its repetition outer code and match the dominant
+ weight-one contribution at the concrete length.
+
+Baweja et al. introduce Encode--Repeat--Accumulate (ERA) codes over arbitrary
+sufficiently large fields~\cite{era26}.  ERA first encodes with an arbitrary
+base code, repeats its output, and then applies two permute--multiply--accumulate
+stages.  Their concrete distance theorem reuses one diagonal multiplier in both
+stages and supports a tailored proximity proof.  Chosen-block BAA instead feeds
+a direct sum of fixed local codes directly into the accumulators and samples
+the two diagonal layers independently.
 
 The original BAA work~\cite{baa26} samples systematic block-diagonal local
 matrices, computes detailed expected enumerators, proves BA-3 asymptotically
@@ -202,40 +460,251 @@ condition.  The binary contribution here is an exact finite-length first
 moment for each chosen local spectrum, together with certified named blocks.
 The large-field contribution is an explicit support-and-shortening analysis
 and a generic-rank obstruction for that specialization.  The original paper
-also notes an $\F_p$ extension using random coefficients and weighters.  The
-monomial ensemble analyzed here accounts explicitly for projective clustering
-and structural rank defects.
+also notes an $\F_p$ extension using random coefficients and weighters.  Our
+monomial maps---permutations followed by nonzero coordinate scalings---let the
+analysis group scalar multiples explicitly and expose rank defects that no
+choice of scaling coefficients can remove.
 
 \paragraph{Cryptographic applications.}
+\emph{PCGs.}
 The use of structured LPN and syndrome-decoding assumptions for silent
 correlation generation grew from vector-OLE compression and foundational PCG
-work~\cite{bcgi18,bcg19pcg}.  Subsequent constructions include Ring-LPN
-PCGs~\cite{bcg20ring}, the structured-LDPC-based Silver protocols
-~\cite{silver21}, Expand--Accumulate codes~\cite{ea22}, and Expand--Convolute
-codes~\cite{ec23}.  Stationary syndrome decoding reduces repeated setup costs
-by amortizing the noise-generation protocol~\cite{stationary25}, while recent
-work also develops PCGs uniformly across finite fields~\cite{lxyy25}.  BAA was
-introduced in this lineage as a particularly hardware-friendly code family
-~\cite{baa26}.  Chosen-block BAA preserves the same linear-time architecture
-and can therefore be used in the same LPN/SD-style PCG applications.
+work~\cite{bcgi18,bcg19pcg}.  Subsequent constructions use Ring-LPN
+~\cite{bcg20ring}, structured LDPC codes~\cite{silver21},
+Expand--Accumulate codes~\cite{ea22}, and Expand--Convolute codes~\cite{ec23}.
+Stationary syndrome decoding keeps the sparse support fixed while resampling
+its field values across instances.  It thereby amortizes the OTs and tree
+expansions used to generate shared noise~\cite{stationary25}.  This optimization
+is complementary to accelerating the subsequent linear map.  Li et al.
+construct programmable PCGs for OLE over every prime field and extend the
+construction to correlations over arbitrary finite fields using extension-field
+trace maps under Ring-LPN or quasi-abelian syndrome-decoding assumptions
+~\cite{lxyy25}.  Their construction does not use BAA, but it makes the
+nonbinary PCG case explicit rather than treating it as a binary encoding
+problem.  BAA contributes a hardware-friendly encoder to the structured-code
+lineage~\cite{baa26}, and chosen-block BAA preserves its linear-time structure.
 
-Code switching and code interleaving make the encoder's rate, distance, and
-concrete cost visible in modern proof systems.  Ron-Zewi and Rothblum's constant-overhead IOP and argument framework gives a
-theoretical baseline for strictly linear prover computation~\cite{rr25}.
-Orion then develops code switching explicitly to obtain a linear-time prover
-with polylogarithmic proof size~\cite{orion22}.  Brakedown instantiates a
-field-agnostic SNARK with a linear-time encodable code~\cite{brakedown23}.
-Block et al.
-generalize Expand--Accumulate codes to arbitrary fields and instantiate a
-field-agnostic SNARK~\cite{fieldEA24}.  Blaze combines code switching with RAA
-codes and supplies improved binary RAA distance bounds~\cite{blaze25}.  Bolt
-continues this direction with specially designed sketched codes and lower
-commitment constants~\cite{bolt26}.  PIPFRI takes a complementary
-``shred-to-shine'' approach, combining linear-time-code proving with a fast
-Reed--Solomon FRI layer~\cite{pipfri26}.  Near-GV binary BAA is relevant to
-binary code switching in these systems.  Their large-field variants pose the
-harder question: can an equally fast scalar encoder approach the $q$-ary
-Singleton/GV frontier?
+\emph{Succinct proofs and zero knowledge.}
+Here the code is typically part of a polynomial commitment, an interactive
+oracle proof, or a proximity test.  Its distance enforces separation from
+invalid words, and its encoder often dominates the prover's linear work.
+Ron-Zewi and Rothblum give a theoretical framework with constant prover
+overhead~\cite{rr25}.  Orion uses code switching to obtain a linear-time prover
+and polylogarithmic proof size~\cite{orion22}.  Brakedown builds a field-agnostic
+SNARK from a practical linear-time code; the paper does not report a
+zero-knowledge variant~\cite{brakedown23}.  Block et al. generalize
+Expand--Accumulate codes to arbitrary finite fields with quasi-linear
+encoding~\cite{fieldEA24}.  Blaze lifts a binary RAA matrix to a packed RAA code
+over a binary extension field and uses it inside a multilinear polynomial
+commitment~\cite{blaze25}; the original BAA work reports a direct encoding and
+memory improvement in that system~\cite{baa26}.  Abbaszadeh et al. use
+unscaled RAA over large fields to instantiate dual-LPN for encrypted MSM,
+which privately outsources KZG commitments and proving steps for Nova,
+Groth16, and Plonk~\cite{outsourcing26}.  Their dual-LPN claim remains an
+assumption; the distance calculation supports parameter selection against
+linear tests.  ERA combines a linear-time field-agnostic encoder with a
+tailored proximity proof~\cite{era26}.  Huang et al. instead use independently
+weighted RAA over a fixed nonbinary field in a blind PCS and an end-to-end
+blind SNARK~\cite{blindraa26}.  Bolt
+designs a different code for the same code-switching paradigm~\cite{bolt26},
+and PIPFRI combines a linear-time code layer with Reed--Solomon FRI
+~\cite{pipfri26}.
+These systems motivate both halves of our analysis: near-GV binary codes for
+packed code switching over binary extension fields, and field-valued codes for
+protocols that avoid a binary lifting or conversion layer.
+
+\section{Preliminaries}
+\label{sec:preliminaries}
+
+This section recalls the coding-theory and cryptographic notions used in the
+paper.  Standard background on the named code families can be found in
+MacWilliams and Sloane~\cite{macwilliams}.
+
+\subsection{Notation}
+
+Throughout, $q$ is a prime power, $\F_q$ is the field of order $q$,
+$\F_q^\ast:=\F_q\setminus\{0\}$, and $[n]:=\{1,\ldots,n\}$.  Vectors are row
+vectors unless transposed; for a vector $x$, $\supp(x):=\{i:x_i\ne0\}$ and
+$\wt(x):=|\supp(x)|$.  For a finite set $S$, $x\gets S$ denotes uniform
+sampling, with separate samples independent unless stated otherwise; $\Prb$
+and $\E$ refer to the displayed randomness.  Unsubscripted logarithms are
+natural, and asymptotics are as $n\to\infty$ with local parameters fixed.
+
+\subsection{Error-correcting codes}
+
+Coding theory studies how to represent information with controlled redundancy.
+The redundancy permits recovery from errors in the classical communication
+setting; in this paper, the same algebraic structure supplies fast linear maps
+with few low-weight outputs.
+
+A $q$-ary linear code of length $n$ is a linear subspace
+$C\subseteq\F_q^n$.  If $C$ has dimension $k$ and minimum distance $d$, it has
+parameters $[n,k,d]_q$ and rate $R=k/n$.  The Hamming distance between $x$ and
+$y$ is $\wt(x-y)$, so linearity gives
+\[
+    d_{\min}(C)=\min_{0\ne c\in C}\wt(c).
+\]
+Thus proving that a linear code has large minimum distance amounts to ruling
+out nonzero codewords with small support.
+
+A full-rank matrix $G\in\F_q^{k\times n}$ is a generator matrix when
+$C=\{uG:u\in\F_q^k\}$.  A full-rank
+$H\in\F_q^{(n-k)\times n}$ is a parity-check matrix when
+$C=\{x:Hx^{\mathsf T}=0\}$.  The direct sum $C_0^{\oplus b}$ encodes $b$
+independent blocks with $C_0$.  Its dimension and length are multiplied by
+$b$, while its generator matrix is block diagonal.
+
+For a binary code, the weight enumerator
+\[
+    W_C(z):=\sum_{c\in C}z^{\wt(c)}
+           =\sum_{w=0}^n A_w z^w
+\]
+records the number $A_w$ of codewords of every weight.  The binary analysis in
+Section~\ref{sec:binary} uses the complete enumerator of the fixed local block.
+For $T\subseteq[n]$, the shortening supported on $T$ is
+\[
+    C[T]:=\{c\in C:\supp(c)\subseteq T\}.
+\]
+Its dimension measures how many codewords can share a prescribed containing
+support.  This is the corresponding local statistic in the large-field
+analysis of Section~\ref{sec:large-field}.
+
+Every $[n,k,d]_q$ code satisfies the Singleton bound $d\le n-k+1$.  A code
+meeting it is maximum-distance separable (MDS).  Reed--Solomon codes are
+the principal examples here: for $n\le q$, an
+$\operatorname{RS}[n,k,n-k+1]$ code evaluates all polynomials of degree less
+than $k$ at $n$ distinct field points.  Their optimal shortening profile makes
+them useful large-field outer blocks.
+
+For asymptotically long codes of rate $R$, the Gilbert--Varshamov (GV) bound is
+the reference distance benchmark.  Its relative distance $\delta_{\rm GV}$
+satisfies
+\[
+    H_q(\delta_{\rm GV})=1-R,
+    \qquad
+    H_q(\delta)
+      =\delta\log_q(q-1)-\delta\log_q\delta
+       -(1-\delta)\log_q(1-\delta).
+\]
+For $q=2$, this reduces to the usual binary entropy.  The GV value is a
+benchmark for the numerical transitions reported here, not a claim about any
+particular finite code.
+
+\subsection{The binary block codes}
+
+The binary evaluation uses four well-known families with exact parameters and
+weight spectra.  The Golay, Reed--Muller, and BCH constituents are certified in
+the accompanying Lean development.  The longer quadratic-residue spectra are
+standard algebraic or published enumerators and are not part of that formal
+certificate.
+
+\paragraph{Reed--Muller codes.}
+The code $\operatorname{RM}(r,\ell)$ is obtained by evaluating every
+multilinear polynomial in $\ell$ binary variables of total degree at most $r$
+on all points of $\F_2^\ell$.  It has parameters
+\[
+    \left[2^\ell,\ \sum_{i=0}^r\binom{\ell}{i},\ 2^{\ell-r}\right]_2.
+\]
+In particular, $\operatorname{RM}(2,5)$ is a $[32,16,8]_2$ code.  Up to a
+permutation of coordinates, it is also the parity extension of the primitive
+triple-error-correcting BCH code $[31,16,7]_2$, and is therefore often called
+the extended BCH code $[32,16,8]_2$~\cite{macwilliams}.  Here ``equivalent''
+means that the two descriptions differ only by a relabeling of coordinates;
+they have the same weight spectrum and give exactly the same BAA transition.
+Thus the $\operatorname{RM}(2,5)$ calculation below is already a rate-$1/2$
+BCH result.
+
+\paragraph{BCH codes.}
+A primitive binary BCH code is a cyclic code of length $2^\ell-1$ specified by
+requiring its code polynomials to vanish at a consecutive set of powers of a
+primitive element of $\F_{2^\ell}$.  The chosen roots give a designed-distance
+lower bound; extending the code by an overall parity coordinate can increase
+its length and distance.  A subcode is simply a linear subspace of the
+parent code.  The rate-$1/4$ block used here is an explicitly generated
+$[32,8,12]_2$ subcode of an extended primitive $[32,11,12]_2$ BCH code.
+Appendix~\ref{app:binary-generator} gives its generator and its exact exhaustive
+weight enumeration, so the analysis does not rely only on the BCH designed
+distance.
+
+\paragraph{The extended Golay code.}
+The extended binary Golay code is the exceptional self-dual $[24,12,8]_2$
+code.  Along with the extended BCH code (equivalently
+$\operatorname{RM}(2,5)$), it supplies a compact rate-$1/2$ block with a known
+complete weight enumerator.
+
+\paragraph{Extended quadratic-residue codes.}
+Extending the binary quadratic-residue code of prime length $p\equiv-1\pmod 8$
+gives a doubly even self-dual code of length $p+1$ and rate $1/2$.  We evaluate
+the concrete constituents $[48,24,12]$, $[80,40,16]$, $[104,52,20]$, and
+$[168,84,24]$.  For the first three, Type-II extremality and Gleason's theorem
+fix the complete weight enumerator from the displayed parameters.  For length
+$168$, we use the exact weight distribution determined by Su et
+al.~\cite{su08}; Appendix~\ref{app:qr-spectrum} records every nonzero
+coefficient used in our calculation.
+
+\subsection{Interleavers, accumulators, and BAA codes}
+
+An interleaver permutes code coordinates, usually by a uniformly random
+permutation in an ensemble analysis.  It preserves weight but randomizes the
+locations of the nonzero symbols.  The accumulator is the invertible linear
+map
+\[
+    (\Acc x)_j=\sum_{i\le j}x_i.
+\]
+Its output at position $j$ is the running sum of its input.  Serial
+concatenation alternates component codes
+or accumulators with interleavers, allowing the next component to see a nearly
+uniform placement conditional on the preceding weight or support.
+
+Block--Accumulate--Accumulate (BAA) codes first encode independent short blocks
+and then apply two interleaved accumulator stages.  The short outer code creates
+local distance, the interleavers disperse its support, and the accumulators turn
+that dispersed support into a global codeword.  Section~\ref{sec:construction}
+defines the precise chosen-block ensemble used in this paper.
+
+\subsection{Machine-checked proofs with Lean}
+\label{sec:lean-prelim}
+
+Lean~4 is an interactive theorem prover and functional programming language
+based on dependent type theory~\cite{demoura21lean4}.  Mathematical definitions,
+theorem statements, and proofs are represented in a formal language, and a small
+trusted kernel checks that each proof term has the type asserted by its theorem.
+We build on mathlib, Lean's community-developed library of formal
+mathematics~\cite{mathlib2020}.  Thus ``verified in Lean'' below means that the
+claimed finite statement has a kernel-checked proof from the explicitly audited
+foundations and dependencies; it does not mean that every asymptotic or
+floating-point calculation in the paper has been formalized.
+
+\subsection{Cryptographic uses of fast linear codes}
+
+\paragraph{Correlation generation.}
+A pseudorandom correlation generator (PCG) lets parties expand short local
+seeds, without further interaction, into long outputs that are
+computationally indistinguishable from a desired correlated distribution.
+Examples include oblivious-transfer (OT), vector oblivious linear evaluation
+(VOLE), and multiplication correlations~\cite{bcgi18,bcg19pcg}.  In code-based
+PCGs, a structured generator or parity-check multiplication forms part of this
+local expansion.  Security is tied to an LPN- or syndrome-decoding-type
+assumption.  The code must therefore exclude exploitable low-weight structure
+and admit fast multiplication at the protocol's concrete length.
+
+\paragraph{Succinct proofs and zero knowledge.}
+Code-based polynomial commitments and interactive oracle proofs encode a
+prover-held vector and test selected coordinates or linear relations.  Minimum
+distance supplies the separation needed for proximity and soundness, while a
+linear-time encoder keeps prover work proportional to the witness size
+~\cite{orion22,brakedown23,blaze25,era26}.  Field-agnostic Expand--Accumulate
+instead has quasi-linear encoding~\cite{fieldEA24}.  The required alphabet
+varies by protocol.  Blaze packs a binary RAA matrix into a code over a binary
+extension field.  Brakedown, field-agnostic Expand--Accumulate, and ERA work
+over arbitrary sufficiently large finite fields.  A binary matrix can
+participate through an explicit lifting or conversion layer, but it cannot
+silently replace an $\F_q$-linear encoder when the proof system expects
+linearity over $\F_q$.
+
+This paper studies the code construction used in both applications: its
+dimension, distance, low-weight events, and encoding cost.  It does not define a
+new PCG reduction, polynomial commitment, or zero-knowledge protocol.
 
 \section{The chosen-block BAA ensemble}
 \label{sec:construction}
@@ -246,26 +715,44 @@ different methods for counting low-weight outputs.
 
 \subsection{Definition and sampling}
 
-Let $q$ be a prime power, let $\F_q$ be the field with $q$ elements, and write
-$[N]:=\{1,\ldots,N\}$.  For a finite set $S$, the notation $x\gets S$ means
-that $x$ is sampled uniformly from $S$.  Separate sampling statements use
-independent randomness unless stated otherwise.  All probabilities and
-expectations below are over the displayed ensemble samples; a local subscript
-identifies any different probability space.
-
-Let $C_0\subseteq \F_q^m$ be a fixed $[m,k,d]_q$ linear code and let
+Following the original BAA notation, let $k$ and $n$ be the global code
+dimension and length, and let $\sigma$ be the local input-block size (called the
+state size in the original paper).  Let $C_0\subseteq \F_q^m$ be a fixed
+$[m,\sigma,d]_q$ linear code with full-rank generator
+$G_0\in\F_q^{\sigma\times m}$.  Assume $m\mid n$ and
 \[
-    B := N/m.
+    \frac{k}{n}=\frac{\sigma}{m},
+    \qquad
+    \frac{k}{\sigma}=\frac{n}{m}.
 \]
-Assume for simplicity that $m\mid N$.  Define the block-diagonal outer code
+The second local parameter $m$ is necessary because we allow rates other than
+$1/2$; for the original rate-$1/2$ setting, $m=2\sigma$.  Define the repeated
+outer code and its block-diagonal generator by
 \[
-    C_{\rm out} := C_0^{\oplus B}\subseteq \F_q^N.
+    C_{\rm out} := C_0^{\oplus k/\sigma}\subseteq \F_q^n,
+    \qquad
+    \mathbf B:=\operatorname{diag}(G_0,\ldots,G_0)
+      \in\F_q^{k\times n}.
 \]
 
-Sample independent permutations $\Pi_1,\Pi_2\gets\operatorname{Sym}([N])$.
+Figure~\ref{fig:block-stage-comparison} isolates the change to the local
+block-diagonal stage: independently sampled blocks are replaced by repeated
+copies of one fixed constituent generator.
+
+\begin{figure}[t]
+    \centering
+    \resizebox{\linewidth}{!}{\input{figures/baa-block-stage-comparison.tikz}}
+    \caption{The block-diagonal stage before and after the chosen-block
+    specialization.  Original BAA samples independent systematic generators
+    $G_1,\ldots,G_t$.  Chosen-block BAA fixes one certified constituent
+    generator $G_0$ and reuses it in every diagonal position.}
+    \label{fig:block-stage-comparison}
+\end{figure}
+
+Sample independent permutations $\Pi_1,\Pi_2\gets\operatorname{Sym}([n])$.
 For $q>2$, let
 \[
-    D_i=\operatorname{diag}(\alpha_{i,1},\ldots,\alpha_{i,N}),
+    D_i=\operatorname{diag}(\alpha_{i,1},\ldots,\alpha_{i,n}),
     \qquad
     \alpha_{i,j}\gets\F_q^\ast,
 \]
@@ -291,31 +778,32 @@ The BAA code is
 \]
 With row-vector convention, a generator may be written
 \[
-    G_{\rm BAA}=G_{\rm out}M_1A M_2A,
+    G_{\rm BAA}=\mathbf B M_1A M_2A
+      \in\F_q^{k\times n},
 \]
 where $A$ is the lower-triangular all-ones matrix.
 
 \begin{proposition}[Dimension preservation]
 For every choice of permutations and nonzero diagonal entries,
 \[
-    \dim \cC_{\rm BAA} = \frac{k}{m}N
+    \dim \cC_{\rm BAA} = k
 \]
 deterministically.
 \end{proposition}
 
 \begin{proof}
 The accumulator is lower triangular with unit diagonal, and each monomial map
-is invertible.  Their composition is a linear equivalence of $\F_q^N$.
+is invertible.  Their composition is a linear equivalence of $\F_q^n$.
 Restricting that equivalence to $C_{\rm out}$ preserves dimension, while the
-direct sum has dimension $Bk=(k/m)N$.
+direct sum has dimension $(k/\sigma)\sigma=k$.
 \end{proof}
 
 \paragraph{Encoding cost.}
-For constant $m$, local block encoding costs $O(N)$ field operations.
-Each permutation, diagonal scaling, and accumulator also costs $O(N)$.
+For constant $\sigma$ and $m$, local block encoding costs $O(n)$ field operations.
+Each permutation, diagonal scaling, and accumulator also costs $O(n)$.
 Hence the complete encoder uses
 \[
-    \boxed{O(N).}
+    \boxed{O(n).}
 \]
 
 \subsection{Why two accumulators are necessary}
@@ -330,27 +818,27 @@ Fix a nonzero word in $C_0$ and a constant $0<\delta<1$.  Over the random
 monomial map $M_1$, and along multiples of $m$, the one-accumulator ensemble
 satisfies
 \[
-    \Prb[d_{\min}(\cC_{\rm BA})\le \delta N]\longrightarrow 1.
+    \Prb[d_{\min}(\cC_{\rm BA})\le \delta n]\longrightarrow 1.
 \]
 \end{proposition}
 
 \begin{proof}
 Fix any nonzero local codeword $c_0\in C_0$ of weight $w$.
-Place one copy in each of the $B=N/m$ local blocks.
+Place one copy in each of the $n/m=k/\sigma$ local blocks.
 
 Let
 \[
-    H=\{N-L+1,\ldots,N\},
-    \qquad L=\lfloor\delta N\rfloor .
+    H=\{n-L+1,\ldots,n\},
+    \qquad L=\lfloor\delta n\rfloor .
 \]
 For block $i$, let $E_i$ be the event that all $w$ support coordinates of its
 copy of $c_0$ land in $H$ under $\Pi_1$.  Then
 \[
     \Prb[E_i]
       =
-    \frac{\binom{L}{w}}{\binom{N}{w}}
+    \frac{\binom{L}{w}}{\binom{n}{w}}
       =
-    \delta^w+O(N^{-1}).
+    \delta^w+O(n^{-1}).
 \]
 On $E_i$, the accumulator input is zero outside $H$, so its output is also
 supported in $H$.  Thus $E_i$ produces a codeword of weight at most $L$.
@@ -360,15 +848,15 @@ supports are disjoint and
 \[
     \Prb[E_i\cap E_j]
       =
-    \frac{\binom{L}{2w}}{\binom{N}{2w}}
+    \frac{\binom{L}{2w}}{\binom{n}{2w}}
       =
-    \Prb[E_i]\Prb[E_j]+O(N^{-1}).
+    \Prb[E_i]\Prb[E_j]+O(n^{-1}).
 \]
-Because $B=\Theta(N)$ and $\Prb[E_i]=\Theta(1)$,
-$\E X=\Theta(N)$ and $\operatorname{Var}(X)=O(N)$.  Chebyshev's inequality
-therefore gives $\Prb[X=0]=O(N^{-1})$.  Hence
+Because $n/m=\Theta(n)$ and $\Prb[E_i]=\Theta(1)$,
+$\E X=\Theta(n)$ and $\operatorname{Var}(X)=O(n)$.  Chebyshev's inequality
+therefore gives $\Prb[X=0]=O(n^{-1})$.  Hence
 \[
-    \Prb[d_{\min}(\cC_{\rm BA})\le \delta N]\to 1.
+    \Prb[d_{\min}(\cC_{\rm BA})\le \delta n]\to 1.
 \]
 Thus one accumulator cannot give asymptotically linear distance with a
 constant-size direct-sum outer code.  The second randomized accumulator is an
@@ -382,7 +870,7 @@ essential part of the construction.
 Set $q=2$.  Then the diagonal randomizers are trivial and the construction is
 \[
     \boxed{
-    C_0^{\oplus N/m}
+    C_0^{\oplus k/\sigma}
       \xrightarrow{\Pi_1}
     \Acc
       \xrightarrow{\Pi_2}
@@ -401,31 +889,31 @@ Write the local homogeneous weight enumerator as
 \]
 For the direct-sum outer code,
 \[
-    W_{\rm out}(z)=W_0(z)^{N/m},
+    W_{\rm out}(z)=W_0(z)^{k/\sigma},
     \qquad
-    A_w^{\rm out}=[z^w]W_0(z)^{N/m}.
-    \tag{B1}
+    A_w^{\rm out}=[z^w]W_0(z)^{k/\sigma}.
+    \eqnumlabel{eq:B1}
 \]
-For constant $m$, enumerating the $2^k$ local messages gives the complete
+For constant $m$, enumerating the $2^\sigma$ local messages gives the complete
 spectrum.  A BCH-like block therefore needs neither an asymptotic spectrum
 theorem nor a random local-code failure event.
 
 \begin{lemma}[Binary accumulator transition]
-For $1\le w\le N$, put
+For $1\le w\le n$, put
 \[
     r_w:=\left\lceil\frac w2\right\rceil,
     \qquad
     s_w:=\left\lfloor\frac w2\right\rfloor.
 \]
-For $1\le h\le N$, the exact binary accumulator input--output enumerator is
+For $1\le h\le n$, the exact binary accumulator input--output enumerator is
 \[
     \boxed{
     E^{\rm bin}_{w,h}
       =
     \binom{h-1}{r_w-1}
-    \binom{N-h}{s_w}.
+    \binom{n-h}{s_w}.
     }
-    \tag{B2}
+    \eqnumlabel{eq:B2}
 \]
 If $w>0$ and $h=0$, then $E^{\rm bin}_{w,0}=0$ because the accumulator is
 invertible.  This separate boundary case avoids interpreting
@@ -441,15 +929,15 @@ The inverse difference map proves both injectivity and surjectivity of this
 correspondence.  Invertibility excludes a zero output for nonzero input.
 \end{proof}
 
-Let $\mathcal H_{N,w}:=\{u\in\F_2^N:\wt(u)=w\}$.  Consequently, for
-$U\gets\mathcal H_{N,w}$,
+Let $\mathcal H_{n,w}:=\{u\in\F_2^n:\wt(u)=w\}$.  Consequently, for
+$U\gets\mathcal H_{n,w}$,
 \[
-    P_N^{\rm bin}(w,h)
+    P_n^{\rm bin}(w,h)
       :=
-    \Prb_{U\gets\mathcal H_{N,w}}[\wt(\Acc U)=h]
+    \Prb_{U\gets\mathcal H_{n,w}}[\wt(\Acc U)=h]
       =
-    \frac{E^{\rm bin}_{w,h}}{\binom Nw}.
-    \tag{B3}
+    \frac{E^{\rm bin}_{w,h}}{\binom{n}{w}}.
+    \eqnumlabel{eq:B3}
 \]
 In contrast with the large-field trace formula below, the binary accumulator
 state alternates deterministically between zero and one at the active
@@ -457,24 +945,25 @@ coordinates; there is no independently chosen zero-return trace.
 
 Define the second-stage low-weight tail
 \[
-    Q_N^{\rm bin}(h,L)
+    Q_n^{\rm bin}(h,L)
       :=
-    \sum_{j=1}^{L}P_N^{\rm bin}(h,j).
+    \sum_{j=1}^{L}P_n^{\rm bin}(h,j).
 \]
 \begin{theorem}[Exact binary first moment]
-Let $1\le L\le N$.  Over independent
-$\Pi_1,\Pi_2\gets\operatorname{Sym}([N])$, the expected number of nonzero BAA
+\label{thm:exact-binary-first-moment}
+Let $1\le L\le n$.  Over independent
+$\Pi_1,\Pi_2\gets\operatorname{Sym}([n])$, the expected number of nonzero BAA
 codewords of weight at most $L$ is
 \[
     \boxed{
-    \mu_{\rm bin}(N,L;C_0)
+    \mu_{\rm bin}(n,L;C_0)
       =
-    \sum_{w=1}^{N}A_w^{\rm out}
-    \sum_{h=1}^{N}
-      P_N^{\rm bin}(w,h)
-      Q_N^{\rm bin}(h,L).
+    \sum_{w=1}^{n}A_w^{\rm out}
+    \sum_{h=1}^{n}
+      P_n^{\rm bin}(w,h)
+      Q_n^{\rm bin}(h,L).
     }
-    \tag{B4}
+    \eqnumlabel{eq:B4}
 \]
 Both interleavers are uniform, so conditioned on its weight, the word entering
 each accumulator is uniform on the corresponding Hamming slice.  Since the
@@ -483,9 +972,9 @@ permutations and accumulators are invertible,
     \boxed{
     \Prb[d_{\min}(\cC_{\rm BAA})\le L]
       \le
-    \mu_{\rm bin}(N,L;C_0).
+    \mu_{\rm bin}(n,L;C_0).
     }
-    \tag{B5}
+    \eqnumlabel{eq:B5}
 \]
 Unlike the large-field case, no projective-support correction is needed:
 $\F_2^\ast$ contains only one scalar.
@@ -493,44 +982,68 @@ $\F_2^\ast$ contains only one scalar.
 
 \begin{proof}
 Fix an outer word of weight $w$.  A uniform permutation sends it uniformly to
-the weight-$w$ Hamming slice, so (B3) gives the first output weight.  Conditional
+the weight-$w$ Hamming slice, so \eqref{eq:B3} gives the first output weight.  Conditional
 on an intermediate weight $h$, the independent second permutation is uniform
-on the weight-$h$ slice, and $Q_N^{\rm bin}(h,L)$ gives the final tail.
-Summing over the $A_w^{\rm out}$ outer words proves (B4) by linearity of
+on the weight-$h$ slice, and $Q_n^{\rm bin}(h,L)$ gives the final tail.
+Summing over the $A_w^{\rm out}$ outer words proves \eqref{eq:B4} by linearity of
 expectation.  If the minimum distance is at most $L$, at least one nonzero bad
-word exists.  Markov's inequality therefore gives (B5).
+word exists.  Markov's inequality therefore gives \eqref{eq:B5}.
+\end{proof}
+
+\begin{corollary}[Asymptotic linear minimum distance]
+\label{cor:binary-linear-distance}
+Let $C_0\subseteq\F_2^m$ be a fixed $[m,\sigma,d]$ code with constant $m$ and
+$\sigma$ and with $d>4$.  Along admissible lengths $n$ with
+$k/n=R:=\sigma/m$, there is a constant
+$\varepsilon=\varepsilon(d,\sigma,R)>0$ such that
+\[
+    \Prb\!\left[
+        d_{\min}(\cC_{\rm BAA})\ge \varepsilon n
+    \right]
+    \xrightarrow[n\to\infty]{}1.
+\]
+\end{corollary}
+
+\begin{proof}
+The linear-distance proof in the original BAA work~\cite{baa26} fixes the outer
+block-diagonal map and assumes that every activated input block contributes
+output weight at least a constant $d'>4$; it does not require the local blocks
+to be sampled independently.  Here the full-rank local generator maps every
+nonzero input block to a nonzero word of $C_0$, hence to one of weight at least
+$d$.  The original theorem therefore applies with $d'=d$ to the same two
+independent uniform interleavers and accumulators.
 \end{proof}
 
 \subsection{Asymptotic consequences}
 
-Fix $w$ and a target $0<\delta<1/2$.  The exact transition~(B3) gives, for
+Fix $w$ and a target $0<\delta<1/2$.  The exact transition~\eqref{eq:B3} gives, for
 fixed $h$,
 \[
-    P_N^{\rm bin}(w,h)
+    P_n^{\rm bin}(w,h)
       =
-    \Theta_{w,h}\!\left(N^{-\lceil w/2\rceil}\right).
+    \Theta_{w,h}\!\left(n^{-\lceil w/2\rceil}\right).
 \]
 The second accumulator tail from fixed $h$ converges to a nonzero beta-tail
 constant.  Splitting the intermediate-weight sum into bounded and growing
 ranges therefore gives
 \[
     \boxed{
-    \sum_h P_N^{\rm bin}(w,h)Q_N^{\rm bin}(h,\lfloor\delta N\rfloor)
+    \sum_h P_n^{\rm bin}(w,h)Q_n^{\rm bin}(h,\lfloor\delta n\rfloor)
       =
-    \Theta_{w,\delta}\!\left(N^{-\lceil w/2\rceil}\right).
+    \Theta_{w,\delta}\!\left(n^{-\lceil w/2\rceil}\right).
     }
-    \tag{B6}
+    \eqnumlabel{eq:B6}
 \]
 Hence the one-active-block contribution is
 \[
-    \frac Nm
+    \frac{k}{\sigma}
     \sum_{w=1}^{m}A_w^{(0)}
-    \Theta_{w,\delta}\!\left(N^{-\lceil w/2\rceil}\right).
-    \tag{B7}
+    \Theta_{w,\delta}\!\left(n^{-\lceil w/2\rceil}\right).
+    \eqnumlabel{eq:B7}
 \]
 If the local distance is $d$, this is at most
 \[
-    O\!\left(N^{1-\lceil d/2\rceil}\right),
+    O\!\left(n^{1-\lceil d/2\rceil}\right),
 \]
 with the exact leading term determined by all local weights attaining the
 smallest value of $\lceil w/2\rceil$.
@@ -538,13 +1051,13 @@ smallest value of $\lceil w/2\rceil$.
 Using only local distance, a fixed family touching $t$ blocks has the coarse
 scale
 \[
-    O\!\left(N^{t-\lceil td/2\rceil}\right).
-    \tag{B8}
+    O\!\left(n^{t-\lceil td/2\rceil}\right).
+    \eqnumlabel{eq:B8}
 \]
 Thus a constant local distance of at least three is consistent with a vanishing
 fixed-$t$ sparse tail.  The earlier binary BA proof assumes $d>4$ because it
 uses coarser inequalities.  For a fixed local block, its exact spectrum and the
-two-accumulator kernel~(B4) give the sharper bound.
+two-accumulator kernel~\eqref{eq:B4} give the sharper bound.
 
 \paragraph{Linear weights.}
 
@@ -558,15 +1071,15 @@ The direct-sum spectrum has the coefficient upper exponent
       \frac1m\log W_0(z)-\alpha\log z
     \right\}.
     }
-    \tag{B9}
+    \eqnumlabel{eq:B9}
 \]
 Indeed,
 \[
-    A_{\lfloor\alpha N\rfloor}^{\rm out}
+    A_{\lfloor\alpha n\rfloor}^{\rm out}
       \le
-    \exp\!\left(N\mathcal A_{C_0}(\alpha)+O(\log N)\right).
+    \exp\!\left(n\mathcal A_{C_0}(\alpha)+O(\log n)\right).
 \]
-For linear input and output weights $uN$ and $vN$, the binary accumulator
+For linear input and output weights $u n$ and $v n$, the binary accumulator
 transition exponent is
 \[
     \boxed{
@@ -576,7 +1089,7 @@ transition exponent is
     +(1-v)H\!\left(\frac{u}{2(1-v)}\right)
     -H(u),
     }
-    \tag{B10}
+    \eqnumlabel{eq:B10}
 \]
 with feasibility $u/2\le v\le1-u/2$.  For $\delta<1/2$, this exponent is
 increasing in the final output fraction up to $1/2$, so the low-weight tail is
@@ -591,40 +1104,44 @@ The binary BAA first-moment exponent is therefore
     +\Gamma_{\rm bin}(\alpha,\eta)
     +\Gamma_{\rm bin}(\eta,\delta).
     }
-    \tag{B11}
+    \eqnumlabel{eq:B11}
 \]
 A sufficient condition for the linear-weight contribution to vanish is
 \[
     \sup_{\alpha,\eta}\Phi^{\rm bin}_{C_0,\delta}(\alpha,\eta)<0
-    \tag{B12}
+    \eqnumlabel{eq:B12}
 \]
-over the feasible domain.  For a fixed block $C_0$, (B4) gives the exact
-finite-length first moment, (B7) controls fixed-block supports, and (B12)
+over the feasible domain.  For a fixed block $C_0$, \eqref{eq:B4} gives the exact
+finite-length first moment, \eqref{eq:B7} controls fixed-block supports, and \eqref{eq:B12}
 controls linear weights.
 
 \section{Large-field support analysis}
 \label{sec:large-field}
 
-Over a large field, one support can carry many scalar assignments.  Counting
-them as separate bad words makes the first moment sensitive to large projective
-clusters.  The bound below fixes the support first and charges only the
-cancellation constraints beyond its projective dimension.
+Over a large field, many codewords can have the same support, and every nonzero
+scalar multiple of a codeword is present automatically.  Counting these scalar
+multiples as separate bad events can greatly inflate a first-moment bound.  We
+instead treat scalar multiples as one codeword direction, fix its support, and
+charge only the accumulator cancellations that exceed the number of available
+directions on that support.
 
 \subsection{Accumulator traces and projective cancellation}
 
-The use of random nonzero weighters around nonbinary accumulators follows the
-weighted nonbinary RA/RMA literature~\cite{yang04,rosnes11}.  The distinction
-between counting field-valued codewords and bounding the probability that a
-sampled code admits a bad projective word is central to recent large-field RAA
-analyses~\cite{akhiani26,khabbazian26}.  In chosen-block BAA, the shortening
-lattice of the local code replaces the one-dimensional supports of the
-repetition code.
+The use of random nonzero diagonal scalings, or weighters, around nonbinary
+accumulators follows the weighted nonbinary RA/RMA literature
+~\cite{yang04,rosnes11}.  Recent nonbinary RAA analyses likewise distinguish
+between counting all field-valued codewords and bounding whether a sampled code
+contains a bad codeword direction, meaning a nonzero word modulo scalar
+multiplication~\cite{akhiani26,khabbazian26,blindraa26}.  For a repetition code,
+every relevant support contains only one such direction.  A chosen local block
+can have several, with the number controlled by its shortening dimension, so
+the fixed-field RAA theorem does not transfer without a new shortening analysis.
 
 
 Consider an accumulator input with exactly $s$ nonzero coordinates at
 \[
     p_1<\cdots<p_s,
-    \qquad p_{s+1}:=N+1.
+    \qquad p_{s+1}:=n+1.
 \]
 Let
 \[
@@ -641,22 +1158,22 @@ consecutive indices.
 
 \begin{lemma}[Nonbinary accumulator placements]
 \label{lem:nonbinary-placement}
-Suppose the active input coordinates form a uniform $s$-subset of $[N]$.  The
+Suppose the active input coordinates form a uniform $s$-subset of $[n]$.  The
 support-placement probability for output weight $h$, summed over all
 zero-return traces of cardinality $a$, is
 \[
     \boxed{
-    \cG_N(s,h,a)
+    \cG_n(s,h,a)
       :=
     \frac{
       \binom{s-a}{a}
-      \binom{N-h}{a}
+      \binom{n-h}{a}
       \binom{h-1}{s-a-1}
     }{
-      \binom{N}{s}
+      \binom{n}{s}
     }.
     }
-    \tag{1}
+    \eqnumlabel{eq:1}
 \]
 for feasible $s,h,a$; the value is zero otherwise.
 \end{lemma}
@@ -668,11 +1185,11 @@ The three factors count, respectively:
     \item the zero-state gaps;
     \item the positive nonzero-state gaps.
 \end{itemize}
-Dividing their product by the $\binom Ns$ possible input supports gives (1).
+Dividing their product by the $\binom{n}{s}$ possible input supports gives \eqref{eq:1}.
 The gap construction is reversible, so every placement is counted once.
 \end{proof}
 
-Fix an exact outer support $S\subseteq[N]$.  Write
+Fix an exact outer support $S\subseteq[n]$.  Write
 \[
     s:=|S|,
     \qquad
@@ -708,7 +1225,7 @@ realizes all $c$ returns is at most
         \frac{q^r-1}{q-1}(q-1)^{-c}
     \right\}.
     }
-    \tag{2}
+    \eqnumlabel{eq:2}
 \]
 \end{lemma}
 
@@ -717,7 +1234,7 @@ Normalize each nonzero word by its first nonzero coordinate.  An
 $r$-dimensional shortening has $(q^r-1)/(q-1)$ normalized representatives.
 For a fixed representative, each prescribed return fixes a fresh independent
 diagonal entry and therefore costs a factor $(q-1)^{-1}$.  The union bound over
-representatives gives the second argument of the minimum in (2); probability
+representatives gives the second argument of the minimum in \eqref{eq:2}; probability
 is at most one.
 \end{proof}
 
@@ -733,7 +1250,7 @@ degrees of freedom; each surplus constraint costs approximately $1/q$.
 \subsection{Finite-length master bound}
 
 \begin{theorem}[Finite large-field master bound]
-Let $q>2$ and $1\le L\le N$.  Over independent uniform permutations and
+Let $q>2$ and $1\le L\le n$.  Over independent uniform permutations and
 independent uniform nonzero diagonal entries, the chosen-block BAA ensemble
 satisfies
 \[
@@ -741,18 +1258,18 @@ satisfies
 \begin{aligned}
 \Prb[d_{\min}(\cC_{\rm BAA})\le L]
 \le
-\sum_{\substack{\varnothing\ne S\subseteq[N]}}
+\sum_{\substack{\varnothing\ne S\subseteq[n]}}
 \sum_{a=0}^{|S|-1}
-\sum_{h=1}^{N}
+\sum_{h=1}^{n}
 \sum_{b=0}^{h-1}
 \sum_{j=1}^{L}
-&\cG_N(|S|,h,a)
+&\cG_n(|S|,h,a)
 \\[-1mm]
-&\cdot \cG_N(h,j,b)
+&\cdot \cG_n(h,j,b)
 \cdot \chi_q(r_S,a+b),
 \end{aligned}
 }
-\tag{3}
+\eqnumlabel{eq:3}
 \]
 where $r_S:=\dim C_{\rm out}[S]$.
 \end{theorem}
@@ -763,13 +1280,13 @@ accumulator trajectory by $(a,h,b,j)$.  Lemma~\ref{lem:nonbinary-placement}
 supplies the two independent support-placement factors.  For each fixed
 support, Lemma~\ref{lem:projective-cancellation} bounds the union over its
 normalized projective words by $\chi_q(r_S,a+b)$.  A final union bound over the
-displayed finite index set proves (3).
+displayed finite index set proves \eqref{eq:3}.
 \end{proof}
 
 Although $S$ indexes an exact-support event, $r_S$ is the dimension of the
 larger shortening whose words have support contained in $S$.  It therefore
 upper-bounds the number of projective candidates with exact support $S$.
-Equation~(3) groups each shortened projective space before applying the union
+Equation~\eqref{eq:3} groups each shortened projective space before applying the union
 bound, so every codeword retains its unique exact support.
 
 \subsection{Shortenings and asymptotic consequences}
@@ -783,7 +1300,7 @@ For a local coordinate set $T\subseteq[m]$, define
     r_0(T):=\dim C_0[T].
 \]
 
-Call $T$ \emph{admissible} when $C_0[T]$ is nontrivial.
+Call $T$ admissible when $C_0[T]$ is nontrivial.
 
 \begin{proposition}[Shortening profile]
 Suppose that $C_0$ has minimum distance $d$.  Every admissible set $T$ of size
@@ -802,14 +1319,14 @@ and its support excess $E:=s-r+1$ satisfies
     \boxed{
     E\ge t(d-1)+1.
     }
-    \tag{4}
+    \eqnumlabel{eq:4}
 \]
-If $C_0$ is an $[m,k,d]$ MDS code, then every $T\subseteq[m]$ satisfies
+If $C_0$ is an $[m,\sigma,d]$ MDS code, then every $T\subseteq[m]$ satisfies
 \[
     \boxed{
     r_0(T)=(|T|-d+1)_+.
     }
-    \tag{5}
+    \eqnumlabel{eq:5}
 \]
 \end{proposition}
 
@@ -817,14 +1334,14 @@ If $C_0$ is an $[m,k,d]$ MDS code, then every $T\subseteq[m]$ satisfies
 The shortening $C_0[T]$ has length $s_T$, dimension $r_0(T)$, and minimum
 distance at least $d$.  Singleton gives the local inequality.  Shortening of a
 direct sum decomposes blockwise, so dimensions and support sizes add; summing
-over the $t$ admissible intersections proves (4).
+over the $t$ admissible intersections proves \eqref{eq:4}.
 
-For an MDS code, restriction to any $k$ coordinates is an isomorphism.  The
+For an MDS code, restriction to any $\sigma$ coordinates is an isomorphism.  The
 kernel of restriction to the complement of $T$ therefore has dimension
-$\max\{0,k-(m-|T|)\}=(|T|-d+1)_+$, which proves (5).
+$\max\{0,\sigma-(m-|T|)\}=(|T|-d+1)_+$, which proves \eqref{eq:5}.
 \end{proof}
 
-The admissibility condition in (4) is necessary: an arbitrary small set can
+The admissibility condition in \eqref{eq:4} is necessary: an arbitrary small set can
 support only the zero shortening and need not satisfy the local Singleton
 inequality.  Exact supports of outer codewords are admissible in every block
 they meet.
@@ -855,16 +1372,16 @@ A direct fixed-$t$ asymptotic analysis of the exact kernel gives the scale
     P_t
       =
     O\!\left(
-      N^{-t(d-2)-1}
+      n^{-t(d-2)-1}
     \right)
     }
-    \tag{6}
+    \eqnumlabel{eq:6}
 \]
 when $q$ is sufficiently large that surplus cancellations are negligible.
 
 In particular,
 \[
-    P_1=O(N^{1-d}).
+    P_1=O(n^{1-d}).
 \]
 The canonical one-block event gives a matching lower bound of the same
 polynomial order, so the natural sparse tail is
@@ -872,9 +1389,9 @@ polynomial order, so the natural sparse tail is
     \boxed{
     \Prb[\text{sparse bad event}]
       =
-    \Theta(N^{1-d}).
+    \Theta(n^{1-d}).
     }
-    \tag{7}
+    \eqnumlabel{eq:7}
 \]
 
 For example:
@@ -882,36 +1399,36 @@ For example:
 \begin{array}{c|c}
 d & \text{sparse tail scale}\\
 \hline
-2 & N^{-1}\\
-3 & N^{-2}\\
-5 & N^{-4}\\
-7 & N^{-6}\\
-9 & N^{-8}
+2 & n^{-1}\\
+3 & n^{-2}\\
+5 & n^{-4}\\
+7 & n^{-6}\\
+9 & n^{-8}
 \end{array}
 \]
 
-For $q-1\gtrsim N$, a surplus cancellation can recover at most one geometric
-power of $N$ while costing $1/(q-1)$, so surplus layers remain controlled.
+For $q-1\gtrsim n$, a surplus cancellation can recover at most one geometric
+power of $n$ while costing $1/(q-1)$, so surplus layers remain controlled.
 For $q\approx2^{128}$ and the lengths considered here, the resulting surplus
 terms are negligible on the reported scale.
 
 \paragraph{Linear weights.}
 
-Let $C_0$ be an $[m,k,d]$ MDS code, with
+Let $C_0$ be an $[m,\sigma,d]$ MDS code, with
 \[
-    d=m-k+1,
-    \qquad R=k/m.
+    d=m-\sigma+1,
+    \qquad R=\sigma/m=k/n.
 \]
 Its local support--dimension polynomial is
 \[
     \boxed{
-    F_{m,k}(z,u)
+    F_{m,\sigma}(z,u)
       =
     1+
     \sum_{\ell=d}^{m}
     \binom{m}{\ell}z^\ell u^{\ell-d+1}.
     }
-    \tag{L1}
+    \eqnumlabel{eq:L1}
 \]
 Let $p_0,p_d,\ldots,p_m$ be the fractions of local blocks in each exact
 support class, and put
@@ -928,17 +1445,17 @@ Define the normalized global support and shortening dimension by
       :=
     \frac1m\sum_{\ell=d}^{m}(\ell-d+1)p_\ell.
 \]
-Since $d-1=m-k=m(1-R)$,
+Since $d-1=m-\sigma=m(1-R)$,
 \[
     \boxed{
     \beta=\alpha-(1-R)\lambda.
     }
-    \tag{L2}
+    \eqnumlabel{eq:L2}
 \]
 The support-pattern entropy per output coordinate is
 \[
     \boxed{
-    \cS_{m,k}(p)
+    \cS_{m,\sigma}(p)
       :=
     \frac1m
     \left[
@@ -947,7 +1464,7 @@ The support-pattern entropy per output coordinate is
       \sum_{\ell=d}^{m}p_\ell\log\binom{m}{\ell}
     \right].
     }
-    \tag{L3}
+    \eqnumlabel{eq:L3}
 \]
 Here $H$ uses natural logarithms unless a quantity is explicitly divided by
 $\log 2$.
@@ -955,11 +1472,11 @@ $\log 2$.
 Normalize the first- and second-stage zero-return counts and intermediate
 support by
 \[
-    x:=a/N,
+    x:=a/n,
     \qquad
-    y:=b/N,
+    y:=b/n,
     \qquad
-    \eta:=h/N.
+    \eta:=h/n.
 \]
 The first accumulator contributes
 \[
@@ -979,7 +1496,7 @@ H\!\left(\frac{\alpha-x}{\eta}\right)
 -H(\alpha),
 \end{aligned}
 }
-\tag{L4}
+\eqnumlabel{eq:L4}
 \]
 and, at final relative weight $\zeta$, the second contributes
 \[
@@ -999,14 +1516,14 @@ H\!\left(\frac{\eta-y}{\zeta}\right)
 -H(\eta).
 \end{aligned}
 }
-\tag{L5}
+\eqnumlabel{eq:L5}
 \]
 A direct derivative calculation gives the unconstrained maximizing final weight
 \[
     \boxed{
     \zeta_\star=1-\frac{y}{\eta}.
     }
-    \tag{L6}
+    \eqnumlabel{eq:L6}
 \]
 Therefore define
 \[
@@ -1027,15 +1544,15 @@ In the large-field no-surplus region,
 and the complete support/trace first-moment exponent is
 \[
     \boxed{
-    \Phi_{m,k,\delta}
+    \Phi_{m,\sigma,\delta}
       =
-    \cS_{m,k}(p)
+    \cS_{m,\sigma}(p)
       +
     \Gamma_1(\alpha,\eta,x)
       +
     \widehat\Gamma_2(\eta,\delta,y).
     }
-    \tag{L7}
+    \eqnumlabel{eq:L7}
 \]
 For finite $q$, the corresponding exponent includes
 \[
@@ -1045,17 +1562,21 @@ For finite $q$, the corresponding exponent includes
     \right\}.
 \]
 The numerical transition for this support/trace bound is the largest $\delta$
-for which the supremum of~(L7) over the feasible domain is negative.
+for which the supremum of~\eqref{eq:L7} over the feasible domain is negative.
 
 \section{Generic rank and the structural obstruction}
 \label{sec:rank-containers}
 
 The master bound in Section~\ref{sec:large-field} distinguishes zero-return
-traces even when they produce the same final support.  Its first moment is
-therefore not a code-level converse.  A backward parity-check matrix groups all
-traces and projective assignments that lead to one support.  The generic rank
-of that matrix has an exact path-packing characterization and yields a
-coefficient-independent obstruction.
+traces even when they produce the same final support.  Its expected trace count
+therefore cannot, by itself, show that sampled codes above the threshold
+typically contain a low-weight word.  We instead fix a proposed final support
+and ask directly whether the code contains a nonzero word confined to it.  A
+parity-check matrix propagated backward through the two accumulators groups all
+internal traces and scalar assignments that lead to that support.  Treating the
+diagonal coefficients as algebraically independent variables defines its
+generic rank; we characterize that rank by a path-packing problem and derive an
+obstruction that holds for every coefficient choice.
 
 \subsection{Backward parity-check formulation}
 
@@ -1070,13 +1591,13 @@ monomial maps, a parity-check matrix for BAA is
     \boxed{
     Q=H D_1P_1\Delta D_2P_2\Delta .
     }
-    \tag{G1}
+    \eqnumlabel{eq:G1}
 \]
-For a final coordinate set $T\subseteq[N]$, a nonzero BAA codeword supported in
+For a final coordinate set $T\subseteq[n]$, a nonzero BAA codeword supported in
 $T$ exists exactly when
 \[
     \boxed{\operatorname{rank}Q_T<|T|.}
-    \tag{G2}
+    \eqnumlabel{eq:G2}
 \]
 This event groups every outer support, projective assignment, and pair of
 accumulator traces that leads to the same final support.
@@ -1084,14 +1605,14 @@ accumulator traces that leads to the same final support.
 Replace the entries of $D_1$ and $D_2$ by two disjoint families of
 indeterminates, and let $K$ be the fraction field of the resulting polynomial
 ring.  All ranks in the remainder of this subsection are over $K$.  For an
-$[m,k]$ MDS block, define the local capacity
+$[m,\sigma]$ MDS block, define the local capacity
 \[
-    h:=m-k
+    h:=m-\sigma
 \]
 for the number of paths that may terminate in that block.
 
-The layered graph associated with (G1) has three copies $V_2,V_1,V_0$ of
-$[N]$.  Add an edge from $j\in V_2$ to $i\in V_1$ when
+The layered graph associated with \eqref{eq:G1} has three copies $V_2,V_1,V_0$ of
+$[n]$.  Add an edge from $j\in V_2$ to $i\in V_1$ when
 $(P_2\Delta)_{i,j}\ne0$, and add an edge from $j\in V_1$ to $i\in V_0$ when
 $(P_1\Delta)_{i,j}\ne0$.  Join each vertex of $V_0$ to the local block that
 contains its coordinate.  Coordinate vertices have unit capacity, and every
@@ -1100,8 +1621,8 @@ maximum number of capacity-respecting paths from distinct vertices of $T$ to
 the block terminals.
 
 \begin{theorem}[Generic rank as path packing]
-Let $C_0$ be an $[m,k]$ MDS code, and let $H$ be a block-diagonal parity-check
-matrix for $C_{\rm out}$.  For every final support $T\subseteq[N]$,
+Let $C_0$ be an $[m,\sigma]$ MDS code, and let $H$ be a block-diagonal parity-check
+matrix for $C_{\rm out}$.  For every final support $T\subseteq[n]$,
 \[
     \operatorname{rank}_K Q_T=\nu(T).
 \]
@@ -1125,9 +1646,9 @@ large-field RAA~\cite{khabbazian26}.
 
 \subsection{A coefficient-independent obstruction}
 
-For $S\subseteq[N]$, define
+For $S\subseteq[n]$, define
 \[
-    S+1:=\{i+1:i\in S,\ i<N\}
+    S+1:=\{i+1:i\in S,\ i<n\}
 \]
 and the one-step path neighborhood
 \[
@@ -1137,13 +1658,13 @@ so the right endpoint is handled explicitly.  Define the two-step backward
 neighborhood
 \[
     U(T):=P_1\partial\!\left(P_2\partial T\right).
-    \tag{G3}
+    \eqnumlabel{eq:G3}
 \]
 For an outer-coordinate set $U$, define its MDS block rank
 \[
     \kappa(U):=
-    \sum_{\text{blocks }B}\min\{|U\cap B|,h\}.
-    \tag{G4}
+    \sum_{\text{blocks }J}\min\{|U\cap J|,h\}.
+    \eqnumlabel{eq:G4}
 \]
 Every backward path from $T$ terminates in $U(T)$, hence
 \[
@@ -1152,15 +1673,15 @@ Every backward path from $T$ terminates in $U(T)$, hence
 Consequently, the rank criterion gives the following corollary.
 
 \begin{proposition}[Structural obstruction]
-Let $C_0$ be an $[m,k]$ MDS code and put $h=m-k$.  For every
-$T\subseteq[N]$,
+Let $C_0$ be an $[m,\sigma]$ MDS code and put $h=m-\sigma$.  For every
+$T\subseteq[n]$,
 \[
     \boxed{
     \kappa(U(T))<|T|
     \quad\Longrightarrow\quad
     T\text{ supports a nonzero BAA codeword}
     }
-    \tag{G5}
+    \eqnumlabel{eq:G5}
 \]
 for every choice of diagonal coefficients.  The obstruction is purely a defect
 of the two permutations, the two difference layers, and the local block-rank
@@ -1172,7 +1693,7 @@ The selected columns of the transported parity-check matrix lie in the direct
 sum of the blockwise column spaces indexed by $U(T)$.  That space has dimension
 at most $\kappa(U(T))$.  If this value is smaller than $|T|$, then $Q_T$ has a
 nonzero kernel vector for every specialization of the diagonal entries.  By
-(G2), the resulting codeword is supported in $T$.
+\eqref{eq:G2}, the resulting codeword is supported in $T$.
 \end{proof}
 
 The mechanism is block saturation.  Once $U(T)$ occupies at least $h$ positions
@@ -1180,31 +1701,36 @@ inside a block, additional positions in that block add no parity-check rank.
 Two backward neighborhood expansions can therefore contain many coordinates
 but concentrate them in a smaller number of almost-full blocks.
 
+We call a set $T$ satisfying \eqref{eq:G5} a direct structural container:
+``container'' because the codeword's exact support may be a strict subset of
+$T$, and ``direct'' because the block-capacity test \eqref{eq:G5} detects it without
+solving the full path-packing problem.
+
 \subsection{Counting structural containers}
 
 For fixed permutations, define
 \[
     Z_t
       :=
-    \bigl|\{T\subseteq[N]:|T|=t,\ \kappa(U(T))<t\}\bigr|.
+    \bigl|\{T\subseteq[n]:|T|=t,\ \kappa(U(T))<t\}\bigr|.
 \]
-By (G5), every set counted by $Z_t$ supports a nonzero BAA codeword for every
+By \eqref{eq:G5}, every set counted by $Z_t$ supports a nonzero BAA codeword for every
 choice of diagonal coefficients.
 
 Endpoint membership changes the size of a difference neighborhood.  For
-$e\in\{0,1\}$, let $R_N^e(t,r)$ count the $t$-subsets with $r$ runs and with
-$e=1$ exactly when $N$ belongs to the set.  Then
+$e\in\{0,1\}$, let $R_n^e(t,r)$ count the $t$-subsets with $r$ runs and with
+$e=1$ exactly when $n$ belongs to the set.  Then
 \[
 \begin{aligned}
-    R_N^0(t,r)
-      &:=\binom{t-1}{r-1}\binom{N-t}{r},\\
-    R_N^1(t,r)
-      &:=\binom{t-1}{r-1}\binom{N-t}{r-1},\\
-    R_N(t,r)
-      &:=R_N^0(t,r)+R_N^1(t,r)
-       =\binom{t-1}{r-1}\binom{N-t+1}{r}.
+    R_n^0(t,r)
+      &:=\binom{t-1}{r-1}\binom{n-t}{r},\\
+    R_n^1(t,r)
+      &:=\binom{t-1}{r-1}\binom{n-t}{r-1},\\
+    R_n(t,r)
+      &:=R_n^0(t,r)+R_n^1(t,r)
+       =\binom{t-1}{r-1}\binom{n-t+1}{r}.
 \end{aligned}
-\tag{G6}
+\eqnumlabel{eq:G6}
 \]
 For a set of type $(t,r,e)$, the neighborhood has exact size
 \[
@@ -1216,19 +1742,19 @@ For the local block-rank count define
     B_{m,h}(x,y)
       :=
     \sum_{\ell=0}^{m}\binom m\ell x^\ell y^{\min(\ell,h)},
-    \tag{G7}
+    \eqnumlabel{eq:G7}
 \]
 and
 \[
-    A_{N,m,h}(u,c)
+    A_{n,m,h}(u,c)
       :=
-    \sum_{z\le c}[x^uy^z]B_{m,h}(x,y)^{N/m}.
-    \tag{G8}
+    \sum_{z\le c}[x^uy^z]B_{m,h}(x,y)^{n/m}.
+    \eqnumlabel{eq:G8}
 \]
 
 \begin{theorem}[Exact structural-container expectation]
-Assume $m\mid N$, fix $1\le t\le N$, and sample independent
-$P_1,P_2\gets\operatorname{Sym}([N])$.  For
+Assume $m\mid n$, fix $1\le t\le n$, and sample independent
+$P_1,P_2\gets\operatorname{Sym}([n])$.  For
 $r_1,r_2\ge1$ and $e_1,e_2\in\{0,1\}$, set
 \[
     u_1:=t+r_1-e_1,
@@ -1236,7 +1762,7 @@ $r_1,r_2\ge1$ and $e_1,e_2\in\{0,1\}$, set
     u_2:=u_1+r_2-e_2.
 \]
 Let $\mathcal I_t$ contain the tuples $(r_1,r_2,e_1,e_2)$ that satisfy
-$r_1\le t$, $r_2\le u_1$, and $u_1,u_2\le N$.
+$r_1\le t$, $r_2\le u_1$, and $u_1,u_2\le n$.
 Then the expected number of direct structural containers $T$ of size $t$ is
 \[
 \boxed{
@@ -1244,42 +1770,65 @@ Then the expected number of direct structural containers $T$ of size $t$ is
 \E Z_t
 =
 \sum_{(r_1,r_2,e_1,e_2)\in\mathcal I_t}
-&R_N^{e_1}(t,r_1)
-\frac{R_N^{e_2}(u_1,r_2)}{\binom N{u_1}}
+&R_n^{e_1}(t,r_1)
+\frac{R_n^{e_2}(u_1,r_2)}{\binom n{u_1}}
 \\[-1mm]
 &\cdot
-\frac{A_{N,m,h}(u_2,t-1)}
-     {\binom N{u_2}}.
+\frac{A_{n,m,h}(u_2,t-1)}
+     {\binom n{u_2}}.
 \end{aligned}
 }
-\tag{G9}
+\eqnumlabel{eq:G9}
 \]
 \end{theorem}
 
 \begin{proof}
 Partition the $t$-subsets by their first run count and endpoint flag.  Equation
-(G6) gives $R_N^{e_1}(t,r_1)$ choices, and the first neighborhood has size
+\eqref{eq:G6} gives $R_n^{e_1}(t,r_1)$ choices, and the first neighborhood has size
 $u_1$.  The permutation $P_2$ maps this neighborhood to a uniform
-$u_1$-subset.  A second application of (G6) gives the ratio
-$R_N^{e_2}(u_1,r_2)/\binom N{u_1}$ and a neighborhood of size $u_2$.  The
+$u_1$-subset.  A second application of \eqref{eq:G6} gives the ratio
+$R_n^{e_2}(u_1,r_2)/\binom n{u_1}$ and a neighborhood of size $u_2$.  The
 permutation $P_1$ maps that neighborhood to a uniform $u_2$-subset.  Equation
-(G8), divided by $\binom N{u_2}$, is exactly the probability that its local
+\eqref{eq:G8}, divided by $\binom n{u_2}$, is exactly the probability that its local
 block rank is at most $t-1$.  Multiplying the factors and summing the disjoint
-cases proves (G9).
+cases proves \eqref{eq:G9}.
 \end{proof}
 
 Impossible parameter choices contribute zero under the usual binomial
-convention.  Equation~(G9) counts each final support once and contains no field
+convention.  Equation~\eqref{eq:G9} counts each final support once and contains no field
 values or zero-return choices.  Omitting $e_1,e_2$ changes neighborhood sizes
 by at most two and gives the same entropy exponent, but not the same finite
 expectation.
 
-\section{Numerical evaluation}
+\section{Concrete distance evaluation}
 \label{sec:numerics}
 
 The calculations below evaluate the binary first moment, the large-field trace
 bound, and the structural-container count.  All transition points come from
-floating-point optimization; none is an interval-certified theorem.
+floating-point optimization; none is an interval-certified theorem.  Displayed
+values are rounded to at most three decimal places unless a smaller gap is shown
+in scientific notation; the optimizations retain full precision internally.
+
+\paragraph{From an enumerator to a concrete distance guarantee.}
+For the binary construction at a fixed length $n$, we choose an acceptable
+code-sampling failure probability $\varepsilon$ and evaluate the cumulative
+first moment $\mu_{\rm bin}(n,L;C_0)$ in~\eqref{eq:B4}.  The largest $L$ for which this
+quantity is at most $\varepsilon$ is a concrete ensemble guarantee: by~\eqref{eq:B5}, a
+fresh choice of the two interleavers has minimum distance greater than $L$ except
+with probability at most $\varepsilon$.  The local weight enumerator is therefore
+an input to the calculation, not itself the claimed global minimum distance.
+
+The original BAA calculation also propagated an expected weight enumerator
+through the accumulators, but it first averaged over a fresh random local matrix
+in every block.  Here the named constituent $C_0$ is deterministic and repeated
+in every block, so its exact spectrum $W_0$ enters~\eqref{eq:B1} directly and the binary
+expectation is only over the two interleavers.  There is no additional event that
+a sampled local code is weak.  The asymptotic values $\delta^\star$ reported
+below are the zero crossings of the corresponding first-moment exponents; they
+should not be confused with a finite-$n$ certificate unless~\eqref{eq:B4} is evaluated at
+the stated $n$ and failure target.  Over large fields, the analogous calculation
+uses shortening dimensions and zero-return traces rather than a binary weight
+enumerator, while the structural-container transition is a separate diagnostic.
 
 \subsection{Binary instantiations}
 
@@ -1289,16 +1838,17 @@ The binary Gilbert--Varshamov benchmarks solve
 \]
 Numerically,
 \[
-    \delta_{\rm GV}(R=1/2)\approx0.1100278644,
+    \delta_{\rm GV}(R=1/2)\approx0.110,
     \qquad
-    \delta_{\rm GV}(R=1/4)\approx0.2145017449.
+    \delta_{\rm GV}(R=1/4)\approx0.215.
 \]
 
-The short-code parameters and enumerators are standard; see MacWilliams and
-Sloane~\cite{macwilliams}.  For each local spectrum, the calculation maximizes
-(B11) over its feasible domain and finds the value of $\delta$ where the
-nontrivial interior maximum crosses zero.  Equations (B6)--(B8) handle sparse
-weights separately.
+The short-code parameters and enumerators are standard or taken from the cited
+exact weight-distribution calculation; see MacWilliams and
+Sloane~\cite{macwilliams} and Su et al.~\cite{su08}.  For each local spectrum,
+the calculation maximizes \eqref{eq:B11} over its feasible domain and finds the value of
+$\delta$ where the nontrivial interior maximum crosses zero.  Equations
+\eqref{eq:B6}--\eqref{eq:B8} handle sparse weights separately.
 
 \paragraph{Rate $1/2$: extended Golay.}
 The extended binary Golay code has parameters $[24,12,8]$ and spectrum
@@ -1309,12 +1859,13 @@ The extended binary Golay code has parameters $[24,12,8]$ and spectrum
 \]
 The numerical BAA transition is
 \[
-    \boxed{\delta^\star_{\rm Golay}\approx0.1051193371.}
+    \boxed{\delta^\star_{\rm Golay}\approx0.105.}
 \]
-The contribution from one active block has order $N^{-3}$.
+The contribution from one active block has order $n^{-3}$.
 
-\paragraph{Rate $1/2$: $\operatorname{RM}(2,5)$.}
-The second-order Reed--Muller code has parameters $[32,16,8]$ and spectrum
+\paragraph{Rate $1/2$: extended BCH / $\operatorname{RM}(2,5)$.}
+The extended BCH code $[32,16,8]$, equivalently the second-order Reed--Muller
+code $\operatorname{RM}(2,5)$, has spectrum
 \[
 \begin{aligned}
     W_{\operatorname{RM}(2,5)}(z)
@@ -1326,16 +1877,55 @@ The second-order Reed--Muller code has parameters $[32,16,8]$ and spectrum
 \]
 The numerical BAA transition is
 \[
-    \boxed{\delta^\star_{\operatorname{RM}(2,5)}\approx0.1061649861.}
+    \boxed{\delta^\star_{\mathrm{eBCH}/\operatorname{RM}(2,5)}
+      \approx0.106.}
 \]
-Among the rate-$1/2$ blocks in this evaluation, $\operatorname{RM}(2,5)$ gives
-the largest transition: about $96.5\%$ of the binary GV relative distance.  The
-one-block contribution again has order $N^{-3}$.
+This is our compact rate-$1/2$ BCH baseline.  Among the two compact implemented
+blocks, it gives the larger transition: about $96.5\%$ of the binary GV
+relative distance.  The longer rate-$1/2$ quadratic-residue spectra below
+improve on this value.  The one-block contribution again has order $n^{-3}$.
 
-\paragraph{Rate $1/4$: a concrete $[32,8,12]$ BCH subcode.}
-Start from the extended primitive BCH code $[32,11,12]$ and select the explicit
-$8$-dimensional subcode given in Appendix~\ref{app:binary-generator}.  Direct
-enumeration of its $256$ words gives
+\paragraph{Rate $1/2$: extended quadratic-residue spectra.}
+To improve the central rate-$1/2$ distance result, we next evaluate longer
+extended binary quadratic-residue blocks.  Table~\ref{tab:binary-qr} reports the
+transition obtained from each exact spectrum.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Local code & $\delta^\star$ & Fraction of binary GV & One-block scale \\
+\midrule
+QR $[48,24,12]$   & $0.109$ & $98.7\%$ & $n^{-5}$ \\
+QR $[80,40,16]$   & $0.110$ & $99.7\%$ & $n^{-7}$ \\
+QR $[104,52,20]$  & $0.110$ & $99.9\%$ & $n^{-9}$ \\
+QR $[168,84,24]$  & $0.110$ & $99.99\%$ & $n^{-11}$ \\
+\bottomrule
+\end{tabular}
+\caption{Rate-$1/2$ binary BAA transitions from exact extended
+quadratic-residue spectra.  A block labeled $[m,\sigma,d]$ has length $m$,
+dimension $\sigma$, and minimum Hamming distance $d$.  The GV value is $0.110$.
+The transition points are floating-point estimates, not interval-certified
+bounds.}
+\label{tab:binary-qr}
+\end{table}
+
+For the strongest row, the numerical transition is
+\[
+    \boxed{\delta^\star_{168,84,24}\approx0.110.}
+\]
+It lies about $1.33\times10^{-5}$ below binary GV.  The local distance $24$
+makes the one-active-block contribution $O(n^{-11})$.  These longer blocks
+strengthen the distance calculation but are not included in the CPU benchmarks
+or the Lean certificate.
+
+\paragraph{Secondary rate $1/4$ point: a concrete $[32,8,12]$ BCH subcode.}
+We retain a lower-rate design point for applications that can trade rate for a
+larger relative-distance margin.  Start from the extended primitive BCH code
+$[32,11,12]$ and select the explicit $8$-dimensional subcode given in
+Appendix~\ref{app:binary-generator}.  Direct enumeration of its $256$ words
+gives
 \[
     \boxed{
     W_{32,8,12}(z)
@@ -1345,35 +1935,34 @@ enumeration of its $256$ words gives
 \]
 The corresponding numerical BAA transition is
 \[
-    \boxed{\delta^\star_{32,8,12}\approx0.2132933411.}
+    \boxed{\delta^\star_{32,8,12}\approx0.213.}
 \]
 This is about $99.4\%$ of the binary rate-$1/4$ GV distance.  The contribution
-from one active block has order $N^{-5}$.
+from one active block has order $n^{-5}$.
 
-Fixing the short code makes its complete spectrum available to both the
-optimization and an exhaustive check.  The global encoding cost remains
-linear in $N$.
+Fixing the short code makes its complete spectrum available to the
+optimization.  The compact Golay, Reed--Muller, and BCH spectra also admit the
+exhaustive or kernel-checked certificates described below.  Constant local
+block size keeps the global encoding cost linear in $n$.
 
 \subsection{Large-field benchmarks and method}
 
-For a $q$-ary linear code of rate $R$, the Gilbert--Varshamov relative distance
-solves $H_q(\delta_{\rm GV})=1-R$, where
-\[
-    H_q(\delta)
-      :=
-    \delta\log_q(q-1)
-    -\delta\log_q\delta
-    -(1-\delta)\log_q(1-\delta).
-\]
+Using the $q$-ary entropy convention from Section~\ref{sec:preliminaries}, the
+Gilbert--Varshamov relative distance solves
+$H_q(\delta_{\rm GV})=1-R$.
 For $q=2^{128}$, the rate-$1/2$ and rate-$1/4$ benchmarks are
 \[
-    \delta_{\rm GV}(1/2)\approx0.492189,
+    \delta_{\rm GV}(1/2)\approx0.492,
     \qquad
-    \delta_{\rm GV}(1/4)\approx0.743584.
-    \tag{R2}
+    \delta_{\rm GV}(1/4)\approx0.744.
+    \eqnumlabel{eq:R2}
 \]
+For the finite-length estimates below, we hold the global dimension at
+$k=2^{20}$ across rates.  This keeps the application payload fixed, giving
+$n=2^{21}$ at rate $1/2$ and $n=2^{22}$ at rate $1/4$; it does not equalize
+encoding work, which scales with $n$.
 The corresponding Singleton ceilings are $0.5$ and $0.75$.  For each local
-block below, the calculation maximizes (L7) over its feasible domain and finds
+block below, the calculation maximizes \eqref{eq:L7} over its feasible domain and finds
 the distance at which the maximum crosses zero.
 
 \subsection{Large-field instantiations}
@@ -1399,19 +1988,19 @@ and
 Numerical optimization of the support/trace exponent gives the transition
 \[
     \boxed{
-    \delta^\star_{16,8}\approx0.3052795.
+    \delta^\star_{16,8}\approx0.305.
     }
-    \tag{R1}
+    \eqnumlabel{eq:R1}
 \]
 At the transition, a representative saddle is approximately
 \[
 \begin{aligned}
-    \lambda &\approx0.5000, &
-    \alpha &\approx0.4477, &
-    \beta &\approx0.1977,\\
-    x &\approx0.1076, &
-    y &\approx0.0901, &
-    \eta &\approx0.3670.
+    \lambda &\approx0.500, &
+    \alpha &\approx0.448, &
+    \beta &\approx0.198,\\
+    x &\approx0.108, &
+    y &\approx0.090, &
+    \eta &\approx0.367.
 \end{aligned}
 \]
 At this saddle, the available projective dimension is almost exactly exhausted
@@ -1421,14 +2010,14 @@ by the zero-return constraints:
 \]
 At $\delta=0.30$, the optimized exponent is approximately
 \[
-    \Phi_{16,8,0.30}^{\max}/\log 2\approx-0.016699
+    \Phi_{16,8,0.30}^{\max}/\log 2\approx-0.017
 \]
 bits per output coordinate.
 
-The local distance is $d=9$, so the sparse one-block scale is $N^{-8}$.  At
-output length $N=2^{20}$ and $\delta=0.30$, the marked one-block term is
-approximately $2^{-129.57}$.  The sparse term and the negative linear-weight
-exponent are consistent with $d_{\min}>0.30N$, but do not prove that inequality
+The local distance is $d=9$, so the sparse one-block scale is $n^{-8}$.  At the
+primary dimension $k=2^{20}$ and output length $n=2^{21}$, with $\delta=0.30$,
+the marked one-block term is approximately $2^{-137.57}$.  The sparse term and the negative linear-weight
+exponent are consistent with $d_{\min}>0.30n$, but do not prove that inequality
 at finite length.
 
 \paragraph{Rate $1/4$.}
@@ -1444,37 +2033,37 @@ The local support--dimension polynomial is
       =
     1+560z^{13}u+120z^{14}u^2+16z^{15}u^3+z^{16}u^4.
     }
-    \tag{R3}
+    \eqnumlabel{eq:R3}
 \]
 With
 \[
     \lambda=p_{13}+p_{14}+p_{15}+p_{16},
 \]
-equation~(L2) becomes
+equation~\eqref{eq:L2} becomes
 \[
     \boxed{
     \beta=\alpha-\frac34\lambda.
     }
-    \tag{R4}
+    \eqnumlabel{eq:R4}
 \]
 The larger redundancy sharply reduces the projective cancellation budget.
 
-Numerical optimization of~(L7) gives the estimated transition
+Numerical optimization of~\eqref{eq:L7} gives the estimated transition
 \[
     \boxed{
-    \delta^\star_{16,4}\approx0.60441329.
+    \delta^\star_{16,4}\approx0.604.
     }
-    \tag{R5}
+    \eqnumlabel{eq:R5}
 \]
 At the transition, a representative saddle is approximately
 \[
 \begin{aligned}
-    \lambda &\approx0.6701545, &
-    \alpha &\approx0.6601815, &
-    \beta &\approx0.1575656,\\
-    x &\approx0.0648292, &
-    y &\approx0.0927364, &
-    \eta &\approx0.6655770.
+    \lambda &\approx0.670, &
+    \alpha &\approx0.660, &
+    \beta &\approx0.158,\\
+    x &\approx0.065, &
+    y &\approx0.093, &
+    \eta &\approx0.666.
 \end{aligned}
 \]
 Here too, the zero-return constraints nearly exhaust the projective dimension:
@@ -1483,7 +2072,7 @@ Here too, the zero-return constraints nearly exhaust the projective dimension:
 \]
 At this saddle,
 \[
-    1-\frac{y}{\eta}\approx0.8607>\delta^\star_{16,4},
+    1-\frac{y}{\eta}\approx0.861>\delta^\star_{16,4},
 \]
 so the final-weight constraint is active and the maximizing value is
 $\zeta=\delta$.
@@ -1494,10 +2083,10 @@ is approximately
 \begin{array}{c|c}
 \text{local support} & \text{conditional fraction}\\
 \hline
-13 & 0.00152\\
-14 & 0.02159\\
-15 & 0.19035\\
-16 & 0.78653
+13 & 0.002\\
+14 & 0.022\\
+15 & 0.190\\
+16 & 0.787
 \end{array}
 \]
 Thus the transition is dominated by dense local shortenings rather than
@@ -1505,11 +2094,11 @@ minimum-weight words.
 
 In bits per output coordinate, the exponent decomposes approximately as
 \[
-    \cS_{16,4}\approx+0.1319884,
+    \cS_{16,4}\approx+0.132,
     \qquad
-    \Gamma_1\approx-0.0681350,
+    \Gamma_1\approx-0.068,
     \qquad
-    \Gamma_2\approx-0.0638533,
+    \Gamma_2\approx-0.064,
 \]
 which sum to zero at the transition.  This is about $81.3\%$ of the
 large-field rate-$1/4$ GV relative distance.
@@ -1518,7 +2107,7 @@ large-field rate-$1/4$ GV relative distance.
 
 Here $d=13$, so the one-active-block structural tail has scale
 \[
-    \boxed{N^{-12}.}
+    \boxed{n^{-12}.}
 \]
 The leading marked term is
 \[
@@ -1528,92 +2117,176 @@ The leading marked term is
     \frac{13!}{16}
     \binom{16}{13}^{\!2}
     \left(\frac{\delta}{1-\delta}\right)^{13}
-    N^{-12}.
+    n^{-12}.
     }
-    \tag{R6}
+    \eqnumlabel{eq:R6}
 \]
-At output length $N=2^{20}$, the numerical estimates are
+At dimension $k=2^{20}$ and output length $n=2^{22}$, the numerical estimates
+are
 \[
 \begin{array}{c|c}
 \delta & -\log_2\mu_1^{\rm mark}\\
 \hline
-0.55   & 189.44\\
-0.58   & 187.15\\
-0.60   & 185.60\\
-0.6044 & 185.26
+0.550 & 213.44\\
+0.580 & 211.15\\
+0.600 & 209.60\\
+0.604 & 209.26
 \end{array}
 \]
-The estimated linear-weight margins at $N=2^{20}$ are
+The estimated linear-weight margins at this length are
 \[
 \begin{array}{c|c|c}
 \delta
 & \max\Phi_{16,4,\delta}/\log 2
-& -N\max\Phi_{16,4,\delta}\text{ (bits)}\\
+& -n\max\Phi_{16,4,\delta}\text{ (bits)}\\
 \hline
-0.6000  & -0.0168867 & 17707\\
-0.6040  & -0.0015990 & 1677\\
-0.6042  & -0.0008257 & 866\\
-0.6043  & -0.0004387 & 460\\
-0.60435 & -0.0002451 & 257\\
-0.6044  & -0.0000515 & 54
+0.600 & -0.017 & 70828\\
+\text{near }0.604 &
+[-0.002,-5.15\mathbin{\times}10^{-5}] & 216\text{--}6708
 \end{array}
 \]
-For $N=2^{20}$, evaluating the first moment at
+For $k=2^{20}$ and $n=2^{22}$, the high-precision point used in the
+first-moment calculation rounds to
 \[
     \boxed{
     C_0=\operatorname{RS}[16,4,13],
     \qquad
-    \delta=0.6043
+    \delta=0.604
     }
-    \tag{R7}
+    \eqnumlabel{eq:R7}
 \]
-gives a numerical margin of roughly $40$ bits.  This does not certify that
-$d_{\min}>0.6043N$.  At $\delta=0.60$, the estimated margin is much larger.
+gives a numerical margin of roughly $160$ bits.  This does not certify that
+$d_{\min}>0.604n$.  At $\delta=0.60$, the estimated margin is much larger.
 
 \subsection{Structural transitions}
 
-Entropy optimization of (G9) gives the following estimated transitions:
+Entropy optimization of \eqref{eq:G9} gives the following estimated transitions:
 \[
 \begin{array}{c|cc}
 \text{scheme} & \text{trace first moment} & \text{direct structural container}\\
 \hline
-\operatorname{RS}[16,8,9] & 0.3052795 & 0.3084210\\
-\operatorname{RS}[16,4,13] & 0.6044133 & 0.6093755
+\operatorname{RS}[16,8,9] & 0.305 & 0.308\\
+\operatorname{RS}[16,4,13] & 0.604 & 0.609
 \end{array}
-\tag{G10}
+\eqnumlabel{eq:G10}
 \]
 At the trace thresholds, the direct-container exponents remain approximately
-$-0.01101$ and $-0.02115$ bits per coordinate, respectively.  Thus trace
+$-0.011$ and $-0.021$ bits per coordinate, respectively.  Thus trace
 clustering creates real slack, but the recovered relative distance is only
-about $0.0031$ and $0.0050$.
+about $0.003$ and $0.005$.
 
 The rate-$1/2$ structural saddle has normalized statistics
 \[
 \begin{aligned}
-|T|/N&\approx0.308421,& r_1/N&\approx0.100975,\\
-|\partial T|/N&\approx0.409396,& r_2/N&\approx0.120308,\\
-|U(T)|/N&\approx0.529704,& \kappa(U(T))/N&\approx0.308421.
+|T|/n&\approx0.308,& r_1/n&\approx0.101,\\
+|\partial T|/n&\approx0.409,& r_2/n&\approx0.120,\\
+|U(T)|/n&\approx0.530,& \kappa(U(T))/n&\approx0.308.
 \end{aligned}
-\tag{G11}
+\eqnumlabel{eq:G11}
 \]
 At rate $1/4$ the corresponding values are
 \[
 \begin{aligned}
-|T|/N&\approx0.609375,& r_1/N&\approx0.102787,\\
-|\partial T|/N&\approx0.712162,& r_2/N&\approx0.069877,\\
-|U(T)|/N&\approx0.782039,& \kappa(U(T))/N&\approx0.609375.
+|T|/n&\approx0.609,& r_1/n&\approx0.103,\\
+|\partial T|/n&\approx0.712,& r_2/n&\approx0.070,\\
+|U(T)|/n&\approx0.782,& \kappa(U(T))/n&\approx0.609.
 \end{aligned}
-\tag{G12}
+\eqnumlabel{eq:G12}
 \]
 Moderate-length integer-program experiments on the exact min-cut formulation
 produce block-saturated witnesses consistent with these profiles.  These
-experiments and all numbers in (G10)--(G12) are diagnostic rather than theorem
+experiments and all numbers in \eqref{eq:G10}--\eqref{eq:G12} are diagnostic rather than theorem
 statements.
 
-A positive exponent in (G9) is not a typical-code upper bound without a
+A positive exponent in \eqref{eq:G9} is not a typical-code upper bound without a
 concentration argument for structural containers.  Still, the
-coefficient-independent transition lies only $0.0031$ or $0.0050$ beyond the
+coefficient-independent transition lies only $0.003$ or $0.005$ beyond the
 trace threshold.  The numerical gap to $q$-ary GV is much larger.
+
+\subsection{Security-matched large-field RAA baseline}
+\label{sec:raa-match}
+
+For a construction-level comparison over the same field, we use weighted
+repeat--accumulate--accumulate (RAA), whose generator has the form
+\[
+    G_{\rm RAA}=R_r M_1 A M_2 A.
+\]
+Here $R_r$ repeats each of $k_0$ message symbols $r$ times,
+$N=rk_0$, and each $M_i$ is an independent permutation followed by independent
+nonzero coordinate scalings.  This is the standard randomly scaled large-field
+RAA ensemble~\cite{rosnes11,akhiani26,khabbazian26}.
+
+This also determines the number of accumulators in the comparator.  A single
+accumulator is not asymptotically good.  Adding a third accumulator does not
+change the $N^{1-r}$ exponent of the dominant weight-one event, but does add a
+full length-$N$ scan.  Numerical optimization of the support/trace exponent
+gives transition estimates $0.169$ for repetition-$2$ RAA and $0.447$ for
+repetition-$3$ RAA; a third accumulator raises the former estimate to $0.415$
+but is unnecessary for the $0.10$ target below.  We therefore use ordinary RAA,
+the fastest RA$^t$ choice meeting each selected distance and sparse-security
+target.  The sharp growing-field theorem currently assumes $r\ge4$
+~\cite{khabbazian26}; the lower-repetition rows below use the same exact sparse
+term and numerical exponent, not that theorem.
+
+We match practical security targets using the sparse mechanism that controls
+both constructions.  For one active RAA message symbol
+and no zero return in either accumulator, the exact contribution to the
+projective support/trace union sum is
+\[
+ \boxed{
+ \mu_{\rm RAA}^{(1,0)}(N,L,r)
+   =k_0\sum_{h=r}^{L}
+     \frac{\binom{h-1}{r-1}}{\binom{N}{r}}
+     \frac{\binom{L}{h}}{\binom{N}{h}},
+ \qquad L=\lfloor\delta N\rfloor .
+ }
+ \eqnumlabel{eq:raa-sparse-match}
+\]
+Indeed, the first ratio fixes the first accumulator's output weight $h$; after
+the second random interleaver, a no-return output has weight at most $L$ exactly
+when all $h$ active positions lie in the terminal $L$ coordinates.  Its
+asymptotic order is $N^{1-r}$.  This is the weight-one mechanism identified by
+the scaled-RAA lower-tail analysis~\cite{khabbazian26}; at
+$q=2^{128}\gg N$, traces containing cancellations pay additional powers of
+$1/(q-1)$.
+
+At $k_0=2^{20}$, Table~\ref{tab:raa-security-match} gives two operating points.
+The $20$-bit profile retains the original BAA work's target relative distance
+$0.10$ and selects the smallest rate-$1/2$ MDS block, RS $[2,1,2]$.  After the
+first independent coordinate scaling, this ensemble is exactly repetition-$2$
+RAA, and both sparse terms equal $2^{-27.340}$.  For the $40$-bit profile we use
+relative distance $0.20$: RS $[4,2,3]$ BAA gives
+$43.415$ bits, while the smallest qualifying RAA repetition is $r=3$, giving
+$48.170$ bits.  Thus each row exceeds its named target; the discreteness of the
+outer distance and repetition factor prevents an exact $20$- or $40$-bit value.
+
+\begin{table}[ht]
+\centering
+\scriptsize
+\begin{tabular}{@{}r@{\hspace{0.65em}}r@{\hspace{0.65em}}l@{\hspace{0.65em}}l@{\hspace{0.65em}}r@{\hspace{0.65em}}r@{\hspace{0.65em}}r@{}}
+\toprule
+Target & $\delta$ & Construction & Outer code & Rate & Length & Sparse bits \\
+\midrule
+$20$ & $0.10$ & chosen-block BAA & RS $[2,1,2]$ & $1/2$ & $2{,}097{,}152$ & $27.340$ \\
+$20$ & $0.10$ & weighted RAA & repetition $2$ & $1/2$ & $2{,}097{,}152$ & $27.340$ \\
+$40$ & $0.20$ & chosen-block BAA & RS $[4,2,3]$ & $1/2$ & $2{,}097{,}152$ & $43.415$ \\
+$40$ & $0.20$ & weighted RAA & repetition $3$ & $1/3$ & $3{,}145{,}728$ & $48.170$ \\
+\bottomrule
+\end{tabular}
+\caption{Practical large-field sparse-security profiles at $k_0=2^{20}$.
+The BAA values sum the one-active-local-block support/trace terms that use no
+surplus projective cancellations; the RAA values are the exact no-return
+weight-one terms in \eqref{eq:raa-sparse-match}.  These are parameter-selection
+proxies, not complete finite-length failure bounds.}
+\label{tab:raa-security-match}
+\end{table}
+
+The comparison fixes message dimension and, within each target, relative
+distance and a minimum sparse-security level.  At $20$ bits the selected
+ensembles, rates, and lengths coincide.  At $40$ bits repetition-$3$ RAA
+processes $1.5$ times as many field symbols as rate-$1/2$ BAA and provides an
+extra $4.75$ sparse-security bits.  The single-thread cost of both profiles is
+measured in Section~\ref{sec:implementation}.
 
 \subsection{Comparison across alphabets}
 \label{sec:comparison}
@@ -1630,28 +2303,33 @@ alphabet.
 \toprule
 Alphabet & Rate & Local code & Trace/enumerator $\delta^\star$ & Rank-container $\delta_{\rm str}$ & GV & Sparse scale \\
 \midrule
-$\F_2$ & $1/2$ & Golay $[24,12,8]$ & $0.105119$ & -- & $0.110028$ & $N^{-3}$ \\
-$\F_2$ & $1/2$ & $\operatorname{RM}(2,5)$ $[32,16,8]$ & $0.106165$ & -- & $0.110028$ & $N^{-3}$ \\
-large $\F_q$ & $1/2$ & RS $[16,8,9]$ & $0.305280$ & $0.308421$ & $0.492189$ & $N^{-8}$ \\
+$\F_2$ & $1/2$ & QR $[168,84,24]$ & $0.110$ & -- & $0.110$ & $n^{-11}$ \\
+$\F_2$ & $1/2$ & Golay $[24,12,8]$ & $0.105$ & -- & $0.110$ & $n^{-3}$ \\
+$\F_2$ & $1/2$ & extended BCH / $\operatorname{RM}(2,5)$ $[32,16,8]$ & $0.106$ & -- & $0.110$ & $n^{-3}$ \\
+large $\F_q$ & $1/2$ & RS $[16,8,9]$ & $0.305$ & $0.308$ & $0.492$ & $n^{-8}$ \\
 \addlinespace
-$\F_2$ & $1/4$ & BCH subcode $[32,8,12]$ & $0.213293$ & -- & $0.214502$ & $N^{-5}$ \\
-large $\F_q$ & $1/4$ & RS $[16,4,13]$ & $0.604413$ & $0.609376$ & $0.743584$ & $N^{-12}$ \\
+$\F_2$ & $1/4$ & BCH subcode $[32,8,12]$ & $0.213$ & -- & $0.215$ & $n^{-5}$ \\
+large $\F_q$ & $1/4$ & RS $[16,4,13]$ & $0.604$ & $0.609$ & $0.744$ & $n^{-12}$ \\
 \bottomrule
 \end{tabular}}
 \caption{Numerical transitions.  Binary rows use the exact weight-enumerator
 first moment.  Large-field trace rows use the support/shortening first moment,
 while rank-container rows count the coefficient-independent obstruction.  The
-$q$-ary GV values use $q=2^{128}$.}
+$q$-ary GV values use $q=2^{128}$.  A local code labeled $[m,\sigma,d]$ has
+block length $m$, dimension $\sigma$, and minimum Hamming distance $d$.}
 \label{tab:comparison}
 \end{table}
 
 At equal rate, large-field BAA has about $2.8$ times the relative symbol
 distance of binary BAA and smaller sparse code-generation tails.  Relative to
 the alphabet-specific benchmark, however, the binary schemes are much closer
-to GV.  The $\operatorname{RM}(2,5)$ and $[32,8,12]$ schemes reach $96.5\%$ and
-$99.4\%$ of binary GV.  The large-field trace transitions reach $62.0\%$ and
-$81.3\%$ of their $q$-ary GV values; the structural thresholds improve these
-fractions only to $62.7\%$ and $81.9\%$.
+to GV.  At the primary rate-$1/2$ target, QR $[168,84,24]$ reaches $99.99\%$ of
+binary GV; the compact implemented extended BCH / $\operatorname{RM}(2,5)$ block
+reaches $96.5\%$.  Thus the paper already contains a rate-$1/2$ BCH result,
+while the secondary rate-$1/4$ BCH subcode reaches $99.4\%$.  The
+large-field trace transitions reach $62.0\%$ and $81.3\%$ of their $q$-ary GV
+values; the structural thresholds improve these fractions only to $62.7\%$ and
+$81.9\%$.
 
 The difference comes from scalar freedom.  Over $\F_2$, support parity fixes
 the accumulator state.  Over a large field, an $r$-dimensional shortening has
@@ -1659,126 +2337,297 @@ about $q^{r-1}$ projective candidates and can absorb as many as $r-1$
 homogeneous cancellation equations without a $1/q$ penalty.  Projectivization
 removes duplicate scalar words, but it does not remove block saturation.
 
-\section{Implications and open problems}
+\subsection{Design implications and open questions}
 \label{sec:implications}
 
-\subsection{Limits of scalar BAA}
+To test whether a stronger local code alone can close the large-field gap, we
+repeated the trace optimization with rate-matched MDS constituents of increasing
+size.  Table~\ref{tab:large-field-block-trend} shows rapidly diminishing gains.
 
-Numerical optimization of the trace exponent gives diminishing improvements as
-the rate-matched MDS block grows.
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}cc@{\hspace{3em}}cc@{}}
+\toprule
+\multicolumn{2}{c}{Rate $1/2$} & \multicolumn{2}{c}{Rate $1/4$}\\
+\cmidrule(r){1-2}\cmidrule(l){3-4}
+MDS block $[m,\sigma,d]$ & $\delta_{\rm trace}$ &
+MDS block $[m,\sigma,d]$ & $\delta_{\rm trace}$\\
+\midrule
+$[8,4,5]$     & $0.285$ & $[8,2,7]$     & $0.588$\\
+$[12,6,7]$    & $0.299$ & $[12,3,10]$   & $0.599$\\
+$[16,8,9]$    & $0.305$ & $[16,4,13]$   & $0.604$\\
+$[20,10,11]$  & $0.309$ & $[20,5,16]$   & $0.607$\\
+$[24,12,13]$  & $0.312$ & $[24,6,19]$   & $0.609$\\
+$[32,16,17]$  & $0.315$ & $[32,8,25]$   & $0.612$\\
+$[64,32,33]$  & $0.319$ & $[64,16,49]$  & $0.615$\\
+\bottomrule
+\end{tabular}
+\caption{Estimated trace transitions for rate-matched large-field MDS
+constituents.  In $[m,\sigma,d]$, $m$ is the local block length, $\sigma$ its
+dimension, and $d$ its minimum Hamming distance; $\delta_{\rm trace}$ is the
+estimated relative-distance transition from the trace first moment.  The
+numerical large-block trends are approximately $0.323$ at rate $1/2$ and
+$0.618$ at rate $1/4$.}
+\label{tab:large-field-block-trend}
+\end{table}
 
-\paragraph{Rate $1/2$.}
+The intuition is that a larger MDS block reduces the number of ways to choose
+active local blocks, but it does not change the one-field-element state carried
+by each accumulator.  Two backward neighborhoods can still overload the same
+local parity-check capacities.  Since an MDS code already minimizes every
+shortening dimension for fixed $(m,\sigma)$, the flattening in
+Table~\ref{tab:large-field-block-trend} points to the standard BAA architecture,
+rather than the local code or trace multiplicity, as the main gap to $q$-ary GV.
+
+The first open problem is to turn the numerical evidence into uniform
+finite-length failure bounds.  At $q=2^{128}$ and the primary dimension
+$k=2^{20}$, concrete targets are
 \[
-\begin{array}{c|c}
-\text{local block} & \text{estimated trace transition}\\
-\hline
-{[8,4,5]}    & 0.2847\\
-{[12,6,7]}   & 0.2987\\
-{[16,8,9]}   & 0.3053\\
-{[20,10,11]} & 0.3091\\
-{[24,12,13]} & 0.3116\\
-{[32,16,17]} & 0.3146\\
-{[64,32,33]} & 0.3191
-\end{array}
-\]
-The numerical large-block trend is approximately $0.3234$.
-
-\paragraph{Rate $1/4$.}
-\[
-\begin{array}{c|c}
-\text{local block} & \text{estimated trace transition}\\
-\hline
-{[8,2,7]}    & 0.5884\\
-{[12,3,10]}  & 0.5994\\
-{[16,4,13]}  & 0.6044\\
-{[20,5,16]}  & 0.6073\\
-{[24,6,19]}  & 0.6092\\
-{[32,8,25]}  & 0.6115\\
-{[64,16,49]} & 0.6147
-\end{array}
-\]
-The numerical large-block trend is approximately $0.618$.
-
-Larger blocks reduce block-activation entropy but do not eliminate two-hop
-block saturation.  An MDS code already minimizes every shortening dimension
-among codes with the same $(m,k)$.  The data therefore give no indication that
-a different local linear code, or a much larger rate-matched MDS block, closes
-the gap to GV within scalar BAA.
-
-\paragraph{Architectural consequences.}
-
-The two numerical bounds are summarized by
-\[
-\boxed{
-\begin{array}{c|ccc}
-\text{rate} & \text{trace threshold} & \text{structural region} & q\text{-ary GV}\\
-\hline
-1/2 & 0.3053 & \approx0.3084 & 0.4922\\
-1/4 & 0.6044 & \approx0.6094 & 0.7436
-\end{array}}
-\tag{C1}
-\]
-The structural value is not a rigorous converse because concentration is still
-open.  Its proximity to the trace threshold nevertheless shows that trace
-multiplicity accounts for only a small part of the gap to GV.
-
-Binary chosen-block BAA behaves differently.  Support parity fixes the
-accumulator state, so there is no projective cancellation budget or large-field
-block-rank family.  The large-field encoder still has greater absolute symbol
-distance, $O(N)$ work, and sparse tails of order $N^{-8}$ or $N^{-12}$.  The
-rank calculation, however, indicates that approaching full $q$-ary GV requires
-a different recursive stage.
-
-The obstruction suggests four modifications:
-\begin{enumerate}
-    \item adding a third independent monomial-interleaver/accumulator layer;
-          multiple-accumulator coding theorems give precedent for closing GV
-          gaps in binary RMA ensembles~\cite{kliewer08};
-    \item encoding at lower rate and puncturing to the target rate, again
-          following classical RMA methodology~\cite{kliewer08};
-    \item replacing the scalar accumulator by a constant-state vector recursion
-          in which a reset consumes more than one independent field equation;
-    \item designing a recursive layer whose backward graph expands across local
-          blocks rather than allowing two-hop neighborhoods to saturate them.
-\end{enumerate}
-Each modification permits $O(N)$ encoding when the state dimension is constant.
-Unlike a sharper union bound, each also changes the structural cut problem.
-
-\subsection{Open problems}
-
-At $q=2^{128}$ and $N=2^{20}$, the two candidate finite-length bounds are
-\[
-    d_{\min}>0.30N
-    \quad\text{for }\operatorname{RS}[16,8,9],
+ \Prb[d_{\min}(\cC_{\rm BAA})\le 0.30n]\le 2^{-\lambda}
+ \quad\text{at rate }1/2\text{ and }n=2^{21},
 \]
 and
 \[
-    d_{\min}>0.6043N
-    \quad\text{for }\operatorname{RS}[16,4,13],
+ \Prb[d_{\min}(\cC_{\rm BAA})\le 0.604n]\le 2^{-\lambda}
+ \quad\text{at rate }1/4\text{ and }n=2^{22},
 \]
-Establishing either inequality requires interval certificates for the trace
-exponents, uniform bounds for sparse and mesoscopic weights, and exact
-finite-$N$ prefactors.
+for an explicitly chosen failure parameter $\lambda$.  Proving such statements
+requires interval certificates for the trace exponents, uniform control from
+sparse through linear weights, and exact finite-$n$ prefactors.
 
-On the structural side, the principal open problem is concentration of the
-container count $Z_t$ around the transition in (G10), including the possibility
-of cheaper cuts that use intermediate-layer vertices rather than only outer
-block capacity.  A matching upper and lower analysis would turn the numerical
-region into an ensemble-distance characterization.
+A second open problem is concentration of the structural-container count $Z_t$
+around the transitions in \eqref{eq:G10}, including cuts that use
+intermediate-layer vertices rather than only outer-block capacity.  A matching
+upper and lower analysis would characterize the ensemble distance.  On the
+construction side, two natural BAA variants are adding a third independent
+accumulator layer and encoding below the target rate before puncturing.  Both
+remain asymptotically linear, but increase the amount of work or data processed.
+Whether either retains BAA's practical advantage while improving the structural
+cut is open.
 
-The broader construction question is whether a slightly more complex
-linear-time recursion can retain BAA's implementation advantages while moving
-the generic-rank min-cut toward the $q$-ary GV/Singleton frontier.
+\section{Implementation and performance evaluation}
+\label{sec:implementation}
 
-\section{Formal verification and proof audit}
+\subsection{Implementation}
+
+We implemented multiplication by $G_{\rm BAA}=\mathbf B M_1AM_2A$ and the
+weighted RAA comparator in about $1{,}000$ lines of C++20 in libOTe, excluding
+tests and benchmark drivers.  The
+implementation supports the binary Golay $[24,12,8]$,
+$\operatorname{RM}(2,5)=[32,16,8]$, and BCH $[32,8,12]$ constituents and
+original-BAA random systematic blocks, as well as systematic $[2,1,2]$,
+$[4,2,3]$, $[16,8,9]$, and $[16,4,13]$ Reed--Solomon constituents over
+$\F_{2^{128}}$.  It provides single- and
+multi-threaded execution of the two accumulator layers, global interleavers,
+and optimized local-code maps; diagonal weighters are omitted in the binary
+case, while the large-field path uses carry-less multiplication.  The binary
+path is bitsliced over libOTe's $128$-bit blocks: one call on $n$ blocks
+evaluates $128$ independent length-$n$ binary inputs in parallel, rather than
+packing one binary input into $\lceil n/128\rceil$ blocks.
+The weighted RAA implementation uses the same fused large-field
+scan--multiply--scatter loop, two independently sampled interleavers and
+weighters, and optimized segment reductions for repetition $2$, $3$, and $7$.
+The low-security BAA paths similarly use straight-line local maps; in particular,
+RS $[2,1,2]$ reduces to one XOR and performs no needless multiplication by the
+field identity.
+
+\subsection{Experimental methodology}
+
+\paragraph{Security-matched rerun.}
+The baseline is our rerun of the original BAA code on this machine, with minor
+code changes.  At $\sigma=32$, every local factor is an independently sampled
+$32\times64$ systematic binary generator matrix $[I_{32}\mid R]$, equivalently
+a random $[64,32]$ binary code.  This is the conservative rate-$1/2$ parameter set for which
+the original evaluation reports relative distance $0.10$ and one-time
+code-sampling failure at most $2^{-20}$~\cite{baa26}.  We use the same target
+for the chosen-block rows.  Their numerical distance transitions,
+$0.105$ for Golay and $0.106$ for Reed--Muller, lie above $0.10$; at the
+measured length, the parts of the low-weight first moment arising from outer
+words supported in exactly one nonzero local block are approximately
+$2^{-47.4}$ and $2^{-48.1}$.  The comparison criterion for the chosen ensembles
+is the complete exact binary first moment in
+Theorem~\ref{thm:exact-binary-first-moment}, rather than equality of local
+dimensions.
+
+\paragraph{Controlled randomness and timed region.}
+All three implementations use $n=2{,}097{,}024$, the largest multiple of
+$\operatorname{lcm}(24,32,64)=192$ below $2^{21}$, and
+$k=n/2=1{,}048{,}512$.  Divisibility by $24$, $32$, and $64$ lets the Golay,
+Reed--Muller, and original random-block constituents tile one common input
+without truncation.  All rows therefore use the same input, two accumulator
+layers, two stored uniform permutations, one CPU thread, and timed $n$-to-$k$
+operation.  The input and the two permutations are generated before timing from
+the same deterministic seeds and in the same order.
+
+The original-BAA rerun uses two prefix-sum/permutation layers followed by a
+dense random systematic local map.  The two permutations are sampled
+independently, and the timed computation evaluates the $n$-to-$k$
+multiplication $x\leftarrow x+Ry$.  Chosen-block BAA replaces the random local
+matrices with the chosen constituent and hence needs no local-matrix stream.
+
+Input generation, permutation sampling, and workspace allocation occur before
+timing.  Both accumulator/permutation layers and the local outer multiplication
+remain inside it.  The original baseline generates its random local matrices
+during that operation, whereas the chosen constructions evaluate their
+constituent-code circuits.  Since the common length is not a power of
+two, all three rows use the same stored uniform libOTe AES-PRNG permutations;
+the ensemble analysis likewise samples uniform permutations.
+
+For the large-field comparison, all four rows instead fix $k=2^{20}$ and use
+the two security profiles from Section~\ref{sec:raa-match}.  Both chosen-block
+rows have $n=2^{21}$ and rate $1/2$.  Repetition-$2$ RAA has the same length and
+rate, while repetition-$3$ RAA has $N=3\cdot2^{20}$ and rate $1/3$.
+All rows use $\F_{2^{128}}$, the same input-generation and construction seeds,
+two independent diagonal weighters, two independently sampled interleavers, one
+CPU thread, and the same encode-only boundary.  The rate-$1/2$ lengths are powers
+of two and therefore use the implementation's four-round Feistel interleavers.
+The repetition-$3$ length is not, so that row uses stored uniform permutations.
+In every case,
+permutation and diagonal generation, input generation, and workspace allocation
+are outside the timed region; both full scan--multiply--scatter layers and the
+outer transpose multiplication are inside it.
+
+\paragraph{Platform and procedure.}
+On an Intel Core i9-14900HX with $32$ logical processors, we compiled libOTe in
+Release mode with MSVC~14.44 and C++20 on Windows NT~10.0.26200, with SSE and
+PCLMUL enabled.  We exclude setup, input generation, permutation construction,
+and workspace allocation; both scan/permutation layers and the outer
+multiplication are timed.  The main comparison uses exactly one CPU thread.  We
+report the median of six process medians, each over $31$ calls after warm-up.
+Across the six processes, each of the three implementations occupies each
+benchmark-order position twice.  The separate two-mode scaling campaigns
+reverse order halfway.  Turbo and thermal state are not controlled; results are
+host-specific.
+The large-field campaign likewise uses six $31$-call process medians after
+warm-up and alternates BAA-first and RAA-first order across processes.
+
+\subsection{Performance results}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}l@{\hspace{1em}}l@{\hspace{1em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{}}
+\toprule
+Construction & Local outer code & \multicolumn{1}{c}{Threads} &
+\multicolumn{1}{c}{ms} & \multicolumn{1}{c}{Speedup} \\
+\midrule
+original BAA & random systematic $[64,32]$, $\sigma=32$ & 1 & $32.769$ & $1.00\times$ \\
+chosen-block BAA & Golay $[24,12,8]$ & 1 & $24.412$ & $1.34\times$ \\
+chosen-block BAA & $\operatorname{RM}(2,5)$ $[32,16,8]$ & 1 & $26.794$ & $1.22\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Security-matched, single-CPU-thread, rate-$1/2$ comparison.  Every row
+uses $n=2{,}097{,}024$, $k=1{,}048{,}512$, the same input and permutation seeds,
+the same two uniform stored permutations, and the same timed operation.  The
+original row is the conservative $\sigma=32$ BAA parameter set with target
+relative distance $0.10$ and code-sampling failure $2^{-20}$.  The chosen rows
+are evaluated at the same target using their chosen-constituent first moments;
+their local dimensions are not matched to the baseline.  A constituent labeled
+$[m,\sigma,d]$ has block length $m$, dimension $\sigma$, and minimum Hamming
+distance $d$; $[m,\sigma]$ omits the distance.}
+\label{tab:cpu-chosen}
+\end{table}
+
+Table~\ref{tab:cpu-chosen} reports construction-level improvement over our
+original BAA rerun, using one CPU thread throughout.  Golay reduces
+latency by $25.5\%$ ($1.34\times$), and Reed--Muller reduces it by $18.2\%$
+($1.22\times$).  The original BAA performs the $\sigma=32$ random local map,
+whereas chosen-block BAA uses a $56$-XOR Golay circuit or a five-variable
+Reed--Muller zeta transform.  The common accumulator and permutation work is
+present in all rows and is therefore not counted as a chosen-block speedup.
+Separate multithreaded measurements show CPU scalability but do not alter the
+construction comparison.
+
+For context, the original BAA paper reports $21.4$~ms for its aggressive
+$\sigma=8$ row and $30.2$~ms for its conservative $\sigma=32$ row, both at
+$k=2^{20}$ on an Intel Core i7-13700H~\cite{baa26}.  The relevant comparison for
+our security-matched baseline is the latter.  At the paper's exact power-of-two
+length, six independent 31-trial processes of our current implementation on the
+i9-14900HX give median-of-process-medians times of $25.279$~ms for $\sigma=8$
+and $30.827$~ms for $\sigma=32$.  These are measurements from that code rerun
+on our machine;
+the $32.769$~ms value in Table~\ref{tab:cpu-chosen} instead belongs to the controlled common-length
+experiment, where every construction uses the same stored uniform permutations.
+
+\paragraph{Practical-security $\F_{2^{128}}$ comparison.}
+Table~\ref{tab:cpu-large-field} reports the two large-field comparisons selected in
+Section~\ref{sec:raa-match}.
+
+\begin{table}[h]
+\centering
+\scriptsize
+\begin{tabular}{@{}r@{\hspace{0.55em}}r@{\hspace{0.55em}}l@{\hspace{0.55em}}l@{\hspace{0.55em}}r@{\hspace{0.55em}}r@{\hspace{0.55em}}r@{}}
+\toprule
+Target & $\delta$ & Construction & Outer code & Rate & Sparse bits & Time (ms) \\
+\midrule
+$20$ & $0.10$ & chosen-block BAA & RS $[2,1,2]$ & $1/2$ & $27.340$ & $21.763$ \\
+$20$ & $0.10$ & weighted RAA & repetition $2$ & $1/2$ & $27.340$ & $21.483$ \\
+$40$ & $0.20$ & chosen-block BAA & RS $[4,2,3]$ & $1/2$ & $43.415$ & $23.337$ \\
+$40$ & $0.20$ & weighted RAA & repetition $3$ & $1/3$ & $48.170$ & $38.398$ \\
+\bottomrule
+\end{tabular}
+\caption{Single-CPU-thread comparison over $\F_{2^{128}}$ at practical sparse-
+security targets.  All rows have $k=2^{20}$; rows with the same target also
+share $\delta$.  Each time is the median of six process medians, with $31$
+calls per process after warm-up.  Setup and allocation are excluded.}
+\label{tab:cpu-large-field}
+\end{table}
+
+For the $20$-bit target, BAA process medians are $21.427$--$21.869$~ms and
+RAA medians are $21.053$--$22.605$~ms.  The $1.3\%$
+difference is appropriately negligible: after scaling, RS $[2,1,2]$ BAA and
+repetition-$2$ RAA are the same ensemble with identical timed arithmetic; they
+also produce the same checksum.  Thus chosen-block BAA has no meaningful
+advantage at this lowest setting.
+
+For the $40$-bit target, BAA process medians are $23.061$--$23.648$~ms and
+RAA medians are $38.061$--$39.329$~ms.  Chosen-block BAA
+reduces latency by $39.2\%$, or $1.65\times$, even though RAA provides $4.75$
+additional sparse-security bits.  Both timed regions contain two nonzero
+diagonal multiplications per codeword coordinate, two global accumulator and
+interleaver layers, and the outer transpose map.  The RAA repetition transpose
+is cheaper per coordinate than the RS $[4,2,3]$ map, but its rate forces it to
+process $1.5\times$ as many coordinates.  The comparison therefore captures
+the end-to-end encoding cost of reaching each minimum security target rather
+than an equal-length microbenchmark.
+
+\paragraph{Estimated single-thread PCG throughput.}
+The original BAA evaluation reports about $8$~ms of CPU expansion work per
+batch, in addition to the linear-code encoding, and excludes an approximately
+$10$~ms one-time seed-tree cost from its throughput figure because that cost is
+amortized across later invocations~\cite{baa26}.  Following the same convention,
+we combine its recurring $8$~ms estimate with our one-thread Golay encoding time:
+\[
+  \frac{1{,}048{,}512}{(24.412+8)\ \mathrm{ms}}
+  \approx 32.3\ \text{million OTs/s}.
+\]
+This projected rate excludes the one-time $10$~ms cost, as does the original
+paper; it is not an integrated measurement.  We do not extrapolate an
+end-to-end multithreaded rate because the corresponding parallel expansion cost
+was not measured; the encoding-only scaling results remain below.
+
+\paragraph{Multithreaded scaling.}
+The headline construction comparison uses one CPU thread.  The implementation
+also supports a persistent CPU worker team: each worker scans a contiguous
+range, the range totals determine prefix offsets, and the workers rescan and
+permute their ranges in parallel.  In a separate paired scaling campaign,
+chosen-block Golay drops from $21.163$~ms on one thread to $5.919$~ms on $24$
+threads, a $3.58\times$ improvement.  Chosen-block Reed--Muller drops from
+$23.852$~ms to $5.796$~ms on $32$ threads, a $4.12\times$ improvement.  These
+are CPU-scaling results, not part of the claimed construction-level speedup over
+original BAA.
+
+\section{Lean formalization and proof audit}
 \label{sec:lean}
 
-The accompanying Lean 4 development formalizes the finite algebraic and
-combinatorial results.  Its purpose is to audit the proof at the points where
+Using the Lean~4 proof assistant described in
+Section~\ref{sec:lean-prelim}, we formalized the finite algebraic and
+combinatorial arguments in mathlib.  The development focuses on points where
 informal notation can hide a boundary case: sample spaces, index ranges,
-endpoint conventions, and shortening hypotheses.  The artifact is contained
-in the \texttt{lean/} directory and is pinned to Lean and mathlib
-version~\texttt{v4.32.1}.
+endpoint conventions, and shortening hypotheses.  %The artifact is contained
+%in the \texttt{lean/} directory and is pinned to Lean and mathlib
+%version~\texttt{v4.32.1}.
 
 \subsection{Representation and proof architecture}
 
@@ -1787,8 +2636,8 @@ $\operatorname{Fin}(n)\to F$, and a linear code is a submodule of that vector
 space.  Hamming weight uses mathlib's \texttt{hammingNorm}.  The accumulator,
 difference, permutation, diagonal, and monomial transformations are linear
 equivalences.  The repeated outer code uses an explicit equivalence between
-$\operatorname{Fin}(B m)$ and
-$\operatorname{Fin}(B)\times\operatorname{Fin}(m)$, which removes hidden
+$\operatorname{Fin}(n)$ and
+$\operatorname{Fin}(n/m)\times\operatorname{Fin}(m)$, which removes hidden
 divisibility and coordinate-order assumptions.
 
 Ensemble probabilities are represented as ratios of finite cardinalities in
@@ -1809,44 +2658,51 @@ The development contains complete proofs of the following finite claims.
 
 \begin{itemize}
     \item The BAA transformations are invertible and preserve dimension.  The
-          block-direct-sum enumerator and the binary identities (B1)--(B5) are
+          block-direct-sum enumerator and the binary identities
+          \eqref{eq:B1}--\eqref{eq:B5} are
           exact finite theorems.
     \item The extended Golay and $\operatorname{RM}(2,5)$ constructions have
           the dimensions, minimum distances, and spectra stated above.  The
           eight-row $[32,8,12]$ code has the stated spectrum and lies in a
           concretely defined extended primitive BCH code.
     \item Reed--Solomon evaluation codes have the claimed dimension and
-          minimum distance.  Their MDS shortening dimensions give (5), (L1),
-          (L2), (R3), and (R4).
-    \item The zero-return placement count (1), projective bound (2), master
-          bound (3), and corrected support-excess bound (4) are formal
+          minimum distance.  Their MDS shortening dimensions give
+          \eqref{eq:5}, \eqref{eq:L1}, \eqref{eq:L2}, \eqref{eq:R3}, and
+          \eqref{eq:R4}.
+    \item The zero-return placement count \eqref{eq:1}, projective bound
+          \eqref{eq:2}, master bound \eqref{eq:3}, and corrected support-excess
+          bound \eqref{eq:4} are formal
           consequences of finite counting and linear algebra.
-    \item The backward parity-check identities (G1)--(G5), run and block-rank
-          counts (G6)--(G8), and endpoint-refined expectation (G9) are proved.
-          The generic rank equals the maximum size of a two-layer
+    \item The backward parity-check identities \eqref{eq:G1}--\eqref{eq:G5}, run and block-rank
+          counts \eqref{eq:G6}--\eqref{eq:G8}, and exact structural-container
+          expectation \eqref{eq:G9},
+          including the endpoint cases, are proved.  The generic rank equals
+          the maximum size of a two-layer
           vertex-disjoint path packing with the local MDS capacities.
 \end{itemize}
 
+The quadratic-residue rows in Table~\ref{tab:binary-qr} use exact external
+spectra and are deliberately outside this list of Lean-verified statements.
+
 The path-packing result is stronger than the neighborhood upper bound used in
-(G5).  Its proof first establishes a rectangular Cauchy--Binet identity.  It
+\eqref{eq:G5}.  Its proof first establishes a rectangular Cauchy--Binet identity.  It
 then identifies nonzero minors of the difference matrix with unique
 self-or-successor linkages.  Finally, the MDS parity-check theorem converts
 selected columns in each local block into the capacity
-$\min\{|U\cap B|,m-k\}$.
+$\min\{|U\cap J|,m-\sigma\}$.
 
 \subsection{Audit findings and trust boundary}
 
 Formalization required three corrections to the informal statements.
 
 \begin{enumerate}
-    \item Formula (B2) requires $h\ge1$; a separate theorem handles the
+    \item Formula \eqref{eq:B2} requires $h\ge1$; a separate theorem handles the
           impossible output weight $h=0$.
-    \item The Singleton step before (4) requires every touched block to have a
+    \item The Singleton step before \eqref{eq:4} requires every touched block to have a
           nontrivial local shortening.  Exact supports of outer codewords meet
           this condition, which is the case used later.
-    \item The former version of (G9) suppressed two endpoint corrections while
-          displaying a finite equality.  Equation~(G9) now uses flags
-          $e_1,e_2$ and is exact.  Suppressing the flags remains valid only at
+    \item Equation~\eqref{eq:G9} requires two endpoint flags, $e_1,e_2$, to give an
+      exact finite equality.  Suppressing the flags remains valid only at
           the entropy-exponent level.
 \end{enumerate}
 
@@ -1857,7 +2713,7 @@ scope.
 
 \paragraph{Trust boundary.}
 
-The artifact contains no \texttt{sorry}, \texttt{admit}, or project-local
+The formalization uses no \texttt{sorry}, \texttt{admit}, or project-local
 axiom.  A dedicated module applies \texttt{\#print axioms} to the theorems
 stated in the paper.  Those theorems depend only on the standard Lean/mathlib
 foundations.  The audit reports \texttt{propext},
@@ -1866,36 +2722,27 @@ are used only for labeled small-instance regression tests.  No theorem stated
 in the paper depends on a generated native-decision axiom.  The fixed-code
 spectra and distances have kernel-checkable proofs.
 
-The command \texttt{lake build BAA.AxiomAudit}, run from \texttt{lean/}, checks
+The command \texttt{lake build BAA.AxiomAudit} checks
 the complete development and prints the dependency audit.  Exhaustive
 regressions cover the binary accumulator and difference-linkage conventions
 through length eight and the nonbinary placement formula through length seven.
 These tests supplement the symbolic all-length theorems; they do not replace
 them.
 
-The Lean development does not claim the one-accumulator asymptotic limit,
-(B6)--(B12), (6)--(7), (L3)--(L7), any numerical transition, the $O(N)$ cost
-model, or concentration of structural containers.  These claims require
-analytic estimates, certified optimization, a computational cost model, or new
-probabilistic arguments.  Separating them from the verified finite core makes
-the remaining proof obligations explicit.
+The Lean development does not formalize the quadratic-residue constituents or
+their published spectra.  It also does not claim the one-accumulator asymptotic
+limit, \eqref{eq:B6}--\eqref{eq:B12}, \eqref{eq:6}--\eqref{eq:7},
+\eqref{eq:L3}--\eqref{eq:L7}, any numerical transition, the $O(n)$
+ cost model, or concentration of structural containers.  These claims require
+ external coding-theory results, analytic estimates, certified optimization, a
+ computational cost model, or new probabilistic arguments.  The RAA parameter
+ match and performance comparison are likewise outside the Lean development.
+ Separating them from
+the machine-checked fixed-length statements makes the remaining proof
+obligations explicit.
 
-\section{Conclusion}
-
-Chosen-block BAA replaces a random local outer map by a reusable, certified
-code.  In the binary setting, this yields exact finite first moments and
-near-GV numerical transitions with simple linear-time encoding.  Over large
-fields, support-based counting avoids the misleading multiplicity of scalar
-words, but generic rank reveals a separate obstruction caused by saturated
-local blocks after two backward difference expansions.
-
-Lean checks the finite algebraic and combinatorial claims and accounts for the
-three corrections described in Section~\ref{sec:lean}.  The remaining problems
-are analytic and probabilistic: certifying the numerical optimizations,
-controlling sparse and mesoscopic weights uniformly, and proving or disproving
-concentration of structural containers.  For large-field codes near GV, the
-rank obstruction points toward a different recursion rather than another bound
-for the same scalar two-layer construction.
+\bibliographystyle{splncs04}
+\bibliography{references}
 
 \appendix
 \renewcommand{\theHsection}{appendix.\Alph{section}}
@@ -1918,168 +2765,39 @@ $2^8$ words gives minimum distance $12$ and the exact spectrum
 \]
 The code is a subcode of the extended primitive BCH code $[32,11,12]$.
 
-\begin{thebibliography}{99}
+\section{Exact rate-$1/2$ QR spectrum}
+\label{app:qr-spectrum}
 
-\bibitem{baa26}
-Vladimir Kolesnikov, Stanislav Peceny, Rahul Rachuri, Srinivasan Raghuraman,
-Peter Rindal, and Harshal Shah.
-\newblock Block-Accumulate Codes: Accelerated Linear Codes for PCGs and ZK.
-\newblock In \emph{CRYPTO 2026, Part VIII}, LNCS 16807, pages 397--429, 2026.
-Also IACR ePrint 2025/1828.
+For completeness, this appendix records the exact spectrum used for the
+strongest rate-$1/2$ row.  Let $A_w$ denote the number of weight-$w$ words in
+the extended binary quadratic-residue code $[168,84,24]$.  The distribution is
+symmetric, $A_{168-w}=A_w$, with $A_0=A_{168}=1$.  All coefficients not implied
+by the following table are zero~\cite{su08}.
 
-\bibitem{berrou93}
-Claude Berrou, Alain Glavieux, and Punya Thitimajshima.
-\newblock Near Shannon limit error-correcting coding and decoding: Turbo codes.
-\newblock In \emph{Proceedings of ICC '93}, pages 1064--1070, 1993.
+\begin{center}
+\small
+\begin{tabular}{@{}r@{\quad}r@{\qquad}r@{\quad}r@{}}
+\toprule
+$w$ & $A_w$ & $w$ & $A_w$ \\
+\midrule
+24 & 776216                 & 56 & 372099690249351071112 \\
+28 & 18130188               & 60 & 4739291519495550245228 \\
+32 & 5550332508             & 64 & 39973673337590380474086 \\
+36 & 1251282702264          & 68 & 225696677727188690570184 \\
+40 & 166071600559137        & 72 & 860241108921860741947676 \\
+44 & 13047136918828740      & 76 & 2227390683565491780127428 \\
+48 & 629048543890724216     & 80 & 3935099586463594172460648 \\
+52 & 19087130695796615088   & 84 & 4755747412595715344169376 \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-\bibitem{benedetto98}
-Sergio Benedetto, Dariush Divsalar, Guido Montorsi, and Fabrizio Pollara.
-\newblock Serial concatenation of interleaved codes: Performance analysis,
-design, and iterative decoding.
-\newblock \emph{IEEE Transactions on Information Theory}, 44(3):909--926, 1998.
-
-\bibitem{divsalar98}
-Dariush Divsalar, Hui Jin, and Robert J. McEliece.
-\newblock Coding theorems for ``turbo-like'' codes.
-\newblock In \emph{36th Allerton Conference on Communication, Control, and
-Computing}, pages 201--210, 1998.
-
-\bibitem{kahale98}
-Nabil Kahale and Ruediger Urbanke.
-\newblock On the minimum distance of parallel and serially concatenated codes.
-\newblock In \emph{IEEE International Symposium on Information Theory}, page
-31, 1998.
-
-\bibitem{bms09}
-Louay Bazzi, Mohammad Mahdian, and Daniel A. Spielman.
-\newblock The minimum distance of turbo-like codes.
-\newblock \emph{IEEE Transactions on Information Theory}, 55(1):6--15, 2009.
-
-\bibitem{kliewer08}
-Joerg Kliewer, Kamil S. Zigangirov, Christian Koller, and Daniel J. Costello, Jr.
-\newblock Coding theorems for repeat multiple accumulate codes.
-\newblock arXiv:0810.3422, 2008.
-
-\bibitem{yang04}
-Kyeongcheol Yang.
-\newblock Weighted nonbinary repeat-accumulate codes.
-\newblock \emph{IEEE Transactions on Information Theory}, 50(3):527--531,
-2004.
-
-\bibitem{rosnes11}
-Eirik Rosnes and Alexandre Graell i Amat.
-\newblock On the analysis of weighted nonbinary repeat multiple-accumulate
-codes.
-\newblock arXiv:1101.5966, 2011.
-
-\bibitem{akhiani26}
-Pariya Akhiani and Yupeng Zhang.
-\newblock Distance of RAA codes over large finite fields (with applications in
-zkSNARKs and PCGs).
-\newblock IACR ePrint 2026/524, 2026.
-
-\bibitem{khabbazian26}
-Majid Khabbazian.
-\newblock Sharp minimum-distance lower tails for RAA codes.
-\newblock IACR ePrint 2026/1075, 2026.
-
-\bibitem{bcgi18}
-Elette Boyle, Geoffroy Couteau, Niv Gilboa, and Yuval Ishai.
-\newblock Compressing vector OLE.
-\newblock In \emph{ACM CCS 2018}, pages 896--912, 2018.
-
-\bibitem{bcg19pcg}
-Elette Boyle, Geoffroy Couteau, Niv Gilboa, Yuval Ishai, Lisa Kohl, and Peter
-Scholl.
-\newblock Efficient pseudorandom correlation generators: Silent OT extension
-and more.
-\newblock In \emph{CRYPTO 2019, Part III}, LNCS 11694, pages 489--518, 2019.
-
-\bibitem{bcg20ring}
-Elette Boyle, Geoffroy Couteau, Niv Gilboa, Yuval Ishai, Lisa Kohl, and Peter
-Scholl.
-\newblock Efficient pseudorandom correlation generators from Ring-LPN.
-\newblock In \emph{CRYPTO 2020, Part II}, LNCS 12171, pages 387--416, 2020.
-
-\bibitem{silver21}
-Geoffroy Couteau, Peter Rindal, and Srinivasan Raghuraman.
-\newblock Silver: Silent VOLE and oblivious transfer from hardness of decoding
-structured LDPC codes.
-\newblock In \emph{CRYPTO 2021, Part III}, LNCS 12827, pages 502--534, 2021.
-
-\bibitem{ea22}
-Elette Boyle, Geoffroy Couteau, Niv Gilboa, Yuval Ishai, Lisa Kohl, Nicolas
-Resch, and Peter Scholl.
-\newblock Correlated pseudorandomness from Expand-Accumulate codes.
-\newblock In \emph{CRYPTO 2022, Part II}, LNCS 13508, pages 603--633, 2022.
-
-\bibitem{ec23}
-Srinivasan Raghuraman, Peter Rindal, and Titouan Tanguy.
-\newblock Expand-Convolute codes for pseudorandom correlation generators from
-LPN.
-\newblock In \emph{CRYPTO 2023, Part IV}, LNCS 14084, pages 602--632, 2023.
-
-\bibitem{stationary25}
-Vladimir Kolesnikov, Stanislav Peceny, Srinivasan Raghuraman, and Peter Rindal.
-\newblock Stationary syndrome decoding for improved PCGs.
-\newblock In \emph{CRYPTO 2025}, pages 284--317, 2025.  Also IACR ePrint
-2025/295.
-
-\bibitem{lxyy25}
-Zhe Li, Chaoping Xing, Yizhou Yao, and Chen Yuan.
-\newblock Efficient pseudorandom correlation generators for any finite field.
-\newblock IACR ePrint 2025/169, 2025.
-
-\bibitem{rr25}
-Noga Ron-Zewi and Ron D. Rothblum.
-\newblock Proving as fast as computing: Succinct arguments with constant prover
-overhead.
-\newblock \emph{Journal of the ACM}, 72(2):15:1--15:54, 2025.
-DOI 10.1145/3721477.
-
-\bibitem{orion22}
-Tiancheng Xie, Yupeng Zhang, and Dawn Song.
-\newblock Orion: Zero knowledge proof with linear prover time.
-\newblock In \emph{CRYPTO 2022}, pages 299--328, 2022.  Also IACR ePrint
-2022/1010.
-
-\bibitem{brakedown23}
-Alexander Golovnev, Jonathan Lee, Srinath Setty, Justin Thaler, and Riad S.
-Wahby.
-\newblock Brakedown: Linear-time and field-agnostic SNARKs for R1CS.
-\newblock In \emph{CRYPTO 2023, Part II}, LNCS 14082, pages 193--226, 2023.
-
-\bibitem{fieldEA24}
-Alexander R. Block, Zhiyong Fang, Jonathan Katz, Justin Thaler, Hendrik Waldner,
-and Yupeng Zhang.
-\newblock Field-agnostic SNARKs from Expand-Accumulate codes.
-\newblock In \emph{CRYPTO 2024}, LNCS 14929, pages 276--307, 2024.
-
-\bibitem{blaze25}
-Martijn Brehm, Binyi Chen, Ben Fisch, Nicolas Resch, Ron D. Rothblum, and Hadas
-Zeilberger.
-\newblock Blaze: Fast SNARKs from interleaved RAA codes.
-\newblock In \emph{EUROCRYPT 2025}, pages 123--152, 2025.  Also IACR ePrint
-2024/1609.
-
-\bibitem{bolt26}
-Kobi Gurkan, Andrija Novakovic, and Ron D. Rothblum.
-\newblock Bolt: Faster SNARKs from sketched codes.
-\newblock In \emph{CRYPTO 2026, Part IX}, pages 362--395, 2026.  Also IACR
-ePrint 2026/310.
-
-\enlargethispage{3\baselineskip}
-\bibitem{pipfri26}
-Weihan Li, Zongyang Zhang, Sherman S. M. Chow, Yanpei Guo, Boyuan Gao, Xuyang
-Song, Yi Deng, and Jianwei Liu.
-\newblock Shred-to-shine metamorphosis of (distributed) polynomial commitments.
-\newblock In \emph{USENIX Security 2026}, 2026.
-
-\bibitem{macwilliams}
-F. J. MacWilliams and N. J. A. Sloane.
-\newblock \emph{The Theory of Error-Correcting Codes}.
-\newblock North-Holland, 1977.
-
-\end{thebibliography}
+Equivalently,
+\[
+  W_{168}(z)=1+z^{168}+A_{84}z^{84}
+  +\sum_{\substack{24\le w<84\\A_w\ne0}}
+       A_w\bigl(z^w+z^{168-w}\bigr).
+\]
+The coefficients sum to $2^{84}$, as required by the dimension.
 
 \end{document}
