@@ -15,12 +15,12 @@
 \usepackage{cite}
 \ifnum\submission=1
 \hypersetup{
-  pdftitle={Chosen-Block BAA Codes: Finite-Length Analysis and a Large-Field Rank Obstruction},
+  pdftitle={Chosen-Block BAA Codes: Fast, Near the Gilbert--Varshamov Bound, and Field-Agnostic},
   pdfauthor={Anonymous Authors}
 }
 \else
 \hypersetup{
-  pdftitle={Chosen-Block BAA Codes: Finite-Length Analysis and a Large-Field Rank Obstruction},
+  pdftitle={Chosen-Block BAA Codes: Fast, Near the Gilbert--Varshamov Bound, and Field-Agnostic},
   pdfauthor={Stanislav Peceny and Peter Rindal}
 }
 \fi
@@ -77,29 +77,31 @@ complete weight distribution exactly through both random rounds, obtaining
 finite-length expected low-weight counts and explicit sampling-failure bounds.
 The original asymptotic proof also applies because it fixes the outer block map
 and requires only that each activated block contribute output weight greater
-than four.  At rate $1/2$, the extended quadratic-residue block gives a
-relative-distance threshold of $0.11$, or $99.99\%$ of the binary
-Gilbert--Varshamov (GV) distance.  At $k\approx2^{20}$, our implemented Golay
-and extended BCH (equivalently Reed--Muller) constituents take $24$--$27$~ms on
-one thread, making them $1.22\times$--$1.34\times$ faster than a rerun of the
-original BAA code, with minor code changes, on the same machine.  Multithreaded
-chosen-block latency is below $6$~ms.
+ than four.  At rate $1/2$, the extended quadratic-residue block reaches
+ $99.99\%$ of the binary Gilbert--Varshamov (GV) distance.  At
+ $k\approx2^{20}$, our Golay and extended BCH (equivalently Reed--Muller)
+ encoders take $23$--$24$~ms on one thread, $1.22\times$--$1.30\times$ faster
+ than a corrected original-BAA-style control on the same machine; multithreaded latency is below
+ $6$~ms.  At relative distance $0.10$, complete finite-length first moments
+ certify $46.38$ and $47.09$ bits, respectively, with unchanged runtimes.  The
+ speedups are matched only at the original evaluation's documented $20$-bit
+ target, not against a $40$-bit original-BAA baseline.
 
 \qquad Over larger fields $\F_q$, symbols can cancel in prefix sums and many
 codewords share a support.  We give a probability bound accounting for both
 effects and prove a structural limitation: some permutation patterns force a
 low-weight codeword regardless of the nonzero coordinate scalings.  For the
 rate-$1/2$ and rate-$1/4$ instances studied, the estimated relative-distance
- transitions are $62.7\%$ and $81.9\%$ of the corresponding $q$-ary GV
- distances.  These values are diagnostic: they estimate rank-deficient supports
- in expectation, not typical-code upper bounds.  We implement the rate-$1/2$
- construction over $\F_{2^{128}}$ and compare it with weighted RAA at the same
- $k=2^{20}$ under practical $20$- and $40$-bit sparse-security targets.  At the
- $20$-bit target the two selected ensembles coincide and take $21.763$ and
- $21.483$~ms on one CPU thread.  At the $40$-bit target, rate-$1/2$
- chosen-block BAA takes $23.337$~ms versus $38.398$~ms for rate-$1/3$ RAA, a
- $1.65\times$ speedup.  Lean~4 verifies the finite counting and structural
- results and the constituent codes.
+transitions are $62.7\%$ and $81.9\%$ of the corresponding $q$-ary GV
+distances.  These values are expectation diagnostics, not typical-code upper
+bounds.  We implement both chosen-block constructions over $\F_{2^{128}}$ at
+$k=2^{20}$.  On one CPU thread, the rate-$1/2$ encoder takes $33.633$~ms and
+has a complete finite-length failure bound of $2^{-136.5}$ at relative distance
+$0.30$; the rate-$1/4$ encoder takes $73.739$~ms and has bound $2^{-208.6}$ at
+relative distance $0.60$.  A representative BAA and weighted
+repeat--accumulate$^t$ table reports each construction's own distance, complete
+failure bound, and runtime.  Lean~4 verifies the finite counting, structural
+results, and constituent codes.
 \keywords{linear codes \and block--accumulate--accumulate codes \and pseudorandom correlation generators \and zero-knowledge
 proofs \and Lean}
 \end{abstract}
@@ -135,7 +137,7 @@ proximity test checks that the committed word is close to a valid codeword.
 The code's distance supplies the separation needed for soundness, while its
 encoding cost contributes directly to prover time
 ~\cite{orion22,brakedown23,blaze25,era26,blindraa26}.  The same two properties
-also appear in private server-aided proving.  There, a
+also appear in private server-aided proving, where a
 repeat--accumulate--accumulate (RAA) code can provide a masking layer for
 encrypted multi-scalar multiplication: its distance determines the linear-test
 security parameters, and multiplication by the code contributes to the
@@ -193,9 +195,10 @@ over a large finite field $\F_q$, where $q$ is the field size, how close can the
  same two-accumulator architecture come to the $q$-ary Gilbert--Varshamov (GV)
  distance?  This question is relevant both to PCGs that generate correlations
  over finite fields and to proof systems that encode directly over their
- computation field.  We also ask whether the resulting large-field encoder is
- practically faster than weighted RAA when both are tuned to the same message
- dimension, target relative distance, and dominant sparse-security scale.
+  computation field.  To expose the practical tradeoffs without collapsing
+  distance, failure probability, and runtime into a single matching criterion, we
+  also benchmark a representative menu of chosen-block BAA and weighted
+  repeat--accumulate$^t$ configurations at a common message dimension.
 
 \subsection{Contributions}
 \label{sec:contributions}
@@ -225,9 +228,12 @@ throughout.  Our main contributions are as follows.
     \item Over $\F_q$ with $q>2$, we give a finite-length low-weight bound that
     accounts for cancellations inside the accumulators and avoids counting
     scalar multiples as distinct bad events.  With $[16,8,9]$ and $[16,4,13]$
-    Reed--Solomon constituents, its estimated relative-distance transitions are
+    Reed--Solomon (RS) constituents, its estimated relative-distance transitions are
     $0.305$ and $0.604$, respectively, or $62.0\%$ and $81.3\%$ of the
-    corresponding $q$-ary GV distances for $q=2^{128}$.
+    corresponding $q$-ary GV distances for $q=2^{128}$.  At $k=2^{20}$, complete
+    numerical evaluations give failure bounds $2^{-136.5}$ at distance $0.30$
+    for the rate-$1/2$ instance and $2^{-208.6}$ at distance $0.60$ for the
+    rate-$1/4$ instance.
 
     \item We identify a rank obstruction, independent of the coefficients, in
     the two-accumulator architecture.  It exposes low-weight supports that remain
@@ -238,21 +244,28 @@ throughout.  Our main contributions are as follows.
     These structural values are diagnostic rather than typical-code upper
     bounds, because concentration of the number of bad supports remains open.
 
-    \item We rerun the original BAA CPU code on our machine with minor code
-    changes and use it for a security-matched comparison at rate $1/2$ and
+    \item We implement a corrected original-BAA-style CPU control based on the
+    original implementation branch and use it for a common-workload comparison at rate $1/2$ and
     $n=2{,}097{,}024$.  At relative distance $0.10$ and code-sampling failure
     target $2^{-20}$, chosen-block BAA with Golay and extended BCH
-    (equivalently Reed--Muller) constituents is $1.34\times$ and $1.22\times$
+     (equivalently Reed--Muller) constituents is $1.30\times$ and $1.22\times$
     faster, respectively, on one CPU thread.  Both implementations run in less
-    than $6$~ms when multithreaded.
+    than $6$~ms when multithreaded.  At the same length and relative distance,
+    complete-sum upper bounds of $2^{-46.38}$ and $2^{-47.09}$ certify that the
+    chosen Golay and Reed--Muller rows also exceed $40$ bits with unchanged
+    encoding times.  The speedups are relative to this same-host control and
+    remain a $20$-bit comparison,
+    however, because a matched $40$-bit claim requires a stronger original-BAA
+    baseline.
 
-    \item Over $\F_{2^{128}}$, we implement and optimize both chosen-block BAA
-    and weighted RAA at $k=2^{20}$.  A $20$-bit target selects RS $[2,1,2]$
-    BAA and repetition-$2$ RAA, both with a $27.34$-bit dominant sparse term;
-    the ensembles coincide and take $21.763$ and $21.483$~ms on one CPU thread.
-    A $40$-bit target selects RS $[4,2,3]$ BAA with $43.42$ bits and
-    repetition-$3$ RAA with $48.17$ bits.  Their times are $23.337$ and
-    $38.398$~ms, so BAA is $1.65\times$ faster at the higher target.
+    \item Over $\F_{2^{128}}$, we implement and optimize chosen-block BAA and
+    weighted repeat--accumulate$^t$ at $k=2^{20}$.  The RS $[16,8,9]$
+    rate-$1/2$ BAA encoder takes $33.633$~ms on one CPU thread and has complete
+    failure bound $2^{-136.5}$ at relative distance $0.30$.  The RS
+    $[16,4,13]$ rate-$1/4$ encoder takes $73.739$~ms and has bound $2^{-208.6}$
+    at distance $0.60$.  A representative configuration table reports distance,
+    complete failure probability, and runtime for BAA and RA$^t$, rather than
+    declaring a match along one coordinate while the other two vary.
 
     \item In Lean~4, we machine-check the exact finite-length identities behind
     the binary and large-field bounds, the generic-rank characterization, and
@@ -268,12 +281,16 @@ each block independently and analyzes the resulting binary ensemble.  We ask
 whether one carefully chosen short code can instead be reused in every block,
  and whether the same architecture remains competitive when the ambient field
  allows cancellations.  The binary answer is favorable: chosen constituents are
- faster to encode in our comparison and can approach the binary GV distance.
- Over large fields we obtain strong absolute symbol distance and a
- $1.65\times$ single-thread speedup over weighted RAA at a practical $40$-bit
- sparse-security target (and parity at a $20$-bit target), but
- uncover an architectural obstruction that leaves a substantial gap to the
- corresponding $q$-ary GV benchmark.
+ faster to encode in our $20$-bit-matched comparison and can approach the binary
+ GV distance.  At the measured length, their complete first moments certify
+ $46.38$ and $47.09$ bits, although we do not present a baseline-matched binary
+ $40$-bit benchmark.
+ Over large fields we obtain strong absolute symbol distance and fast
+ single-thread encoders, but uncover an architectural obstruction that leaves a
+ substantial gap to the corresponding $q$-ary GV benchmark.  We present BAA
+ and weighted repeat--accumulate$^t$ measurements as a configuration menu so
+ that rate, target distance, complete failure bound, and runtime remain
+ visible rather than being compressed into a single ranking.
 
 \paragraph{Construction.}
 Let $C_0$ be a fixed $[m,\sigma,d]_q$ code.  Chosen-block BAA first encodes
@@ -369,12 +386,14 @@ the likely source of the observed gap.
 
 \paragraph{Implementation and verification.}
 At $n=2{,}097{,}024$, the chosen Golay and Reed--Muller implementations take
-$24.412$ and $26.794$~ms on one CPU thread, compared with $32.769$~ms for our
-security-matched rerun of original BAA; their multithreaded latencies are below
- $6$~ms.  Over $\F_{2^{128}}$ at $k=2^{20}$, the selected $20$-bit BAA and RAA
- profiles take $21.763$ and $21.483$~ms on one thread; at the $40$-bit target,
- chosen-block BAA takes $23.337$~ms versus $38.398$~ms for weighted RAA.
- Finally, our Lean~4 development checks the finite combinatorial
+ $22.810$ and $24.278$~ms on one CPU thread, compared with $29.596$~ms for our
+ same-host original-BAA-style control; their multithreaded latencies are below
+ $6$~ms.  Over $\F_{2^{128}}$ at $k=2^{20}$, RS $[16,8,9]$ BAA takes
+ $33.633$~ms on one thread at rate $1/2$, and RS $[16,4,13]$ BAA takes
+ $73.739$~ms at rate $1/4$.  Their complete finite-length failure bounds are
+ $2^{-136.5}$ at distance $0.30$ and $2^{-208.6}$ at distance $0.60$.  We
+ additionally report representative weighted RA$^t$ configurations along the
+ same independent axes.  Finally, our Lean~4 development checks the finite combinatorial
 identities, probability bounds, constituent-code facts, and generic-rank
 results on which the analysis rests.
 
@@ -382,8 +401,10 @@ results on which the analysis rests.
 Our concrete identities, probability inequalities, code parameters, and rank
 identities are exact.  The asymptotic estimates and numerically optimized
  distance transitions are not machine-checked, and concentration of structural
- containers remains open.  The large-field RAA comparison matches dominant
- sparse contributions rather than complete finite-length failure bounds.  The
+ containers remains open.  The large-field configuration table reports complete
+ numerical evaluations of the finite trace union bounds, with an explicit
+ outward-rounding allowance; the structural transitions remain separate
+ diagnostics.  The
  implementation timings are measurements on the reported platform.  The coding results are application-neutral: we do not claim
 a new PCG reduction or zero-knowledge protocol.  The binary results target
 systems built from binary matrices, while the large-field results target
@@ -1882,8 +1903,69 @@ The numerical BAA transition is
 \]
 This is our compact rate-$1/2$ BCH baseline.  Among the two compact implemented
 blocks, it gives the larger transition: about $96.5\%$ of the binary GV
-relative distance.  The longer rate-$1/2$ quadratic-residue spectra below
-improve on this value.  The one-block contribution again has order $n^{-3}$.
+ relative distance.  The longer rate-$1/2$ quadratic-residue spectra below
+ improve on this value.  The one-block contribution again has order $n^{-3}$.
+
+\paragraph{Finite-length $40$-bit certificate for the implemented blocks.}
+We evaluate the complete sum~\eqref{eq:B4} at the benchmark length
+$n=2{,}097{,}024$ and $L=\lfloor0.10n\rfloor=209{,}702$.  To make the
+calculation both exhaustive and reproducible, first observe that
+$Q_n^{\rm bin}(h,L)$ is the upper tail
+$\Prb[X\ge x_h]$ for
+$X\sim\operatorname{Hypergeom}(n,L,h)$ and $x_h=\lceil h/2\rceil$.  If
+\[
+ \rho_h=
+ \frac{L-x_h}{x_h+1}
+ \frac{h-x_h}{n-L-h+x_h+1},
+\]
+then successive terms of this tail have decreasing ratio, and hence
+\[
+ Q_n^{\rm bin}(h,L)
+ \le
+ \frac{\binom{L}{x_h}\binom{n-L}{h-x_h}}
+      {\binom{n}{h}(1-\rho_h)}.
+ \eqnumlabel{eq:binary-hypergeom-tail}
+\]
+We compute the coefficients $A_w^{\rm out}$ exactly through $w=32$ and sum
+the resulting bound over every feasible intermediate weight $h$.  For the
+remaining weights, the coefficient inequality
+\[
+ A_w^{\rm out}
+ \le
+ \exp\!\left(B\log W_0(e^\theta)-w\theta\right),
+ \qquad B=n/m,
+ \eqnumlabel{eq:binary-coefficient-bound}
+\]
+ holds for every real $\theta$.  We minimize this bound numerically.  An
+ explicit consecutive-ratio check shows that the bounded transition summand is
+ unimodal on each of the even and odd $h$ subsequences; we maximize the two
+ subsequences separately and multiply their maximum by the number of feasible
+ $h$.  No $w>4L$ term can contribute, because each binary
+accumulator has output weight at least half its nonzero input weight.  A full
+one-bit outward-rounding allowance is applied independently to the $w\le32$
+and $w>32$ subtotals.
+
+The resulting complete first-moment certificates are
+\[
+ \boxed{
+ \begin{aligned}
+  \mu_{\rm bin}(n,L;C_{\rm Golay})
+    &\le 2^{-46.386},\\
+  \mu_{\rm bin}(n,L;\operatorname{RM}(2,5))
+    &\le 2^{-47.093}.
+ \end{aligned}}
+ \eqnumlabel{eq:binary-40-certificate}
+\]
+For comparison, the $w>32$ subtotal is at most $2^{-155.759}$ for Golay and
+$2^{-158.897}$ for Reed--Muller; the complete bound is controlled by $w=8$.
+ Repeating the calculation with cutoffs $24$ and $32$ gives the same displayed
+ complete bounds.  The accompanying script
+ \path{scripts/binary_first_moment_certificate.py} reproduces the calculation.
+ By~\eqref{eq:B5}, both implemented chosen-block ensembles
+therefore exceed a $40$-bit one-time sampling-failure target at relative
+distance $0.10$.  This certifies the chosen rows themselves; it does not turn
+the original $\sigma=32$ row, documented at $20$ bits, into a matched $40$-bit
+baseline.
 
 \paragraph{Rate $1/2$: extended quadratic-residue spectra.}
 To improve the central rate-$1/2$ distance result, we next evaluate longer
@@ -2203,90 +2285,68 @@ concentration argument for structural containers.  Still, the
 coefficient-independent transition lies only $0.003$ or $0.005$ beyond the
 trace threshold.  The numerical gap to $q$-ary GV is much larger.
 
-\subsection{Security-matched large-field RAA baseline}
+\subsection{Representative large-field repeat--accumulate configurations}
 \label{sec:raa-match}
 
-For a construction-level comparison over the same field, we use weighted
-repeat--accumulate--accumulate (RAA), whose generator has the form
+For construction-level context over the same field, we use weighted
+repeat--accumulate$^t$ (RA$^t$), whose generator has the form
 \[
-    G_{\rm RAA}=R_r M_1 A M_2 A.
+    G_{\rm RA^t}=R_r M_1 A \cdots M_t A.
 \]
 Here $R_r$ repeats each of $k_0$ message symbols $r$ times,
 $N=rk_0$, and each $M_i$ is an independent permutation followed by independent
-nonzero coordinate scalings.  This is the standard randomly scaled large-field
-RAA ensemble~\cite{rosnes11,akhiani26,khabbazian26}.
+nonzero coordinate scalings.  For $t=2$ this is the standard randomly scaled
+large-field RAA ensemble~\cite{rosnes11,akhiani26,khabbazian26}.
 
-This also determines the number of accumulators in the comparator.  A single
-accumulator is not asymptotically good.  Adding a third accumulator does not
-change the $N^{1-r}$ exponent of the dominant weight-one event, but does add a
-full length-$N$ scan.  Numerical optimization of the support/trace exponent
-gives transition estimates $0.169$ for repetition-$2$ RAA and $0.447$ for
-repetition-$3$ RAA; a third accumulator raises the former estimate to $0.415$
-but is unnecessary for the $0.10$ target below.  We therefore use ordinary RAA,
-the fastest RA$^t$ choice meeting each selected distance and sparse-security
-target.  The sharp growing-field theorem currently assumes $r\ge4$
-~\cite{khabbazian26}; the lower-repetition rows below use the same exact sparse
-term and numerical exponent, not that theorem.
+A single accumulator is not asymptotically good, so we consider $t\ge2$.  Each
+additional accumulator adds one full length-$N$ scan, but also suppresses the
+no-return weight-one event by another polynomial factor.  Numerical optimization
+of the support/trace exponent gives transition estimates $0.169$ for
+repetition-$2$ RAA and $0.447$ for repetition-$3$ RAA; a third accumulator
+raises the repetition-$2$ estimate to $0.415$.  The sharp growing-field theorem
+currently assumes $r\ge4$~\cite{khabbazian26}; the representative repetition-$2$ configurations
+ are evaluated directly with the finite support/trace sum below rather than that
+ theorem.
 
-We match practical security targets using the sparse mechanism that controls
-both constructions.  For one active RAA message symbol
-and no zero return in either accumulator, the exact contribution to the
-projective support/trace union sum is
+For a full finite-length comparison, put $h_0=rw$.  Applying
+Lemma~\ref{lem:nonbinary-placement} stage by stage and
+Lemma~\ref{lem:projective-cancellation} to the $w$-dimensional shortening of
+$w$ active repetition blocks gives
 \[
- \boxed{
- \mu_{\rm RAA}^{(1,0)}(N,L,r)
-   =k_0\sum_{h=r}^{L}
-     \frac{\binom{h-1}{r-1}}{\binom{N}{r}}
-     \frac{\binom{L}{h}}{\binom{N}{h}},
- \qquad L=\lfloor\delta N\rfloor .
- }
- \eqnumlabel{eq:raa-sparse-match}
+\boxed{
+\begin{aligned}
+ \Prb[d_{\min}(\cC_{\rm RA^t})\le L]
+ &\le \mu_{\rm RA^t}(N,L;r)\\
+ &:={}
+ \sum_{w=1}^{k_0}\binom{k_0}{w}
+ \sum_{\substack{a_1,\ldots,a_t\ge0\\
+                   h_1,\ldots,h_t\ge1\\ h_t\le L}}
+ \chi_q\!\left(w,\sum_{i=1}^t a_i\right)
+ \prod_{i=1}^t \cG_N(h_{i-1},h_i,a_i).
+\end{aligned}}
+\eqnumlabel{eq:rat-complete-bound}
 \]
-Indeed, the first ratio fixes the first accumulator's output weight $h$; after
-the second random interleaver, a no-return output has weight at most $L$ exactly
-when all $h$ active positions lie in the terminal $L$ coordinates.  Its
-asymptotic order is $N^{1-r}$.  This is the weight-one mechanism identified by
-the scaled-RAA lower-tail analysis~\cite{khabbazian26}; at
-$q=2^{128}\gg N$, traces containing cancellations pay additional powers of
-$1/(q-1)$.
+Infeasible trace tuples contribute zero through $\cG_N$.  The outer binomial
+coefficient counts the possible active message supports, and their shortening
+dimension is $w$.  Thus this is the complete support/trace union bound, not only
+the weight-one no-return contribution.  That leading contribution still
+explains the sparse orders $N^{1-r}$ for RA$^2$ and
+$N^{1-r(t-1)}$ for fixed $r,t$.
 
-At $k_0=2^{20}$, Table~\ref{tab:raa-security-match} gives two operating points.
-The $20$-bit profile retains the original BAA work's target relative distance
-$0.10$ and selects the smallest rate-$1/2$ MDS block, RS $[2,1,2]$.  After the
-first independent coordinate scaling, this ensemble is exactly repetition-$2$
-RAA, and both sparse terms equal $2^{-27.340}$.  For the $40$-bit profile we use
-relative distance $0.20$: RS $[4,2,3]$ BAA gives
-$43.415$ bits, while the smallest qualifying RAA repetition is $r=3$, giving
-$48.170$ bits.  Thus each row exceeds its named target; the discreteness of the
-outer distance and repetition factor prevents an exact $20$- or $40$-bit value.
+We evaluate \eqref{eq:3} and \eqref{eq:rat-complete-bound} in the log domain.
+Low-support types are summed directly; the remaining types are covered by a
+coefficient/trace envelope, and surplus-return layers retain their explicit
+$1/(q-1)$ factors.  A full bit of outward rounding is then applied to the
+combined sum.  The calculation is stable when the direct cutoffs are increased
+and is reproduced by
+\path{scripts/large_field_first_moment_certificate.py}.
 
-\begin{table}[ht]
-\centering
-\scriptsize
-\begin{tabular}{@{}r@{\hspace{0.65em}}r@{\hspace{0.65em}}l@{\hspace{0.65em}}l@{\hspace{0.65em}}r@{\hspace{0.65em}}r@{\hspace{0.65em}}r@{}}
-\toprule
-Target & $\delta$ & Construction & Outer code & Rate & Length & Sparse bits \\
-\midrule
-$20$ & $0.10$ & chosen-block BAA & RS $[2,1,2]$ & $1/2$ & $2{,}097{,}152$ & $27.340$ \\
-$20$ & $0.10$ & weighted RAA & repetition $2$ & $1/2$ & $2{,}097{,}152$ & $27.340$ \\
-$40$ & $0.20$ & chosen-block BAA & RS $[4,2,3]$ & $1/2$ & $2{,}097{,}152$ & $43.415$ \\
-$40$ & $0.20$ & weighted RAA & repetition $3$ & $1/3$ & $3{,}145{,}728$ & $48.170$ \\
-\bottomrule
-\end{tabular}
-\caption{Practical large-field sparse-security profiles at $k_0=2^{20}$.
-The BAA values sum the one-active-local-block support/trace terms that use no
-surplus projective cancellations; the RAA values are the exact no-return
-weight-one terms in \eqref{eq:raa-sparse-match}.  These are parameter-selection
-proxies, not complete finite-length failure bounds.}
-\label{tab:raa-security-match}
-\end{table}
-
-The comparison fixes message dimension and, within each target, relative
-distance and a minimum sparse-security level.  At $20$ bits the selected
-ensembles, rates, and lengths coincide.  At $40$ bits repetition-$3$ RAA
-processes $1.5$ times as many field symbols as rate-$1/2$ BAA and provides an
-extra $4.75$ sparse-security bits.  The single-thread cost of both profiles is
-measured in Section~\ref{sec:implementation}.
+At $k_0=2^{20}$, Section~\ref{sec:implementation} tabulates representative
+RA$^t$ and chosen-block BAA configurations.  We do not designate pairs as
+``matched'': changing repetition, accumulator count, or local code jointly
+changes rate, target distance, failure probability, and encoding work.  Each
+row therefore uses a meaningful distance below its own estimated transition;
+the lower-rate rows use correspondingly larger distances.
 
 \subsection{Comparison across alphabets}
 \label{sec:comparison}
@@ -2380,21 +2440,13 @@ shortening dimension for fixed $(m,\sigma)$, the flattening in
 Table~\ref{tab:large-field-block-trend} points to the standard BAA architecture,
 rather than the local code or trace multiplicity, as the main gap to $q$-ary GV.
 
-The first open problem is to turn the numerical evidence into uniform
-finite-length failure bounds.  At $q=2^{128}$ and the primary dimension
-$k=2^{20}$, concrete targets are
-\[
- \Prb[d_{\min}(\cC_{\rm BAA})\le 0.30n]\le 2^{-\lambda}
- \quad\text{at rate }1/2\text{ and }n=2^{21},
-\]
-and
-\[
- \Prb[d_{\min}(\cC_{\rm BAA})\le 0.604n]\le 2^{-\lambda}
- \quad\text{at rate }1/4\text{ and }n=2^{22},
-\]
-for an explicitly chosen failure parameter $\lambda$.  Proving such statements
-requires interval certificates for the trace exponents, uniform control from
-sparse through linear weights, and exact finite-$n$ prefactors.
+The first open problem is to certify the optimized transition itself, uniformly
+in block length and without relying on floating-point saddle searches.  The
+pointwise finite-length evaluations in Table~\ref{tab:cpu-large-field} certify
+distances $0.30$ and $0.60$ for the two implemented BAA rows, but they do not
+turn the estimated transition values $0.305$ and $0.604$ into interval-certified
+thresholds.  Closing that gap requires interval optimization of the trace
+exponents and uniform control of the finite-$n$ prefactors.
 
 A second open problem is concentration of the structural-container count $Z_t$
 around the transitions in \eqref{eq:G10}, including cuts that use
@@ -2412,7 +2464,7 @@ cut is open.
 \subsection{Implementation}
 
 We implemented multiplication by $G_{\rm BAA}=\mathbf B M_1AM_2A$ and the
-weighted RAA comparator in about $1{,}000$ lines of C++20 in libOTe, excluding
+weighted RA$^t$ construction in about $1{,}000$ lines of C++20 in libOTe, excluding
 tests and benchmark drivers.  The
 implementation supports the binary Golay $[24,12,8]$,
 $\operatorname{RM}(2,5)=[32,16,8]$, and BCH $[32,8,12]$ constituents and
@@ -2425,30 +2477,46 @@ case, while the large-field path uses carry-less multiplication.  The binary
 path is bitsliced over libOTe's $128$-bit blocks: one call on $n$ blocks
 evaluates $128$ independent length-$n$ binary inputs in parallel, rather than
 packing one binary input into $\lceil n/128\rceil$ blocks.
-The weighted RAA implementation uses the same fused large-field
-scan--multiply--scatter loop, two independently sampled interleavers and
-weighters, and optimized segment reductions for repetition $2$, $3$, and $7$.
+The weighted RA$^t$ implementation accepts arbitrary positive accumulator
+counts, uses the same fused large-field scan--multiply--scatter loop with an
+independently sampled interleaver and weighter in every stage, and provides
+optimized segment reductions for repetition $2$, $3$, and $7$.
 The low-security BAA paths similarly use straight-line local maps; in particular,
 RS $[2,1,2]$ reduces to one XOR and performs no needless multiplication by the
 field identity.
 
 \subsection{Experimental methodology}
 
-\paragraph{Security-matched rerun.}
-The baseline is our rerun of the original BAA code on this machine, with minor
-code changes.  At $\sigma=32$, every local factor is an independently sampled
+\paragraph{Common-workload original-BAA control.}
+The baseline in Table~\ref{tab:cpu-chosen} is a same-host implementation control
+based on the original \texttt{ppcg-peter} CPU branch, not a replay of the exact
+executable timed in the original paper.  That branch's benchmark constructs one
+accumulator object and invokes it twice, thereby reusing one permutation; its
+block step also has overlapping mask-buffer writes and the wrong
+systematic-dual orientation.  Our control instead uses independent permutations,
+consumes every matrix bit once, and computes the intended
+$x\leftarrow x+Ry$ map.  These corrections preserve the construction and its
+work profile, but change the exact instruction stream.  At $\sigma=32$, every
+local factor is an independently sampled
 $32\times64$ systematic binary generator matrix $[I_{32}\mid R]$, equivalently
 a random $[64,32]$ binary code.  This is the conservative rate-$1/2$ parameter set for which
 the original evaluation reports relative distance $0.10$ and one-time
 code-sampling failure at most $2^{-20}$~\cite{baa26}.  We use the same target
 for the chosen-block rows.  Their numerical distance transitions,
-$0.105$ for Golay and $0.106$ for Reed--Muller, lie above $0.10$; at the
-measured length, the parts of the low-weight first moment arising from outer
-words supported in exactly one nonzero local block are approximately
-$2^{-47.4}$ and $2^{-48.1}$.  The comparison criterion for the chosen ensembles
-is the complete exact binary first moment in
-Theorem~\ref{thm:exact-binary-first-moment}, rather than equality of local
-dimensions.
+ $0.105$ for Golay and $0.106$ for Reed--Muller, lie above $0.10$.  At the
+ measured length, the complete numerical evaluation described in
+ Section~\ref{sec:numerics} gives
+ $\mu_{\rm bin}\le2^{-46.386}$ and $2^{-47.093}$, respectively.  Thus both
+ chosen rows themselves exceed $40$ bits at relative distance $0.10$ with no
+ parameter or runtime change.  The comparison criterion is the complete exact
+ binary first moment in Theorem~\ref{thm:exact-binary-first-moment}, rather than
+ equality of local dimensions.  The original $\sigma=32$ row, however, is
+ documented at only $20$ bits.  We therefore report
+ Table~\ref{tab:cpu-chosen} as a matched $20$-bit comparison.  A matched binary
+ $40$-bit speedup would still require benchmarking a stronger original-BAA
+ parameter set; the original paper's empirical rule
+ $\sigma\approx4\lambda/3$ suggests $\sigma\approx54$ before rounding to a
+ convenient block size when $\lambda=40$~\cite{baa26}.
 
 \paragraph{Controlled randomness and timed region.}
 All three implementations use $n=2{,}097{,}024$, the largest multiple of
@@ -2456,141 +2524,163 @@ $\operatorname{lcm}(24,32,64)=192$ below $2^{21}$, and
 $k=n/2=1{,}048{,}512$.  Divisibility by $24$, $32$, and $64$ lets the Golay,
 Reed--Muller, and original random-block constituents tile one common input
 without truncation.  All rows therefore use the same input, two accumulator
-layers, two stored uniform permutations, one CPU thread, and timed $n$-to-$k$
-operation.  The input and the two permutations are generated before timing from
-the same deterministic seeds and in the same order.
+layers, two independently seeded pseudorandom permutations, one CPU thread, and
+timed $n$-to-$k$ operation.  The input and permutation seeds are generated
+before timing from the same deterministic seeds and in the same order.
 
-The original-BAA rerun uses two prefix-sum/permutation layers followed by a
+The original-BAA-style control uses two prefix-sum/permutation layers followed by a
 dense random systematic local map.  The two permutations are sampled
 independently, and the timed computation evaluates the $n$-to-$k$
 multiplication $x\leftarrow x+Ry$.  Chosen-block BAA replaces the random local
 matrices with the chosen constituent and hence needs no local-matrix stream.
 
-Input generation, permutation sampling, and workspace allocation occur before
+Input generation, permutation-seed derivation, and workspace allocation occur before
 timing.  Both accumulator/permutation layers and the local outer multiplication
 remain inside it.  The original baseline generates its random local matrices
 during that operation, whereas the chosen constructions evaluate their
-constituent-code circuits.  Since the common length is not a power of
-two, all three rows use the same stored uniform libOTe AES-PRNG permutations;
-the ensemble analysis likewise samples uniform permutations.
+constituent-code circuits.  The benchmark supports the common non-power-of-two
+length without a stored $n$-entry permutation table.  The mathematical ensemble
+analysis continues to sample uniform permutations.
 
-For the large-field comparison, all four rows instead fix $k=2^{20}$ and use
-the two security profiles from Section~\ref{sec:raa-match}.  Both chosen-block
-rows have $n=2^{21}$ and rate $1/2$.  Repetition-$2$ RAA has the same length and
-rate, while repetition-$3$ RAA has $N=3\cdot2^{20}$ and rate $1/3$.
-All rows use $\F_{2^{128}}$, the same input-generation and construction seeds,
-two independent diagonal weighters, two independently sampled interleavers, one
-CPU thread, and the same encode-only boundary.  The rate-$1/2$ lengths are powers
-of two and therefore use the implementation's four-round Feistel interleavers.
-The repetition-$3$ length is not, so that row uses stored uniform permutations.
-In every case,
+For the large-field configuration menu, every row fixes $k=2^{20}$,
+$\F_{2^{128}}$, one CPU thread, and the same encode-only boundary, while rate,
+length, local map or repetition, and accumulator count vary intentionally.  The
+rate-$1/2$ rows have $n=2^{21}$; repetition-$3$ RA$^2$ has
+$n=3\cdot2^{20}$; and RS $[16,4,13]$ BAA has rate $1/4$ and $n=2^{22}$.
+The reported target distances are $0.10$ for repetition-$2$ RA$^2$, $0.30$
+for rate-$1/2$ BAA, $0.40$ for repetition-$2$ RA$^3$ and repetition-$3$
+RA$^2$, and $0.60$ for rate-$1/4$ BAA.  Each lies below that configuration's
+estimated trace transition; lower-rate configurations are evaluated at larger
+distances rather than at the rate-$1/2$ reference $0.10$.
+Each stage has independent diagonal weighters and interleavers.  In every case,
 permutation and diagonal generation, input generation, and workspace allocation
-are outside the timed region; both full scan--multiply--scatter layers and the
-outer transpose multiplication are inside it.
+are outside the timed region; every full scan--multiply--scatter layer and the
+outer transpose multiplication or repetition reduction are inside it.
 
 \paragraph{Platform and procedure.}
 On an Intel Core i9-14900HX with $32$ logical processors, we compiled libOTe in
 Release mode with MSVC~14.44 and C++20 on Windows NT~10.0.26200, with SSE and
-PCLMUL enabled.  We exclude setup, input generation, permutation construction,
-and workspace allocation; both scan/permutation layers and the outer
-multiplication are timed.  The main comparison uses exactly one CPU thread.  We
-report the median of six process medians, each over $31$ calls after warm-up.
-Across the six processes, each of the three implementations occupies each
-benchmark-order position twice.  The separate two-mode scaling campaigns
-reverse order halfway.  Turbo and thermal state are not controlled; results are
-host-specific.
-The large-field campaign likewise uses six $31$-call process medians after
-warm-up and alternates BAA-first and RAA-first order across processes.
+ PCLMUL enabled.  We exclude setup, input generation, permutation construction,
+ and workspace allocation; all scan/permutation layers and the outer
+ multiplication are timed.  The headline binary construction campaign uses
+exactly one CPU thread and binds each process to logical processor~2 (Windows
+affinity mask \texttt{0x4}).  We report the median of six process medians, each
+over $31$ calls after warm-up.  Across the six processes, each of the three
+implementations occupies each benchmark-order position twice.  The separate,
+unpinned two-mode scaling campaigns reverse order halfway.  Turbo and thermal
+state are not controlled; results are host-specific.
+Each large-field row likewise uses six $31$-call process medians after warm-up;
+paired BAA and RA$^t$ campaigns alternate which implementation runs first.
 
 \subsection{Performance results}
 
 \begin{table}[h]
 \centering
-\small
-\begin{tabular}{@{}l@{\hspace{1em}}l@{\hspace{1em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{}}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}l@{\hspace{0.8em}}l@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{}}
 \toprule
-Construction & Local outer code & \multicolumn{1}{c}{Threads} &
-\multicolumn{1}{c}{ms} & \multicolumn{1}{c}{Speedup} \\
+Construction & Local outer code & $\delta$ &
+ $\Prb[d_{\min}\le\delta n]$ & Threads & ms & vs. control \\
 \midrule
-original BAA & random systematic $[64,32]$, $\sigma=32$ & 1 & $32.769$ & $1.00\times$ \\
-chosen-block BAA & Golay $[24,12,8]$ & 1 & $24.412$ & $1.34\times$ \\
-chosen-block BAA & $\operatorname{RM}(2,5)$ $[32,16,8]$ & 1 & $26.794$ & $1.22\times$ \\
+original-BAA-style control & random systematic $[64,32]$, $\sigma=32$ & $0.10$ & $\le2^{-20}$ & 1 & $29.596$ & $1.00\times$ \\
+chosen-block BAA & Golay $[24,12,8]$ & $0.10$ & $\le2^{-46.386}$ & 1 & $22.810$ & $1.30\times$ \\
+chosen-block BAA & $\operatorname{RM}(2,5)$ $[32,16,8]$ & $0.10$ & $\le2^{-47.093}$ & 1 & $24.278$ & $1.22\times$ \\
 \bottomrule
 \end{tabular}
-\caption{Security-matched, single-CPU-thread, rate-$1/2$ comparison.  Every row
-uses $n=2{,}097{,}024$, $k=1{,}048{,}512$, the same input and permutation seeds,
-the same two uniform stored permutations, and the same timed operation.  The
-original row is the conservative $\sigma=32$ BAA parameter set with target
-relative distance $0.10$ and code-sampling failure $2^{-20}$.  The chosen rows
-are evaluated at the same target using their chosen-constituent first moments;
-their local dimensions are not matched to the baseline.  A constituent labeled
+}
+\caption{Common-workload, single-CPU-thread, rate-$1/2$ comparison.  Every row
+uses $k=1{,}048{,}512$, the same input and permutation seeds, the same two
+independently seeded pseudorandom permutations, and the same timed operation.
+The failure column
+ reports the original construction's documented code-sampling target and the complete
+chosen-constituent first-moment bounds in
+\eqref{eq:binary-40-certificate}.  This table does not claim a matched
+ $40$-bit speedup because the control row is not a $40$-bit baseline.  Their
+ local dimensions are not matched to the baseline.  A constituent labeled
 $[m,\sigma,d]$ has block length $m$, dimension $\sigma$, and minimum Hamming
 distance $d$; $[m,\sigma]$ omits the distance.}
 \label{tab:cpu-chosen}
 \end{table}
 
 Table~\ref{tab:cpu-chosen} reports construction-level improvement over our
-original BAA rerun, using one CPU thread throughout.  Golay reduces
-latency by $25.5\%$ ($1.34\times$), and Reed--Muller reduces it by $18.2\%$
-($1.22\times$).  The original BAA performs the $\sigma=32$ random local map,
+original-BAA-style control, using one CPU thread throughout.  Golay reduces
+latency by $22.9\%$ ($1.30\times$), and Reed--Muller reduces it by $18.0\%$
+ ($1.22\times$).  The control performs the $\sigma=32$ random local map,
 whereas chosen-block BAA uses a $56$-XOR Golay circuit or a five-variable
 Reed--Muller zeta transform.  The common accumulator and permutation work is
-present in all rows and is therefore not counted as a chosen-block speedup.
-Separate multithreaded measurements show CPU scalability but do not alter the
-construction comparison.
+ present in all rows and is therefore not counted as a chosen-block speedup.
+ Separate multithreaded measurements show CPU scalability but do not alter the
+ construction comparison.  Equation~\eqref{eq:binary-40-certificate} shows that
+ the Golay and Reed--Muller rows need no parameter change at a $40$-bit target,
+ so their encoding times remain $22.810$ and $24.278$~ms.  These are certified
+ $40$-bit chosen-code measurements, but not speedups against a security-matched
+ original BAA: that comparison still requires the stronger original-BAA
+ baseline described above.
 
 For context, the original BAA paper reports $21.4$~ms for its aggressive
-$\sigma=8$ row and $30.2$~ms for its conservative $\sigma=32$ row, both at
-$k=2^{20}$ on an Intel Core i7-13700H~\cite{baa26}.  The relevant comparison for
-our security-matched baseline is the latter.  At the paper's exact power-of-two
-length, six independent 31-trial processes of our current implementation on the
-i9-14900HX give median-of-process-medians times of $25.279$~ms for $\sigma=8$
-and $30.827$~ms for $\sigma=32$.  These are measurements from that code rerun
-on our machine;
-the $32.769$~ms value in Table~\ref{tab:cpu-chosen} instead belongs to the controlled common-length
-experiment, where every construction uses the same stored uniform permutations.
+$\sigma=8$ row and $30.2$~ms for its conservative $\sigma=32$ row at
+$n=2^{21}$ on an Intel Core i7-13700H~\cite{baa26}.  Table~\ref{tab:cpu-chosen}
+instead uses $n=2{,}097{,}024$, the largest multiple of
+$\operatorname{lcm}(24,32,64)$ below $2^{21}$, so that the Golay,
+Reed--Muller, and random-block constituents all tile the same input without a
+shortened final block.  This common-workload choice is $128$ symbols below the
+original length.  In a separate affinity-controlled path ablation, the
+corrected $\sigma=32$ control took $31.895$~ms at the common length and
+$31.992$~ms at $n=2^{21}$ under the same on-the-fly permutation implementation;
+their six-process ranges, $29.147$--$32.997$ and $28.999$--$33.039$~ms, overlap.
+A precomputed-permutation variant at the common length took $33.688$~ms in the
+same ablation.  Thus the $128$-symbol length reduction has no measurable
+penalty once the permutation implementation is held fixed.
+Table~\ref{tab:cpu-chosen}'s $29.596$~ms
+control comes from the separate balanced three-way campaign and is used only
+for its within-campaign ratios.  The original paper's executable, compiler
+environment, and processor (i7-13700H rather than i9-14900HX) also differ from
+ours, so hardware labels alone do not make the absolute timings directly
+comparable.
 
-\paragraph{Practical-security $\F_{2^{128}}$ comparison.}
-Table~\ref{tab:cpu-large-field} reports the two large-field comparisons selected in
-Section~\ref{sec:raa-match}.
+\paragraph{Representative $\F_{2^{128}}$ configurations.}
+Table~\ref{tab:cpu-large-field} reports a configuration menu along three
+independent axes: target distance, complete finite-length failure bound, and
+measured runtime.
 
 \begin{table}[h]
 \centering
 \scriptsize
-\begin{tabular}{@{}r@{\hspace{0.55em}}r@{\hspace{0.55em}}l@{\hspace{0.55em}}l@{\hspace{0.55em}}r@{\hspace{0.55em}}r@{\hspace{0.55em}}r@{}}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}l@{\hspace{0.9em}}l@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{}}
 \toprule
-Target & $\delta$ & Construction & Outer code & Rate & Sparse bits & Time (ms) \\
+Construction & Outer map & $t$ & Rate & $\delta$ & $\Prb[d_{\min}\le\delta n]$ & Time (ms) \\
 \midrule
-$20$ & $0.10$ & chosen-block BAA & RS $[2,1,2]$ & $1/2$ & $27.340$ & $21.763$ \\
-$20$ & $0.10$ & weighted RAA & repetition $2$ & $1/2$ & $27.340$ & $21.483$ \\
-$40$ & $0.20$ & chosen-block BAA & RS $[4,2,3]$ & $1/2$ & $43.415$ & $23.337$ \\
-$40$ & $0.20$ & weighted RAA & repetition $3$ & $1/3$ & $48.170$ & $38.398$ \\
+$\mathrm{RA}^2$ & repetition $2$ & $2$ & $1/2$ & $0.10$ & $\le2^{-24.7}$ & $22.832$ \\
+chosen-block BAA & RS $[16,8,9]$ & $2$ & $1/2$ & $0.30$ & $\le2^{-136.5}$ & $33.633$ \\
+$\mathrm{RA}^3$ & repetition $2$ & $3$ & $1/2$ & $0.40$ & $\le2^{-62.1}$ & $32.872$ \\
+$\mathrm{RA}^2$ & repetition $3$ & $2$ & $1/3$ & $0.40$ & $\le2^{-42.9}$ & $48.222$ \\
+chosen-block BAA & RS $[16,4,13]$ & $2$ & $1/4$ & $0.60$ & $\le2^{-208.6}$ & $73.739$ \\
 \bottomrule
 \end{tabular}
-\caption{Single-CPU-thread comparison over $\F_{2^{128}}$ at practical sparse-
-security targets.  All rows have $k=2^{20}$; rows with the same target also
-share $\delta$.  Each time is the median of six process medians, with $31$
-calls per process after warm-up.  Setup and allocation are excluded.}
+}
+\caption{Representative large-field configurations at $k=2^{20}$ over
+$\F_{2^{128}}$; the output length is determined by the displayed rate.  The
+failure column is the complete support/trace union bound from \eqref{eq:3} or
+\eqref{eq:rat-complete-bound}, including all support classes and cancellation
+traces, with one bit of outward rounding.  Time is the median of six process
+medians, each with $31$ calls after warm-up, on one CPU thread; setup and
+allocation are excluded.  The rows are representative configurations, not
+matched pairs or a ranking.}
 \label{tab:cpu-large-field}
 \end{table}
 
-For the $20$-bit target, BAA process medians are $21.427$--$21.869$~ms and
-RAA medians are $21.053$--$22.605$~ms.  The $1.3\%$
-difference is appropriately negligible: after scaling, RS $[2,1,2]$ BAA and
-repetition-$2$ RAA are the same ensemble with identical timed arithmetic; they
-also produce the same checksum.  Thus chosen-block BAA has no meaningful
-advantage at this lowest setting.
-
-For the $40$-bit target, BAA process medians are $23.061$--$23.648$~ms and
-RAA medians are $38.061$--$39.329$~ms.  Chosen-block BAA
-reduces latency by $39.2\%$, or $1.65\times$, even though RAA provides $4.75$
-additional sparse-security bits.  Both timed regions contain two nonzero
-diagonal multiplications per codeword coordinate, two global accumulator and
-interleaver layers, and the outer transpose map.  The RAA repetition transpose
-is cheaper per coordinate than the RS $[4,2,3]$ map, but its rate forces it to
-process $1.5\times$ as many coordinates.  The comparison therefore captures
-the end-to-end encoding cost of reaching each minimum security target rather
-than an equal-length microbenchmark.
+The table is a menu rather than a direct comparison: repetition, accumulator
+count, local code, rate, target distance, and length change different
+coordinates at once.  At rate $1/2$, repetition-$2$ RA$^2$ supplies a
+$24.7$-bit bound at distance $0.10$ in $22.832$~ms, while the third accumulator
+supports distance $0.40$ with a $62.1$-bit bound in $32.872$~ms.  The
+RS $[16,8,9]$ BAA row supports distance $0.30$ with a $136.5$-bit bound in
+$33.633$~ms.  At lower rates, repetition-$3$ RA$^2$ gives a $42.9$-bit bound at
+distance $0.40$, and RS $[16,4,13]$ BAA gives a $208.6$-bit bound at distance
+$0.60$.  These are complete failure bounds at the displayed operating points,
+not separate sparse and asymptotic diagnostics.
 
 \paragraph{Estimated single-thread PCG throughput.}
 The original BAA evaluation reports about $8$~ms of CPU expansion work per
@@ -2599,8 +2689,8 @@ $10$~ms one-time seed-tree cost from its throughput figure because that cost is
 amortized across later invocations~\cite{baa26}.  Following the same convention,
 we combine its recurring $8$~ms estimate with our one-thread Golay encoding time:
 \[
-  \frac{1{,}048{,}512}{(24.412+8)\ \mathrm{ms}}
-  \approx 32.3\ \text{million OTs/s}.
+  \frac{1{,}048{,}512}{(22.810+8)\ \mathrm{ms}}
+  \approx 34.0\ \text{million OTs/s}.
 \]
 This projected rate excludes the one-time $10$~ms cost, as does the original
 paper; it is not an integrated measurement.  We do not extrapolate an
@@ -2612,11 +2702,11 @@ The headline construction comparison uses one CPU thread.  The implementation
 also supports a persistent CPU worker team: each worker scans a contiguous
 range, the range totals determine prefix offsets, and the workers rescan and
 permute their ranges in parallel.  In a separate paired scaling campaign,
-chosen-block Golay drops from $21.163$~ms on one thread to $5.919$~ms on $24$
-threads, a $3.58\times$ improvement.  Chosen-block Reed--Muller drops from
-$23.852$~ms to $5.796$~ms on $32$ threads, a $4.12\times$ improvement.  These
-are CPU-scaling results, not part of the claimed construction-level speedup over
-original BAA.
+ chosen-block Golay drops from $22.632$~ms on one thread to $5.605$~ms on $24$
+threads, a $4.04\times$ improvement.  Chosen-block Reed--Muller drops from
+$24.455$~ms to $5.385$~ms on $32$ threads, a $4.54\times$ improvement.  These
+ are CPU-scaling results, not part of the comparison with the original-BAA-style
+ control.
 
 \section{Lean formalization and proof audit}
 \label{sec:lean}
@@ -2735,8 +2825,8 @@ limit, \eqref{eq:B6}--\eqref{eq:B12}, \eqref{eq:6}--\eqref{eq:7},
 \eqref{eq:L3}--\eqref{eq:L7}, any numerical transition, the $O(n)$
  cost model, or concentration of structural containers.  These claims require
  external coding-theory results, analytic estimates, certified optimization, a
- computational cost model, or new probabilistic arguments.  The RAA parameter
- match and performance comparison are likewise outside the Lean development.
+ computational cost model, or new probabilistic arguments.  The RA$^t$
+ parameter selection and configuration measurements are likewise outside the Lean development.
  Separating them from
 the machine-checked fixed-length statements makes the remaining proof
 obligations explicit.
