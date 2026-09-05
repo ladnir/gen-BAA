@@ -1,0 +1,69 @@
+{
+  "status": "exact minimum distances for sampled coupled encoders and selected odd primes",
+  "ensemble": {
+    "local_map": "repetition3",
+    "master_seed": 1,
+    "tested_primes": [
+      17,
+      19,
+      23,
+      29,
+      31,
+      43,
+      127,
+      257,
+      65537,
+      2305843009213693951
+    ]
+  },
+  "length_15": {
+    "samples_per_schedule": 100,
+    "PAPA": {
+      "prime_encoder_comparisons": 1000,
+      "distance_losses": 0,
+      "distance_ties": 30,
+      "distance_improvements": 970,
+      "minimum_distance_gap": 0,
+      "mean_distance_gap_range": [3.43, 3.45],
+      "raw_csv_sha256": "55F706BA7958F4A01FF2734AB2A24FD5CCD7BA372E3C60F28CB2E37F9E23F48D"
+    },
+    "APAP": {
+      "prime_encoder_comparisons": 1000,
+      "distance_losses": 0,
+      "distance_ties": 0,
+      "distance_improvements": 1000,
+      "minimum_distance_gap": 1,
+      "mean_distance_gap_range": [4.03, 4.16],
+      "raw_csv_sha256": "9BEAF4F5410E5681B1DCB338A972B762214080F048058DC8CAF594558FE21CB0"
+    }
+  },
+  "length_18": {
+    "samples_per_schedule": 15,
+    "PAPA": {
+      "prime_encoder_comparisons": 150,
+      "distance_losses": 0,
+      "distance_ties": 0,
+      "distance_improvements": 150,
+      "minimum_distance_gap": 1,
+      "mean_distance_gap_range": [4.27, 4.33],
+      "raw_csv_sha256": "94EBD4DD9B321FCC18357A51647B2F62C4912941DEF7AC30D19144240657E3BF"
+    },
+    "APAP": {
+      "prime_encoder_comparisons": 150,
+      "distance_losses": 0,
+      "distance_ties": 0,
+      "distance_improvements": 150,
+      "minimum_distance_gap": 2,
+      "mean_distance_gap_range": [4.93, 5.13],
+      "raw_csv_sha256": "F22E133EB0DA04E7BDF433FA1FEC503633B080EDE30374267C0DEC60109803FD"
+    }
+  },
+  "totals": {
+    "prime_encoder_comparisons": 2300,
+    "distance_losses": 0,
+    "distance_ties": 30,
+    "distance_improvements": 2270
+  },
+  "command_template": "cargo run --release -- --local examples/repetition3.matrix --blocks BLOCKS --schedule SCHEDULE --samples SAMPLES --primes 17,19,23,29,31,43,127,257,65537,2305843009213693951 --no-rational --max-rank-evals 50000000 --output OUTPUT.csv",
+  "limitation": "The support search is exhaustive for every sampled encoder, but the interleaver pairs and the prime list are finite samples. Zero observed losses does not imply a uniform theorem over encoders or characteristics."
+}

@@ -1,7 +1,7 @@
-use num_bigint::BigInt;
+use num_bigint::{BigInt, BigUint};
 use num_integer::Integer as _;
 use num_traits::{One as _, Signed as _, Zero as _};
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::env;
 use std::fmt::Write as _;
 use std::fs;
@@ -20,6 +20,14 @@ struct Config {
     seed: u64,
     include_rationals: bool,
     distance_only: bool,
+    stopping_only: bool,
+    stopping_cycle_rank: usize,
+    fixed_deletion_only: bool,
+    deletion_sizes: Vec<usize>,
+    deletion_pattern: String,
+    deletion_seed: u64,
+    fixed_p128: bool,
+    fixed_max_core_rank: usize,
     classify_witnesses: bool,
     support_spectrum: bool,
     max_n: usize,
@@ -42,6 +50,14 @@ impl Default for Config {
             seed: 1,
             include_rationals: true,
             distance_only: false,
+            stopping_only: false,
+            stopping_cycle_rank: 0,
+            fixed_deletion_only: false,
+            deletion_sizes: Vec::new(),
+            deletion_pattern: "random".to_owned(),
+            deletion_seed: 0x6a09_e667_f3bc_c909,
+            fixed_p128: false,
+            fixed_max_core_rank: 1_024,
             classify_witnesses: false,
             support_spectrum: false,
             max_n: 22,
@@ -100,6 +116,16 @@ OPTIONS:\n\
   --seed N                Reproducible master seed [default: 1]\n\
   --no-rational           Skip the exact characteristic-zero profile\n\
   --distance-only         Enumerate messages; requires --no-rational\n\
+  --stopping-only         Find the smallest output deletion with a peeled\n\
+                          sparse-circuit core; skips field computations\n\
+  --stopping-cycle-rank N Require a message component with cycle rank at\n\
+                          least N [default: 0]\n\
+  --fixed-deletion-only   Test deletion sets fixed before the interleavers\n\
+  --deletion-sizes D,...  Sizes for --fixed-deletion-only\n\
+  --deletion-pattern NAME prefix, even, or random [default: random]\n\
+  --deletion-seed N       Seed for the fixed random deletion\n\
+  --fixed-p128            Also rank over p=2^128-159\n\
+  --fixed-max-core-rank N Skip dense ranks above this core size [1024]\n\
   --classify-witnesses    Classify every odd-field minimum witness\n\
   --classify-losses       Deprecated alias for --classify-witnesses\n\
   --support-spectrum      Record minima by exact message support weight\n\
@@ -163,6 +189,35 @@ fn parse_config() -> Result<Option<Config>, String> {
             "--seed" => config.seed = parse_u64("--seed", arguments.next())?,
             "--no-rational" => config.include_rationals = false,
             "--distance-only" => config.distance_only = true,
+            "--stopping-only" => config.stopping_only = true,
+            "--stopping-cycle-rank" => {
+                config.stopping_cycle_rank = parse_usize("--stopping-cycle-rank", arguments.next())?
+            }
+            "--fixed-deletion-only" => config.fixed_deletion_only = true,
+            "--deletion-sizes" => {
+                let text = arguments
+                    .next()
+                    .ok_or_else(|| "missing value for --deletion-sizes".to_owned())?;
+                config.deletion_sizes = text
+                    .split(',')
+                    .map(|part| {
+                        part.parse::<usize>()
+                            .map_err(|_| format!("invalid deletion size {part:?}"))
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+            }
+            "--deletion-pattern" => {
+                config.deletion_pattern = arguments
+                    .next()
+                    .ok_or_else(|| "missing value for --deletion-pattern".to_owned())?;
+            }
+            "--deletion-seed" => {
+                config.deletion_seed = parse_u64("--deletion-seed", arguments.next())?
+            }
+            "--fixed-p128" => config.fixed_p128 = true,
+            "--fixed-max-core-rank" => {
+                config.fixed_max_core_rank = parse_usize("--fixed-max-core-rank", arguments.next())?
+            }
             "--classify-witnesses" | "--classify-losses" => config.classify_witnesses = true,
             "--support-spectrum" => config.support_spectrum = true,
             "--max-n" => config.max_n = parse_usize("--max-n", arguments.next())?,
@@ -196,6 +251,47 @@ fn validate_config(config: &Config) -> Result<(), String> {
     }
     if config.distance_only && config.include_rationals {
         return Err("--distance-only requires --no-rational".to_owned());
+    }
+    if config.stopping_only && config.distance_only {
+        return Err("--stopping-only and --distance-only are mutually exclusive".to_owned());
+    }
+    if config.fixed_deletion_only && (config.stopping_only || config.distance_only) {
+        return Err(
+            "--fixed-deletion-only cannot be combined with --stopping-only or --distance-only"
+                .to_owned(),
+        );
+    }
+    if config.fixed_deletion_only
+        && (config.classify_witnesses || config.support_spectrum || config.include_rationals)
+    {
+        return Err(
+            "--fixed-deletion-only requires --no-rational and cannot classify witnesses or spectra"
+                .to_owned(),
+        );
+    }
+    if config.fixed_deletion_only && config.deletion_sizes.is_empty() {
+        return Err("--fixed-deletion-only requires --deletion-sizes".to_owned());
+    }
+    if !config.fixed_deletion_only && !config.deletion_sizes.is_empty() {
+        return Err("--deletion-sizes requires --fixed-deletion-only".to_owned());
+    }
+    if !matches!(
+        config.deletion_pattern.as_str(),
+        "prefix" | "even" | "random"
+    ) {
+        return Err("--deletion-pattern must be prefix, even, or random".to_owned());
+    }
+    if config.fixed_max_core_rank == 0 {
+        return Err("--fixed-max-core-rank must be positive".to_owned());
+    }
+    if config.stopping_only && (config.classify_witnesses || config.support_spectrum) {
+        return Err(
+            "--stopping-only cannot be combined with witness classification or support spectra"
+                .to_owned(),
+        );
+    }
+    if !config.stopping_only && config.stopping_cycle_rank != 0 {
+        return Err("--stopping-cycle-rank requires --stopping-only".to_owned());
     }
     if config.support_spectrum && !config.distance_only {
         return Err("--support-spectrum requires --distance-only".to_owned());
@@ -329,6 +425,15 @@ fn build_encoder(
         }
     }
     Ok((encoder, permutations))
+}
+
+fn sample_permutations(length: usize, schedule: &str, seed: u64) -> Vec<Vec<usize>> {
+    let mut random = SplitMix64::new(seed);
+    schedule
+        .bytes()
+        .filter(|&operation| operation == b'P')
+        .map(|_| random.permutation(length))
+        .collect()
 }
 
 fn sample_seed(master_seed: u64, sample: usize) -> u64 {
@@ -1117,6 +1222,7 @@ struct UnitEquationCore {
     components: usize,
     message_components: usize,
     cycle_rank: usize,
+    maximum_message_component_cycle_rank: usize,
     largest_component_variables: usize,
     largest_component_message_variables: usize,
     largest_component_equations: usize,
@@ -1305,6 +1411,7 @@ fn peel_unit_equations(
     let mut components = 0;
     let mut message_components = 0;
     let mut cycle_rank = 0;
+    let mut maximum_message_component_cycle_rank = 0;
     let mut largest_component_variables = 0;
     let mut largest_component_message_variables = 0;
     let mut largest_component_equations = 0;
@@ -1342,8 +1449,13 @@ fn peel_unit_equations(
                 }
             }
         }
-        message_components += usize::from(component_message_variables != 0);
-        cycle_rank += component_edges + 1 - component_variables - component_equations;
+        let component_cycle_rank = component_edges + 1 - component_variables - component_equations;
+        if component_message_variables != 0 {
+            message_components += 1;
+            maximum_message_component_cycle_rank =
+                maximum_message_component_cycle_rank.max(component_cycle_rank);
+        }
+        cycle_rank += component_cycle_rank;
         largest_component_variables = largest_component_variables.max(component_variables);
         largest_component_message_variables =
             largest_component_message_variables.max(component_message_variables);
@@ -1370,6 +1482,7 @@ fn peel_unit_equations(
         components,
         message_components,
         cycle_rank,
+        maximum_message_component_cycle_rank,
         largest_component_variables,
         largest_component_message_variables,
         largest_component_equations,
@@ -1634,6 +1747,195 @@ impl SparseEncoderGraph {
             final_state: state,
         })
     }
+}
+
+struct StoppingCoreEvaluator {
+    message_variables: usize,
+    base_equations: usize,
+    length: usize,
+    equation_variables: Vec<Vec<usize>>,
+    variable_equations: Vec<Vec<usize>>,
+    active_variables: Vec<bool>,
+    active_equations: Vec<bool>,
+    degrees: Vec<usize>,
+    queue: VecDeque<usize>,
+    visited_nodes: Vec<bool>,
+    component_stack: Vec<usize>,
+}
+
+impl StoppingCoreEvaluator {
+    fn new(graph: &SparseEncoderGraph) -> Self {
+        let base_equations = graph.base_equations.len();
+        let mut equation_variables = graph.base_equations.clone();
+        equation_variables.reserve(graph.length);
+        for coordinate in 0..graph.length {
+            equation_variables.push(vec![graph.final_state_start + coordinate]);
+        }
+        let mut variable_equations = vec![Vec::new(); graph.variables];
+        for (equation, support) in equation_variables.iter().enumerate() {
+            for &variable in support {
+                variable_equations[variable].push(equation);
+            }
+        }
+        let equation_count = equation_variables.len();
+        Self {
+            message_variables: graph.message_variables,
+            base_equations,
+            length: graph.length,
+            equation_variables,
+            variable_equations,
+            active_variables: vec![true; graph.variables],
+            active_equations: vec![true; equation_count],
+            degrees: vec![0; equation_count],
+            queue: VecDeque::with_capacity(equation_count),
+            visited_nodes: vec![false; graph.variables + equation_count],
+            component_stack: Vec::with_capacity(graph.variables + equation_count),
+        }
+    }
+
+    fn has_message_core(&mut self, deleted_mask: u64) -> bool {
+        self.active_variables.fill(true);
+        self.active_equations[..self.base_equations].fill(true);
+        for coordinate in 0..self.length {
+            self.active_equations[self.base_equations + coordinate] =
+                deleted_mask & (1_u64 << coordinate) == 0;
+        }
+        self.queue.clear();
+        for equation in 0..self.equation_variables.len() {
+            if self.active_equations[equation] {
+                self.degrees[equation] = self.equation_variables[equation].len();
+                if self.degrees[equation] <= 1 {
+                    self.queue.push_back(equation);
+                }
+            } else {
+                self.degrees[equation] = 0;
+            }
+        }
+
+        let mut live_message_variables = self.message_variables;
+        while let Some(equation) = self.queue.pop_front() {
+            if !self.active_equations[equation] || self.degrees[equation] > 1 {
+                continue;
+            }
+            self.active_equations[equation] = false;
+            if self.degrees[equation] == 0 {
+                continue;
+            }
+            let variable = self.equation_variables[equation]
+                .iter()
+                .copied()
+                .find(|&candidate| self.active_variables[candidate])
+                .expect("a degree-one equation has one active variable");
+            self.active_variables[variable] = false;
+            if variable < self.message_variables {
+                live_message_variables -= 1;
+            }
+            for &affected in &self.variable_equations[variable] {
+                if self.active_equations[affected] {
+                    self.degrees[affected] -= 1;
+                    if self.degrees[affected] <= 1 {
+                        self.queue.push_back(affected);
+                    }
+                }
+            }
+        }
+        live_message_variables != 0
+    }
+
+    fn maximum_message_component_cycle_rank(&mut self) -> usize {
+        self.visited_nodes.fill(false);
+        let equation_node_start = self.active_variables.len();
+        let mut maximum = 0;
+        for root in 0..self.message_variables {
+            if !self.active_variables[root] || self.visited_nodes[root] {
+                continue;
+            }
+            self.component_stack.clear();
+            self.component_stack.push(root);
+            self.visited_nodes[root] = true;
+            let mut variables = 0;
+            let mut equations = 0;
+            let mut edges = 0;
+            while let Some(node) = self.component_stack.pop() {
+                if node < equation_node_start {
+                    variables += 1;
+                    for &equation in &self.variable_equations[node] {
+                        let equation_node = equation_node_start + equation;
+                        if self.active_equations[equation] && !self.visited_nodes[equation_node] {
+                            self.visited_nodes[equation_node] = true;
+                            self.component_stack.push(equation_node);
+                        }
+                    }
+                } else {
+                    let equation = node - equation_node_start;
+                    equations += 1;
+                    edges += self.degrees[equation];
+                    for &variable in &self.equation_variables[equation] {
+                        if self.active_variables[variable] && !self.visited_nodes[variable] {
+                            self.visited_nodes[variable] = true;
+                            self.component_stack.push(variable);
+                        }
+                    }
+                }
+            }
+            maximum = maximum.max(edges + 1 - variables - equations);
+        }
+        maximum
+    }
+}
+
+struct StoppingDistanceResult {
+    distance: usize,
+    deleted_mask: u64,
+    evaluations: u64,
+}
+
+fn minimum_stopping_distance(
+    graph: &SparseEncoderGraph,
+    required_cycle_rank: usize,
+    maximum_evaluations: u64,
+) -> Result<StoppingDistanceResult, String> {
+    let mut evaluator = StoppingCoreEvaluator::new(graph);
+    let limit = 1_u64 << graph.length;
+    let mut evaluations = 0_u64;
+    for weight in 0..=graph.length {
+        let mut deleted_mask = if weight == 0 {
+            0
+        } else {
+            (1_u64 << weight) - 1
+        };
+        loop {
+            evaluations += 1;
+            if evaluations > maximum_evaluations {
+                return Err(format!(
+                    "stopping-distance search exceeded --max-rank-evals {maximum_evaluations}"
+                ));
+            }
+            let has_message_core = evaluator.has_message_core(deleted_mask);
+            if has_message_core
+                && (required_cycle_rank == 0
+                    || evaluator.maximum_message_component_cycle_rank() >= required_cycle_rank)
+            {
+                return Ok(StoppingDistanceResult {
+                    distance: weight,
+                    deleted_mask,
+                    evaluations,
+                });
+            }
+            if weight == 0 {
+                break;
+            }
+            let least_bit = deleted_mask & deleted_mask.wrapping_neg();
+            let carry = deleted_mask + least_bit;
+            if carry >= limit {
+                break;
+            }
+            deleted_mask = (((carry ^ deleted_mask) >> 2) / least_bit) | carry;
+        }
+    }
+    Err(format!(
+        "no output deletion leaves a message component with cycle rank at least {required_cycle_rank}"
+    ))
 }
 
 struct WitnessDiagnostics {
@@ -2083,6 +2385,545 @@ fn append_result(csv: &mut String, context: &CsvSample<'_>, result: FieldResult<
     .expect("writing to a string cannot fail");
 }
 
+type SparseColumn = Vec<(usize, i128)>;
+
+fn canonicalize_sparse(mut entries: SparseColumn) -> Result<SparseColumn, String> {
+    entries.sort_unstable_by_key(|&(index, _)| index);
+    let mut result: SparseColumn = Vec::with_capacity(entries.len());
+    for (index, coefficient) in entries {
+        if coefficient == 0 {
+            continue;
+        }
+        if let Some((last_index, last_coefficient)) = result.last_mut()
+            && *last_index == index
+        {
+            *last_coefficient = last_coefficient
+                .checked_add(coefficient)
+                .ok_or_else(|| "integer overflow in sparse dual column".to_owned())?;
+            if *last_coefficient == 0 {
+                result.pop();
+            }
+        } else {
+            result.push((index, coefficient));
+        }
+    }
+    Ok(result)
+}
+
+fn repetition3_dual_column(
+    length: usize,
+    schedule: &str,
+    permutations: &[Vec<usize>],
+    output_coordinate: usize,
+) -> Result<SparseColumn, String> {
+    let mut column = vec![(output_coordinate, 1_i128)];
+    let mut permutation_index = permutations.len();
+    for operation in schedule.bytes().rev() {
+        let mut transformed = Vec::with_capacity(column.len() * 2);
+        match operation {
+            b'A' => {
+                for &(index, coefficient) in &column {
+                    transformed.push((index, coefficient));
+                    if index + 1 < length {
+                        transformed.push((index + 1, -coefficient));
+                    }
+                }
+            }
+            b'P' => {
+                permutation_index -= 1;
+                let permutation = &permutations[permutation_index];
+                for &(index, coefficient) in &column {
+                    transformed.push((permutation[index], coefficient));
+                }
+            }
+            _ => unreachable!("schedule was validated"),
+        }
+        column = canonicalize_sparse(transformed)?;
+    }
+    debug_assert_eq!(permutation_index, 0);
+
+    let mut checks = Vec::with_capacity(column.len() * 2);
+    for (coordinate, coefficient) in column {
+        let block = coordinate / 3;
+        match coordinate % 3 {
+            0 => checks.push((2 * block, coefficient)),
+            1 => {
+                checks.push((2 * block, -coefficient));
+                checks.push((2 * block + 1, coefficient));
+            }
+            2 => checks.push((2 * block + 1, -coefficient)),
+            _ => unreachable!(),
+        }
+    }
+    canonicalize_sparse(checks)
+}
+
+#[derive(Debug)]
+struct UnitPeeling {
+    first_round_columns: usize,
+    peeled_columns: usize,
+    core_columns: usize,
+    core_rows: usize,
+    core_edges: usize,
+    core_components: usize,
+    core_cycle_rank: usize,
+    matrix: IntegerMatrix,
+}
+
+fn peel_sparse_columns(
+    columns: &[SparseColumn],
+    require_unit: bool,
+    maximum_dense_columns: usize,
+) -> UnitPeeling {
+    let mut row_ids = columns
+        .iter()
+        .flat_map(|column| column.iter().map(|&(row, _)| row))
+        .collect::<Vec<_>>();
+    row_ids.sort_unstable();
+    row_ids.dedup();
+    let row_lookup = row_ids
+        .iter()
+        .enumerate()
+        .map(|(compact, &original)| (original, compact))
+        .collect::<HashMap<_, _>>();
+    let compact_columns = columns
+        .iter()
+        .map(|column| {
+            column
+                .iter()
+                .map(|&(row, coefficient)| (row_lookup[&row], coefficient))
+                .collect::<SparseColumn>()
+        })
+        .collect::<Vec<_>>();
+    let mut row_edges = vec![Vec::<(usize, i128)>::new(); row_ids.len()];
+    for (column, entries) in compact_columns.iter().enumerate() {
+        for &(row, coefficient) in entries {
+            row_edges[row].push((column, coefficient));
+        }
+    }
+    let mut active_columns = vec![true; columns.len()];
+    let mut row_degrees = row_edges.iter().map(Vec::len).collect::<Vec<_>>();
+    let mut queue = VecDeque::new();
+    let mut first_round_columns = vec![false; columns.len()];
+    for row in 0..row_edges.len() {
+        if row_degrees[row] == 1 && (!require_unit || row_edges[row][0].1.abs() == 1) {
+            queue.push_back(row);
+            first_round_columns[row_edges[row][0].0] = true;
+        }
+    }
+    let first_round_columns = first_round_columns
+        .into_iter()
+        .filter(|&exposed| exposed)
+        .count();
+    let mut peeled_columns = 0;
+    while let Some(row) = queue.pop_front() {
+        if row_degrees[row] != 1 {
+            continue;
+        }
+        let Some(&(column, coefficient)) = row_edges[row]
+            .iter()
+            .find(|&&(column, _)| active_columns[column])
+        else {
+            continue;
+        };
+        if require_unit && coefficient.abs() != 1 {
+            continue;
+        }
+        active_columns[column] = false;
+        peeled_columns += 1;
+        for &(incident_row, _) in &compact_columns[column] {
+            row_degrees[incident_row] -= 1;
+            if row_degrees[incident_row] == 1 {
+                if let Some(&(_, remaining_coefficient)) = row_edges[incident_row]
+                    .iter()
+                    .find(|&&(candidate, _)| active_columns[candidate])
+                    && (!require_unit || remaining_coefficient.abs() == 1)
+                {
+                    queue.push_back(incident_row);
+                }
+            }
+        }
+    }
+
+    let core_column_ids = active_columns
+        .iter()
+        .enumerate()
+        .filter_map(|(column, &active)| active.then_some(column))
+        .collect::<Vec<_>>();
+    let core_column_lookup = core_column_ids
+        .iter()
+        .enumerate()
+        .map(|(compact, &original)| (original, compact))
+        .collect::<HashMap<_, _>>();
+    let core_row_ids = row_degrees
+        .iter()
+        .enumerate()
+        .filter_map(|(row, &degree)| (degree != 0).then_some(row))
+        .collect::<Vec<_>>();
+    let core_edges = core_row_ids.iter().map(|&row| row_degrees[row]).sum();
+    let mut visited_columns = vec![false; columns.len()];
+    let mut visited_rows = vec![false; row_ids.len()];
+    let mut core_components = 0;
+    for &start_column in &core_column_ids {
+        if visited_columns[start_column] {
+            continue;
+        }
+        core_components += 1;
+        visited_columns[start_column] = true;
+        let mut component_queue = VecDeque::from([(true, start_column)]);
+        while let Some((is_column, vertex)) = component_queue.pop_front() {
+            if is_column {
+                for &(row, _) in &compact_columns[vertex] {
+                    if row_degrees[row] != 0 && !visited_rows[row] {
+                        visited_rows[row] = true;
+                        component_queue.push_back((false, row));
+                    }
+                }
+            } else {
+                for &(column, _) in &row_edges[vertex] {
+                    if active_columns[column] && !visited_columns[column] {
+                        visited_columns[column] = true;
+                        component_queue.push_back((true, column));
+                    }
+                }
+            }
+        }
+    }
+    let core_cycle_rank = core_edges + core_components - core_column_ids.len() - core_row_ids.len();
+    let mut matrix = if core_column_ids.len() <= maximum_dense_columns {
+        vec![vec![0_i128; core_column_ids.len()]; core_row_ids.len()]
+    } else {
+        Vec::new()
+    };
+    if !matrix.is_empty() {
+        for (output_row, &row) in core_row_ids.iter().enumerate() {
+            for &(column, coefficient) in &row_edges[row] {
+                if let Some(&output_column) = core_column_lookup.get(&column) {
+                    matrix[output_row][output_column] = coefficient;
+                }
+            }
+        }
+    }
+    UnitPeeling {
+        first_round_columns,
+        peeled_columns,
+        core_columns: core_column_ids.len(),
+        core_rows: core_row_ids.len(),
+        core_edges,
+        core_components,
+        core_cycle_rank,
+        matrix,
+    }
+}
+
+fn rank_mod_dense(matrix: &IntegerMatrix, columns: usize, prime: u64) -> usize {
+    if columns == 0 || matrix.is_empty() {
+        return 0;
+    }
+    let rows = matrix.len();
+    let mut data = vec![0_u64; rows * columns];
+    for row in 0..rows {
+        for column in 0..columns {
+            data[row * columns + column] = integer_mod(matrix[row][column], prime);
+        }
+    }
+    let mut rank = 0;
+    for column in 0..columns {
+        let Some(pivot) = (rank..rows).find(|&row| data[row * columns + column] != 0) else {
+            continue;
+        };
+        if pivot != rank {
+            for swap_column in column..columns {
+                data.swap(rank * columns + swap_column, pivot * columns + swap_column);
+            }
+        }
+        let inverse = modular_power(data[rank * columns + column], prime - 2, prime);
+        for pivot_column in column..columns {
+            let index = rank * columns + pivot_column;
+            data[index] = modular_multiply(data[index], inverse, prime);
+        }
+        for row in rank + 1..rows {
+            let factor = data[row * columns + column];
+            if factor == 0 {
+                continue;
+            }
+            for eliminate_column in column..columns {
+                let index = row * columns + eliminate_column;
+                let product =
+                    modular_multiply(factor, data[rank * columns + eliminate_column], prime);
+                data[index] = if data[index] >= product {
+                    data[index] - product
+                } else {
+                    prime - (product - data[index])
+                };
+            }
+        }
+        rank += 1;
+        if rank == rows {
+            break;
+        }
+    }
+    rank
+}
+
+fn big_integer_mod(value: i128, modulus: &BigUint) -> BigUint {
+    if value >= 0 {
+        BigUint::from(value as u128) % modulus
+    } else {
+        let magnitude = BigUint::from(value.unsigned_abs()) % modulus;
+        if magnitude.is_zero() {
+            magnitude
+        } else {
+            modulus - magnitude
+        }
+    }
+}
+
+fn rank_mod_big_dense(matrix: &IntegerMatrix, columns: usize, prime: &BigUint) -> usize {
+    if columns == 0 || matrix.is_empty() {
+        return 0;
+    }
+    let rows = matrix.len();
+    let mut data = vec![BigUint::ZERO; rows * columns];
+    for row in 0..rows {
+        for column in 0..columns {
+            data[row * columns + column] = big_integer_mod(matrix[row][column], prime);
+        }
+    }
+    let exponent = prime - BigUint::from(2_u8);
+    let mut rank = 0;
+    for column in 0..columns {
+        let Some(pivot) = (rank..rows).find(|&row| !data[row * columns + column].is_zero()) else {
+            continue;
+        };
+        if pivot != rank {
+            for swap_column in column..columns {
+                data.swap(rank * columns + swap_column, pivot * columns + swap_column);
+            }
+        }
+        let inverse = data[rank * columns + column].modpow(&exponent, prime);
+        for pivot_column in column..columns {
+            let index = rank * columns + pivot_column;
+            data[index] = (&data[index] * &inverse) % prime;
+        }
+        for row in rank + 1..rows {
+            let factor = data[row * columns + column].clone();
+            if factor.is_zero() {
+                continue;
+            }
+            for eliminate_column in column..columns {
+                let index = row * columns + eliminate_column;
+                let product = (&factor * &data[rank * columns + eliminate_column]) % prime;
+                data[index] = if data[index] >= product {
+                    &data[index] - &product
+                } else {
+                    prime + &data[index] - &product
+                };
+            }
+        }
+        rank += 1;
+        if rank == rows {
+            break;
+        }
+    }
+    rank
+}
+
+fn fixed_deletion_sets(
+    length: usize,
+    sizes: &[usize],
+    pattern: &str,
+    seed: u64,
+) -> Result<Vec<Vec<usize>>, String> {
+    if let Some(&size) = sizes.iter().find(|&&size| size == 0 || size > length) {
+        return Err(format!("deletion size {size} is outside 1..={length}"));
+    }
+    let mut distinct = HashSet::with_capacity(sizes.len());
+    if let Some(&duplicate) = sizes.iter().find(|&&size| !distinct.insert(size)) {
+        return Err(format!("duplicate deletion size {duplicate}"));
+    }
+    let random_order = if pattern == "random" {
+        Some(SplitMix64::new(seed).permutation(length))
+    } else {
+        None
+    };
+    sizes
+        .iter()
+        .map(|&size| {
+            let mut deletion = match pattern {
+                "prefix" => (0..size).collect(),
+                "even" => (0..size).map(|index| index * length / size).collect(),
+                "random" => random_order.as_ref().unwrap()[..size].to_vec(),
+                _ => unreachable!("pattern was validated"),
+            };
+            deletion.sort_unstable();
+            Ok(deletion)
+        })
+        .collect()
+}
+
+fn optional_rank_text(rank: Option<usize>) -> String {
+    rank.map_or_else(String::new, |value| value.to_string())
+}
+
+fn deletion_run_profile(deletion: &[usize], length: usize) -> (usize, bool) {
+    let runs = 1 + deletion
+        .windows(2)
+        .filter(|window| window[1] != window[0] + 1)
+        .count();
+    (runs, deletion.last() == Some(&(length - 1)))
+}
+
+fn run_fixed_deletion_search(
+    config: &Config,
+    local: &IntegerMatrix,
+    length: usize,
+    dimension: usize,
+) -> Result<String, String> {
+    if local.as_slice() != [vec![1_i128, 1, 1]] {
+        return Err("--fixed-deletion-only currently requires repetition3.matrix".to_owned());
+    }
+    let deletion_sets = fixed_deletion_sets(
+        length,
+        &config.deletion_sizes,
+        &config.deletion_pattern,
+        config.deletion_seed,
+    )?;
+    let p128 = BigUint::parse_bytes(b"340282366920938463463374607431768211297", 10)
+        .expect("the fixed prime constant is valid");
+    let mut csv = String::from(
+        "sample,n,k,schedule,sample_seed,deletion_pattern,deletion_seed,deletion_size,deletion_density,deletion_runs,deletion_terminal,max_abs_entry,unit_first_round,unit_peeled,unit_core_columns,unit_core_rows,unit_core_edges,unit_core_components,unit_core_cycle_rank,nonzero_first_round,nonzero_peeled,nonzero_core_columns,nonzero_core_rows,nonzero_core_edges,nonzero_core_components,nonzero_core_cycle_rank,rank_f2",
+    );
+    for prime in &config.primes {
+        write!(csv, ",rank_f{prime},torsion_f{prime}").expect("writing to a string cannot fail");
+    }
+    if config.fixed_p128 {
+        csv.push_str(",rank_f128,torsion_f128");
+    }
+    csv.push('\n');
+
+    for sample in 0..config.samples {
+        let seed = sample_seed(config.seed, sample);
+        let permutations = sample_permutations(length, &config.schedule, seed);
+        for deletion in &deletion_sets {
+            let (deletion_runs, deletion_terminal) = deletion_run_profile(deletion, length);
+            let columns = deletion
+                .iter()
+                .map(|&coordinate| {
+                    repetition3_dual_column(length, &config.schedule, &permutations, coordinate)
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let max_abs_entry = columns
+                .iter()
+                .flat_map(|column| column.iter().map(|&(_, coefficient)| coefficient.abs()))
+                .max()
+                .unwrap_or(0);
+            let peeling = peel_sparse_columns(&columns, true, config.fixed_max_core_rank);
+            let nonzero_peeling = peel_sparse_columns(&columns, false, config.fixed_max_core_rank);
+            let can_rank = peeling.core_columns <= config.fixed_max_core_rank;
+            let rank_two = can_rank.then(|| {
+                peeling.peeled_columns + rank_mod_dense(&peeling.matrix, peeling.core_columns, 2)
+            });
+            write!(
+                csv,
+                "{sample},{length},{dimension},{schedule},{seed},{pattern},{deletion_seed},{size},{density:.12},{deletion_runs},{deletion_terminal},{max_abs_entry},{first_round},{peeled},{core_columns},{core_rows},{core_edges},{core_components},{core_cycle_rank},{nonzero_first_round},{nonzero_peeled},{nonzero_core_columns},{nonzero_core_rows},{nonzero_core_edges},{nonzero_core_components},{nonzero_core_cycle_rank},{}",
+                optional_rank_text(rank_two),
+                schedule = config.schedule,
+                pattern = config.deletion_pattern,
+                deletion_seed = config.deletion_seed,
+                size = deletion.len(),
+                density = deletion.len() as f64 / length as f64,
+                first_round = peeling.first_round_columns,
+                peeled = peeling.peeled_columns,
+                core_columns = peeling.core_columns,
+                core_rows = peeling.core_rows,
+                core_edges = peeling.core_edges,
+                core_components = peeling.core_components,
+                core_cycle_rank = peeling.core_cycle_rank,
+                nonzero_first_round = nonzero_peeling.first_round_columns,
+                nonzero_peeled = nonzero_peeling.peeled_columns,
+                nonzero_core_columns = nonzero_peeling.core_columns,
+                nonzero_core_rows = nonzero_peeling.core_rows,
+                nonzero_core_edges = nonzero_peeling.core_edges,
+                nonzero_core_components = nonzero_peeling.core_components,
+                nonzero_core_cycle_rank = nonzero_peeling.core_cycle_rank,
+            )
+            .expect("writing to a string cannot fail");
+            for &prime in &config.primes {
+                let rank = can_rank.then(|| {
+                    peeling.peeled_columns
+                        + rank_mod_dense(&peeling.matrix, peeling.core_columns, prime)
+                });
+                let torsion = matches!((rank_two, rank), (Some(r2), Some(rp)) if r2 == deletion.len() && rp < deletion.len());
+                write!(csv, ",{},{}", optional_rank_text(rank), u8::from(torsion))
+                    .expect("writing to a string cannot fail");
+            }
+            if config.fixed_p128 {
+                let can_rank_p128 = nonzero_peeling.core_columns <= config.fixed_max_core_rank;
+                let rank = can_rank_p128.then(|| {
+                    nonzero_peeling.peeled_columns
+                        + rank_mod_big_dense(
+                            &nonzero_peeling.matrix,
+                            nonzero_peeling.core_columns,
+                            &p128,
+                        )
+                });
+                let torsion = matches!((rank_two, rank), (Some(r2), Some(rp)) if r2 == deletion.len() && rp < deletion.len());
+                write!(csv, ",{},{}", optional_rank_text(rank), u8::from(torsion))
+                    .expect("writing to a string cannot fail");
+            }
+            csv.push('\n');
+        }
+    }
+    Ok(csv)
+}
+
+fn run_stopping_search(
+    config: &Config,
+    local: &IntegerMatrix,
+    length: usize,
+    dimension: usize,
+) -> Result<String, String> {
+    let mut csv = String::from(
+        "sample,n,k,schedule,sample_seed,required_cycle_rank,stopping_distance,relative_distance,evaluations,deleted_coordinates,permutations,core_variables,core_message_variables,core_equations,core_edges,core_cycle_rank,maximum_message_component_cycle_rank,core_components,largest_component_variables,largest_component_message_variables,largest_component_equations\n",
+    );
+    let mut remaining_evaluations = config.max_rank_evals;
+    for sample in 0..config.samples {
+        let seed = sample_seed(config.seed, sample);
+        let (_, permutations) = build_encoder(local, config.blocks, &config.schedule, seed)?;
+        let graph = SparseEncoderGraph::new(local, config.blocks, &config.schedule, &permutations)?;
+        let result =
+            minimum_stopping_distance(&graph, config.stopping_cycle_rank, remaining_evaluations)?;
+        remaining_evaluations -= result.evaluations;
+        let retained = retained_coordinates(length, result.deleted_mask);
+        let core = graph.core(&retained);
+        writeln!(
+            csv,
+            "{sample},{length},{dimension},{schedule},{seed},{required_cycle_rank},{distance},{relative:.12},{evaluations},\"{deleted}\",\"{permutations}\",{variables},{message_variables},{equations},{edges},{cycle_rank},{maximum_message_component_cycle_rank},{components},{largest_variables},{largest_message_variables},{largest_equations}",
+            schedule = config.schedule,
+            required_cycle_rank = config.stopping_cycle_rank,
+            distance = result.distance,
+            relative = result.distance as f64 / length as f64,
+            evaluations = result.evaluations,
+            deleted = deleted_coordinates_text(result.deleted_mask),
+            permutations = permutations_text(&permutations),
+            variables = core.variables,
+            message_variables = core.message_variables,
+            equations = core.equations,
+            edges = core.edges,
+            cycle_rank = core.cycle_rank,
+            maximum_message_component_cycle_rank =
+                core.maximum_message_component_cycle_rank,
+            components = core.components,
+            largest_variables = core.largest_component_variables,
+            largest_message_variables = core.largest_component_message_variables,
+            largest_equations = core.largest_component_equations,
+        )
+        .expect("writing to a string cannot fail");
+    }
+    Ok(csv)
+}
+
 fn run(config: &Config) -> Result<String, String> {
     let local = parse_binary_matrix(&config.local_path)?;
     let local_dimension = local.len();
@@ -2099,6 +2940,9 @@ fn run(config: &Config) -> Result<String, String> {
     let dimension = local_dimension
         .checked_mul(config.blocks)
         .ok_or_else(|| "global dimension overflow".to_owned())?;
+    if config.fixed_deletion_only {
+        return run_fixed_deletion_search(config, &local, length, dimension);
+    }
     if length > config.max_n {
         return Err(format!(
             "global length {length} exceeds --max-n {}",
@@ -2107,6 +2951,9 @@ fn run(config: &Config) -> Result<String, String> {
     }
     if length >= 63 {
         return Err("global length must be below 63 for exhaustive subset masks".to_owned());
+    }
+    if config.stopping_only {
+        return run_stopping_search(config, &local, length, dimension);
     }
     if config.distance_only {
         let codewords_per_sample = std::iter::once(2_u64)
@@ -2520,6 +3367,22 @@ mod tests {
     }
 
     #[test]
+    fn stopping_search_detects_the_p7_greater_than_n_core() {
+        let local = vec![vec![1, 1, 1]];
+        let seed = sample_seed(1, 45);
+        let (encoder, permutations) = build_encoder(&local, 2, "PAPA", seed).unwrap();
+        let graph = SparseEncoderGraph::new(&local, 2, "PAPA", &permutations).unwrap();
+        let result = minimum_stopping_distance(&graph, 7, 64).unwrap();
+        let binary = minimum_distance_by_messages::<false>(&encoder, 2).unwrap();
+        let septic = minimum_distance_by_messages::<false>(&encoder, 7).unwrap();
+        assert_eq!(binary.distance, 4);
+        assert_eq!(septic.distance, 3);
+        assert_eq!(result.distance, 3);
+        let retained = retained_coordinates(6, result.deleted_mask);
+        assert!(graph.core(&retained).maximum_message_component_cycle_rank >= 7);
+    }
+
+    #[test]
     fn witness_diagnostics_separate_all_algebraic_classes() {
         let local = vec![vec![1, 1, 1]];
         let cases = [
@@ -2572,6 +3435,68 @@ mod tests {
             assert_eq!(diagnostics.rational_rank, rational_rank);
             assert_eq!(diagnostics.certificate_is_odd, certificate_is_odd);
         }
+    }
+
+    #[test]
+    fn sparse_repetition_dual_matches_dense_encoder() {
+        let local = vec![vec![1, 1, 1]];
+        let (generator, permutations) = build_encoder(&local, 2, "PAPA", 19).unwrap();
+        assert_eq!(
+            permutations,
+            sample_permutations(generator[0].len(), "PAPA", 19)
+        );
+        let length = generator[0].len();
+        let check_rows = 4;
+        let sparse_columns = (0..length)
+            .map(|coordinate| {
+                repetition3_dual_column(length, "PAPA", &permutations, coordinate).unwrap()
+            })
+            .collect::<Vec<_>>();
+        let mut check = vec![vec![0_i128; length]; check_rows];
+        for (column, entries) in sparse_columns.iter().enumerate() {
+            for &(row, coefficient) in entries {
+                check[row][column] = coefficient;
+            }
+        }
+        for generator_row in &generator {
+            for check_row in &check {
+                assert_eq!(
+                    generator_row
+                        .iter()
+                        .zip(check_row)
+                        .map(|(left, right)| left * right)
+                        .sum::<i128>(),
+                    0
+                );
+            }
+        }
+
+        let full_mask = (1_u64 << length) - 1;
+        for prime in [2, 7] {
+            for deleted_mask in 0..=full_mask {
+                let deletion = (0..length)
+                    .filter(|&column| deleted_mask & (1_u64 << column) != 0)
+                    .collect::<Vec<_>>();
+                let mut restricted = vec![vec![0_i128; deletion.len()]; check_rows];
+                for (output_column, &column) in deletion.iter().enumerate() {
+                    for &(row, coefficient) in &sparse_columns[column] {
+                        restricted[row][output_column] = coefficient;
+                    }
+                }
+                let generator_has_supported_word =
+                    rank_mod_mask(&generator, full_mask ^ deleted_mask, prime) < generator.len();
+                let dual_columns_are_dependent =
+                    rank_mod_dense(&restricted, deletion.len(), prime) < deletion.len();
+                assert_eq!(generator_has_supported_word, dual_columns_are_dependent);
+            }
+        }
+    }
+
+    #[test]
+    fn deletion_run_profiles_include_the_terminal_flag() {
+        assert_eq!(deletion_run_profile(&[0, 1, 3, 5], 6), (3, true));
+        assert_eq!(deletion_run_profile(&[1, 2, 4], 6), (2, false));
+        assert_eq!(deletion_run_profile(&[0, 2, 4], 6), (3, false));
     }
 
     #[test]

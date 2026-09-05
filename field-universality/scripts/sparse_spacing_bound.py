@@ -394,6 +394,37 @@ def main() -> None:
                 and rational_left < rational_right
             ),
         }
+    elif (
+        prime == 7
+        and repetition == 3
+        and delta_fraction <= Fraction(11, 50)
+        and eta_fraction <= Fraction(1, 100_000)
+    ):
+        # For delta <= 11/50,
+        #
+        #   sqrt(4*delta*(1-delta)) <= sqrt(429)/25 < 21/25,
+        #
+        # so exp(D)-1 > 4/21.  With e<3 and eta<=1/100000,
+        # the exact comparison below makes the geometric base less than 7/10.
+        ratio_integer = 300_000
+        rational_left = 100 * 3 * 6**2 * 3**2 * ratio_integer**2 * 21**3
+        rational_right = 49 * 4**3 * (ratio_integer - 3) ** 3
+        rational_certificate = {
+            "domain": (
+                "p = 7, r = 3, 0 < delta <= 11/50, "
+                "and 0 < eta <= 1/100000"
+            ),
+            "base_upper_bound": 0.7,
+            "sqrt_check": {"left": 429, "right": 21**2, "passes": 429 < 21**2},
+            "ratio_check": {"left": 21, "right": 299_997, "passes": 21 < 299_997},
+            "left": rational_left,
+            "right": rational_right,
+            "passes": (
+                429 < 21**2
+                and 21 < 299_997
+                and rational_left < rational_right
+            ),
+        }
     print(
         json.dumps(
             {

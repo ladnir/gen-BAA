@@ -395,8 +395,16 @@ def search(args: argparse.Namespace) -> dict[str, object]:
     equality, target, _, _ = bulk.constraints(layout, args.eta, args.delta)
     lower = [0.0] * (3 * args.prime)
     upper = [1.0] * (3 * args.prime)
-    upper[layout.mu.start] = 1.0 - args.eta
-    lower[layout.zeta.start] = 1.0 - args.delta
+    support_intervals = (
+        (layout.mu, args.eta, min(1.0, 4.0 * args.delta)),
+        (layout.beta, args.eta / 2.0, min(1.0, 2.0 * args.delta)),
+        (layout.zeta, args.eta / 4.0, args.delta),
+    )
+    for component, support_lower, support_upper in support_intervals:
+        lower[component.start] = 1.0 - support_upper
+        upper[component.start] = 1.0 - support_lower
+        for index in range(component.start + 1, component.stop):
+            upper[index] = support_upper
     initial = box_bound(
         Box(tuple(lower), tuple(upper)),
         (),

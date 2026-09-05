@@ -655,6 +655,52 @@ L(alpha,beta,x)
 This argument does not assume sign symmetry. It uses only stationarity,
 addition in the field, and the zero/nonzero projection.
 
+Stationarity yields a second, incomparable payment. Push the product law `Q`
+through the bijection
+
+```text
+(D,S) -> (S,T),  T:=S+D,
+```
+
+and call the resulting source--target law `K`. The true source--target law
+has both marginals equal to `beta`. Consequently,
+
+```text
+I(D;S)-I(U;V)
+  = D(P || Q)
+  >= S(alpha,beta,x),
+
+S(alpha,beta,x)
+  := inf_(R: row(R)=column(R)=beta) D(R || K).      [stationary bound]
+```
+
+The optimization defining `S` is the information projection of `K` onto the
+stationary couplings of `beta`. Because `K` already has source marginal
+`beta`, eliminating the source potentials gives
+
+```text
+S(alpha,beta,x)
+  = sup_v { <beta,v>
+            -sum_s beta_s log(sum_t (K_st/beta_s) exp(v_t)) }.
+```
+
+The continuous extension covers zero-mass rows. This dual is globally valid:
+the target potential is fixed before maximizing over the unknown transition
+law. It may still distinguish target symbols, which is precisely the
+information lost by support-only cuts.
+
+Let `C(alpha,beta,x)` denote the cell-target KL projection, obtained by
+retaining the support cell and target symbol. Since both `C` and `S` lower
+bound the same divergence,
+
+```text
+I(D;S)-I(U;V) >= max(C(alpha,beta,x),S(alpha,beta,x)).
+                                                               [hybrid bound]
+```
+
+The two terms are incomparable. Numerically, their maximum removes escape
+directions left by either term alone.
+
 Apply the two-level bound to both accumulators, with crossing masses `x_1`
 and `x_2`. The full exponent then obeys
 
@@ -683,6 +729,28 @@ These values are numerical diagnostics, not global certificates. Their signs
 show that the two-level inequality is strong enough to support the desired
 prime ladder. The next certification problem is now composition-only and
 retains a visible margin at each of the first three rungs.
+
+The same script also implements the cell-target, stationary, and hybrid
+payments. At output fraction `0.22`, the hybrid upper bounds found are
+`-0.00118836` for `F_5` with message cutoff `0.002`, and `-0.00004311` for
+`F_7` with cutoff `0.0008`. These remain local numerical searches. In
+particular, the septenary margin is too small to guide an exact cover without
+a more thorough optimization audit.
+
+The stationary dual has an exact cut representation with rational potentials
+and directed exponential intervals. The current cut bank does not strengthen
+the five-variable eliminated checker. At the quinary numerical support point, both the original
+and hybrid cut banks give exact upper bound `+0.00118844`. The common cut
+required by the pure-branch reduction loses the symbol-sensitive stationary
+payment.
+
+Retaining the three conditional symbol laws avoids that loss. The resulting
+14-variable checker evaluates every fixed cut on the vertices of each
+conditional simplex. At the quinary numerical maximizer, a degenerate box has
+exact upper bound `-0.00115832`. A global interval cover is still open. After
+200 splits, its worst upper bound is `0.902508` because broad symbol boxes make
+both KL payments zero. The next certificate must couple the symbol variables
+more tightly than independent interval subdivision.
 
 The exact checker `scripts/verify_reduced_composition_bulk.py` works in the
 variables `(A,B,C,x_1,x_2)` and the three conditional nonzero-symbol laws. It
@@ -736,12 +804,17 @@ Indeed, subtracting
 canonical simplex. Unconstrained entropy maximization then proves the
 displayed log-sum-exp formula.
 
-There is no positive entropy term for `beta^+` or `zeta^+`. After a cut is
-fixed, their remaining dependence is multilinear. Its maximum over the two
-simplexes is therefore attained at a pair
-`(beta^+,zeta^+)=(delta_j,delta_k)`. The finite branches may use different
-valid cuts and different order multipliers. Thus they need not share the
-weaker orbit-averaged cut.
+There is no positive entropy term for `beta^+` or `zeta^+`. After a complete
+Fenchel certificate is fixed, their remaining dependence is multilinear. Its
+maximum over the two simplexes is therefore attained at a pair
+`(beta^+,zeta^+)=(delta_j,delta_k)`.
+
+The order of these operations is essential. The checker must fix one common
+cut mixture before maximizing over `(j,k)`. Choosing the best cut separately
+on each pure branch reverses a minimax order and can produce a false upper
+bound. Branch-dependent order multipliers remain permissible only within one
+fixed certificate, because each multiplier pays for the same canonical
+message inequalities.
 
 This gives a five-variable upper bound. For each `(j,k)`, combine an ordered
 first-stage conjugate with a second-stage affine cut, then maximize over the
@@ -751,47 +824,24 @@ a rational support polytope occurs at a vertex. The checker therefore uses
 directed point evaluations at finitely many support vertices instead of wide
 exponential intervals.
 
-The script `scripts/verify_eliminated_composition_bulk.py` implements this
-reduction for `F_5`. At the quinary numerical maximizer, rational single-cut
-branch certificates give the exact upper bound `-0.00138189`; the true
-two-level value there is `-0.00146130`. At the four diagnostic support scales
-`A=0.002,0.01,0.05,0.26`, the corresponding numerical branch envelopes are
-respectively
+The script `scripts/verify_eliminated_composition_bulk.py` implements the
+corrected reduction for `F_5`. At the earlier diagnostic point, the corrected
+common-mixture bound is `+0.00002672`. Thus that point is not yet certified
+negative by this relaxation.
 
-```text
--0.00138189, -0.00461658, -0.01173108, -0.05332647.
-```
+The five-variable global cover remains open. The checker uses floating point
+only to propose a common mixture. It rationalizes that mixture before exact
+evaluation. A 20-box corrected diagnostic at `delta=0.1323` and `eta=0.002`
+has exact upper bound `0.140051`.
 
-The active first-stage certificates are usually single multiplicative images
-of one reference cut. For the second stage, nonzero symbol pairs split into
-orbits indexed by the ratio `k/j`. This is the first mechanism in the bulk
-analysis whose complexity grows linearly, rather than quadratically, in the
-number of nonzero field elements. The present exact checker nevertheless
-keeps all sixteen quinary branches separate until exact orbit invariance of
-the rationalized cut bank is certified.
-
-The five-variable global cover is not yet closed. Its current implementation
-uses exact rational verification for every proposed cut mixture, but the cut
-bank is still too sparse on broad off-maximizer support boxes. This is now a
-support-space certificate-generation problem; no conditional-composition
-boxes remain.
-
-Two further reductions improve that cover. A first-stage cut designed at the
-center of a support box is only a proposal: the checker rationalizes its
-potentials and verifies the resulting inequality independently. At the first
-off-curve obstruction, where `A` and `B` are near `0.25` and `x_1` is near
-`0.002`, one such cut lowers the local ordered conjugate from `0.2908` to
-`-1.1020`.
-
-The checker also keeps the support and conditional terms coupled. After the
+The checker keeps the support and conditional terms coupled. After the
 two positive joint entropies are replaced by cross-entropy tangents, the
 complete surrogate is convex in `(A,B,C,x_1,x_2)`: negative binary entropy is
 convex, the ordered log-sum-exp term is a convex perspective, and every cut
 term is affine. Its maximum on a rational support box is therefore attained
 at a vertex of the joint five-dimensional feasibility polytope. Evaluating
 the complete surrogate at those vertices avoids maximizing its support and
-conditional pieces at incompatible points. With local cut proposals and this
-joint-vertex bound, the exact upper bound after 100 boxes is `0.09312368`.
+conditional pieces at incompatible points.
 
 The proved global support estimate supplies a second envelope. On every box,
 the full exponent is at most both the coupled surrogate and
@@ -800,14 +850,10 @@ the full exponent is at most both the coupled surrogate and
 1/10000 + (conditional message entropy - two KL payments).
 ```
 
-The checker also propagates locally verified cuts down the branch-and-bound
-tree. It retains the five most recent local certificates, so every active bank
-has at most 56 cuts and ten branch certificates. With this bounded inherited
-bank and the two-envelope minimum, the exact upper bound after 100 boxes is
-`0.00846858`. Retaining the full ancestral bank gives the stronger 300-box
-diagnostic `0.00271039`, but its replay cost grows with depth. Neither positive
-value is evidence for a positive bulk exponent; both are incomplete-cover
-bounds.
+The checker can propagate common mixtures down the branch-and-bound tree or
+select them by support region. The earlier branch-wise diagnostics
+`0.09312368`, `0.00846858`, and `0.00271039` used the invalid minimax order and
+are withdrawn. `AUDIT.md` records the counterexample and correction.
 
 This observation gives a quantitative proof split. On the domain
 
@@ -848,6 +894,153 @@ This would give `Psi<-0.002391` throughout `G<=1/10000`. These two values are
 numerical diagnostics, not certificates. They reduce the remaining quinary
 binary-benchmark proof to an unconstrained full-symbol Lagrangian bound with
 a visible margin.
+
+### 3.3.2 A finite information-projection upper bound
+
+The Lagrangian reduction preserves the exact exponent but still leaves a
+large transition-entropy cover. A smaller upper bound follows from one
+application of data processing.
+
+Let `P` be the joint law of an accumulator increment `D` and source state
+`S`. Put
+
+```text
+U := 1[D!=0],   V := 1[S!=0],   T := D+S.
+```
+
+Define a comparison law `Q` on `(D,S)` by
+
+```text
+Q(d,s) := P_UV(u,v) P_(D|U)(d|u) P_(S|V)(s|v),
+```
+
+where `u=1[d!=0]` and `v=1[s!=0]`. Thus `Q` keeps the exact support coupling
+but makes the two field values conditionally independent once their support
+bits are fixed. Let `R` be the image of `Q` under
+`(d,s) |-> (u,v,d+s)`.
+
+**Support-cell projection lemma.** For every joint law `P` on `(D,S)`,
+
+```text
+I_P(D;S)
+  >= I_P(U;V) + D(P_UVT || R).
+```
+
+**Proof.** Direct expansion gives
+
+```text
+D(P_DS || Q)
+  = H(D)+H(S)-H(D,S)-H(U)-H(V)+H(U,V)
+  = I_P(D;S)-I_P(U;V).
+```
+
+Relative entropy cannot increase under a deterministic map. Applying data
+processing to `(d,s) |-> (u,v,d+s)` yields
+
+```text
+D(P_DS || Q) >= D(P_UVT || R),
+```
+
+which proves the claim. ∎
+
+For stage `i`, write `L_i:=D(P_(U_i,V_i,T_i)||R_i)`. The exact two-stage
+exponent therefore satisfies
+
+```text
+Psi_(5,3)
+  <= H(mu)/3 - I(U_1;V_1) - L_1 - I(U_2;V_2) - L_2.
+```
+
+The right-hand side depends on each transition only through the finite table
+`P_(U,V,T)`, with `20` cells over `F_5`. It discards information and is an
+upper bound, but it retains the additive output constraint that the earlier
+support relaxation lost.
+
+At the numerical maximizer of the exact exponent, the first projection term
+is `0.0006916531`, compared with an exact internal-information excess of
+`0.0006916926`. The corresponding second-stage values are `0.0004196419` and
+`0.0004294042`. Thus the projection retains nearly all of the missing
+field-value payment at the relevant sparse type.
+
+Two independent constrained searches at `delta=0.1323` and `eta=0.002`
+found projection-surrogate maxima
+
+```text
+-0.0018144965   (seed 17, 12 restarts),
+-0.0018210461   (seed 31, 12 restarts).
+```
+
+Both candidates lie on `A=0.002` and `C=0.1323`. These values are numerical,
+not certified global maxima. They nevertheless supply the first simple
+pointwise upper bound whose numerical optimization reaches the certified
+binary benchmark over the complete quinary bulk domain. The remaining task
+is to certify this reduced projection problem with rational boxes and
+directed bounds for the KL terms. The raw data are recorded in
+`results/f5-projection-surrogate-0.1323.json`.
+
+The projected transition tables can be eliminated without weakening this
+composition-only relaxation. For increment composition `a` and state
+composition `b`, let `M_(a,b)` be the law of
+
+```text
+(1[D!=0],1[S!=0],D+S),   D~a, S~b independently.
+```
+
+Let `J(a,b)` be the minimum of `D(W||M_(a,b))` over laws `W` whose first
+support marginal is `a(F_5^*)`, whose second support marginal is
+`b(F_5^*)`, and whose sum marginal is `b`. Every projected stationary
+transition is feasible for this minimization. Hence
+
+```text
+Psi_(5,3)(mu,beta,zeta)
+  <= H(mu)/3 - J(mu,beta) - J(beta,zeta).
+```
+
+The information projection has the six-parameter dual
+
+```text
+J(a,b) = sup_(y,lambda,rho)
+  <y,b> + lambda a(F_5^*) + rho b(F_5^*)
+  - log sum_(d,s) a_d b_s
+      exp(y_(d+s) + lambda 1[d!=0] + rho 1[s!=0]),
+```
+
+where the gauge `y_0=0` leaves four target potentials and two support
+potentials. A numerical optimization of the complete projected-table
+relaxation gives `-0.0015187126`. At its optimizer, the primal and dual
+values differ by at most `1.1e-10` in each stage.
+
+A constraint-generation search collected each dual cut together with its
+four multiplicative `F_5^*` images. Its local nonlinear search became
+negative after 18 rounds and reached `-0.0013026013` after 30 rounds. A later
+global cover found a missed composition with bank value `0.0000455302`.
+Fitting the information projection at that composition gave `-0.1488975`.
+The final floating bank contains 120 cuts per stage, including multiplicative
+orbits fitted at weak points from the global frontier.
+
+The script `scripts/explore_projected_kl_box_cover.py` instead covers the
+full composition domain with LP boxes for a fixed cut bank. It uses entropy
+and logarithm tangents, all degree-two composition moments, McCormick
+envelopes, simplex moment identities, covariance cuts, and first-level RLT
+constraints. The checker saves its dual bank and best-bound queue. At
+`delta=0.1323` and `eta=0.002`, representative floating bounds are
+
+| boxes split | global LP upper |
+|---:|---:|
+| 1500 | `0.00361292` |
+| 3000 | `0.00213081` |
+| 3500 | `0.000481865` |
+| 3750 | `0.0000885919` |
+| 3799 | `-0.000000632899` |
+| 3854 | `-0.000103613` |
+
+At split 3799, every live box had a negative floating upper. Twelve tangent
+rounds and 55 further splits increased the global margin to `0.000103613`.
+This computation closes the complete composition domain for the floating
+relaxation; it does not yet prove the distance theorem. The cut potentials,
+exponentials, logarithms, and LP certificates still require directed or
+exact replay. The compact results are in
+`results/f5-projected-kl-box-cover.json`.
 
 There is one field-uniform face on which the internal-information payment is
 already exact. Let `D` be the first-stage increment, let `S` be its source

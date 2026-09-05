@@ -14,6 +14,7 @@ import json
 from dataclasses import dataclass
 from fractions import Fraction
 from functools import lru_cache
+from typing import cast
 
 import numpy as np
 from mpmath import iv
@@ -75,6 +76,17 @@ class Cut:
     target: tuple[Fraction, ...]
     exponential_minus_one: tuple[tuple[Interval, ...], ...]
     reference_support: Fraction
+
+
+@dataclass(frozen=True)
+class StationaryCut:
+    source: tuple[Fraction, ...]
+    target: tuple[Fraction, ...]
+    exponential_minus_one: tuple[tuple[Interval, ...], ...]
+    reference_support: Fraction
+
+
+DualCut = Cut | StationaryCut
 
 
 @dataclass(frozen=True)
@@ -517,6 +529,78 @@ def make_cut(
     )
 
 
+def make_stationary_cut(
+    increment: np.ndarray, state: np.ndarray, crossing: float
+) -> StationaryCut:
+    source_float, target_float = product.stationary_coupling_dual_potentials(
+        increment, state, crossing
+    )
+    source = tuple(rational_potential(value) for value in source_float)
+    target = tuple(rational_potential(value) for value in target_float)
+    exponentials = []
+    for source_value in source:
+        row = []
+        for target_value in target:
+            exponent = iv.exp(iv_fraction(source_value + target_value)) - 1
+            row.append(rational_interval(exponent))
+        exponentials.append(tuple(row))
+    return StationaryCut(
+        source,
+        target,
+        tuple(exponentials),
+        rational_potential(float(increment[1:].sum())),
+    )
+
+
+def multiply_stationary_cut(
+    cut: StationaryCut, multiplier: int
+) -> StationaryCut:
+    prime = len(cut.source)
+    source = [ZERO] * prime
+    target = [ZERO] * prime
+    exponentials: list[list[Interval | None]] = [
+        [None] * prime for _ in range(prime)
+    ]
+    for old_source in range(prime):
+        new_source = (multiplier * old_source) % prime
+        source[new_source] = cut.source[old_source]
+        for old_target in range(prime):
+            new_target = (multiplier * old_target) % prime
+            target[new_target] = cut.target[old_target]
+            exponentials[new_source][new_target] = (
+                cut.exponential_minus_one[old_source][old_target]
+            )
+    if any(value is None for row in exponentials for value in row):
+        raise RuntimeError("field multiplier did not permute every symbol")
+    return StationaryCut(
+        tuple(source),
+        tuple(target),
+        tuple(
+            tuple(cast(Interval, value) for value in row)
+            for row in exponentials
+        ),
+        cut.reference_support,
+    )
+
+
+def stationary_pure_coefficients(
+    cut: StationaryCut, difference: int, source: int
+) -> tuple[Fraction, Fraction, Fraction, Fraction]:
+    target = (difference + source) % len(cut.source)
+    row_zero = cut.exponential_minus_one[0][0].upper
+    row_state = cut.exponential_minus_one[source][source].upper
+    row_increment = cut.exponential_minus_one[0][difference].upper
+    row_both = cut.exponential_minus_one[source][target].upper
+    linear_zero = cut.source[0] + cut.target[0]
+    linear_state = cut.source[source] + cut.target[source]
+    return (
+        linear_zero - row_zero,
+        row_state - row_both,
+        -linear_zero + linear_state + row_zero - row_state,
+        row_zero - row_state - row_increment + row_both,
+    )
+
+
 def multiply_distribution(distribution: np.ndarray, multiplier: int) -> np.ndarray:
     image = np.zeros_like(distribution)
     for value, mass in enumerate(distribution):
@@ -524,7 +608,9 @@ def multiply_distribution(distribution: np.ndarray, multiplier: int) -> np.ndarr
     return image
 
 
-def default_cuts() -> tuple[Cut, ...]:
+def default_cut_points() -> tuple[
+    tuple[np.ndarray, np.ndarray, np.ndarray, float, float], ...
+]:
     candidates = (
         (
             np.array(
@@ -651,8 +737,12 @@ def default_cuts() -> tuple[Cut, ...]:
             0.08713621468109453,
         ),
     )
+    return candidates
+
+
+def default_cuts() -> tuple[Cut, ...]:
     cuts = []
-    for mu, beta, zeta, crossing1, crossing2 in candidates:
+    for mu, beta, zeta, crossing1, crossing2 in default_cut_points():
         for multiplier in range(1, 5):
             mu_image = multiply_distribution(mu, multiplier)
             beta_image = multiply_distribution(beta, multiplier)
@@ -660,6 +750,21 @@ def default_cuts() -> tuple[Cut, ...]:
             cuts.append(make_cut(mu_image, beta_image, crossing1))
             cuts.append(make_cut(beta_image, zeta_image, crossing2))
     return tuple(cuts)
+
+
+def default_stationary_cuts() -> tuple[StationaryCut, ...]:
+    cuts = []
+    for mu, beta, zeta, crossing1, crossing2 in default_cut_points():
+        first = make_stationary_cut(mu, beta, crossing1)
+        second = make_stationary_cut(beta, zeta, crossing2)
+        for multiplier in range(1, 5):
+            cuts.append(multiply_stationary_cut(first, multiplier))
+            cuts.append(multiply_stationary_cut(second, multiplier))
+    return tuple(cuts)
+
+
+def default_hybrid_cuts() -> tuple[DualCut, ...]:
+    return default_cuts() + default_stationary_cuts()
 
 
 def split(box: Box, dimension: int) -> tuple[Box, Box]:

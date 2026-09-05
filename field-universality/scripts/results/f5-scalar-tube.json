@@ -1,0 +1,25 @@
+{
+  "defect": 1.0000005222016933e-06,
+  "delta": 0.22,
+  "eta": 0.002,
+  "first_payment": 0.00025073530256869815,
+  "maximum_defect": 1e-06,
+  "maximum_upper_bound_found": -0.0005064229359043696,
+  "optimizer_message": "Optimization terminated successfully",
+  "optimizer_success": true,
+  "point": {
+    "A": 0.002,
+    "B": 0.002105500803561426,
+    "C": 0.22,
+    "x1": 0.0009920127155698525,
+    "x2": 0.0007882853876143102,
+    "z1": 0.48024661832008536,
+    "z2": 0.1870289805655876
+  },
+  "prime": 5,
+  "rejected_infeasible_restarts": 0,
+  "repetition": 3,
+  "restarts": 128,
+  "second_payment": 6.906897357203848e-05,
+  "status": "floating seven-variable scalar relaxation; not a global certificate"
+}

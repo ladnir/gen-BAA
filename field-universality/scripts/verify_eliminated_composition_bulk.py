@@ -14,20 +14,26 @@ from functools import lru_cache
 
 import numpy as np
 from mpmath import iv
-from scipy.optimize import linprog
+from scipy.optimize import linprog, minimize
 
 from verify_conditional_product_bulk import (
     Cut,
+    DualCut,
     Interval,
     ONE,
     TWO,
     ZERO,
     default_cuts,
+    default_hybrid_cuts,
     entropy_bounds,
     iv_fraction,
     negative_log_upper,
     rational_interval,
     make_cut,
+    make_stationary_cut,
+    multiply_stationary_cut,
+    StationaryCut,
+    stationary_pure_coefficients,
 )
 from verify_reduced_composition_bulk import support_vertices
 from verify_support_indicator_bulk import (
@@ -49,15 +55,31 @@ class Certificate:
 
 
 @dataclass(frozen=True)
+class ExpandedCertificate:
+    first_weights: tuple[tuple[tuple[DualCut, Fraction], ...], ...]
+    order_multipliers: tuple[tuple[Fraction, ...], ...]
+
+
+@dataclass(frozen=True)
+class RegionalCertificate:
+    box: Box
+    certificate: ExpandedCertificate
+
+
+@dataclass(frozen=True)
 class Bound:
     value: Fraction
     box: Box
     split_dimension: int
-    cuts: tuple[Cut, ...]
+    cuts: tuple[DualCut, ...]
     certificates: tuple[Certificate, ...]
+    full_upper: Fraction
+    conditional_upper: Fraction
+    local_support_upper: Fraction
 
 
 def candidate_certificate() -> Certificate:
+    """Return the retired branch-dependent certificate for audit regressions."""
     scale = 1_000_000_000_000
     return Certificate(
         (
@@ -76,6 +98,7 @@ def candidate_certificate() -> Certificate:
 
 
 def reference_certificates() -> tuple[Certificate, ...]:
+    """Return retired branch-dependent certificates for index-remapping tests."""
     scale = 1_000_000_000_000
 
     def multiplier_rows(first: int, second: int, third: int) -> tuple[tuple[Fraction, ...], ...]:
@@ -112,6 +135,170 @@ def reference_certificates() -> tuple[Certificate, ...]:
     )
 
 
+def common_cut_certificates(cuts: tuple[Cut, ...]) -> tuple[Certificate, ...]:
+    zero_multipliers = tuple((ZERO,) * 4 for _ in range(4))
+    return tuple(
+        Certificate(
+            tuple(((cut_index, ONE),) for _ in range(4)),
+            zero_multipliers,
+        )
+        for cut_index in range(len(cuts))
+    )
+
+
+def has_common_first_cut(certificate: Certificate) -> bool:
+    return all(
+        weights == certificate.first_weights[0]
+        for weights in certificate.first_weights[1:]
+    )
+
+
+def common_first_certificate(
+    box: Box, cuts: tuple[Cut, ...]
+) -> Certificate | None:
+    vertices = joint_support_vertices(box)
+    reference = tuple(
+        sum((vertex[index] for vertex in vertices), ZERO) / len(vertices)
+        for index in range(5)
+    )
+    message_support = float(reference[0])
+    if message_support <= 0.0:
+        return None
+    first_vertex = (reference[0], reference[1], reference[3])
+    costs = np.array(
+        [
+            [
+                [
+                    float(
+                        evaluate_affine(
+                            pure_cut_coefficients(cut, difference, source),
+                            first_vertex,
+                        )
+                    )
+                    for difference in range(1, 5)
+                ]
+                for source in range(1, 5)
+            ]
+            for cut in cuts
+        ]
+    )
+
+    def branch_values_and_gradients(
+        weights: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        mixed = np.tensordot(weights, costs, axes=(0, 0))
+        branch_values = []
+        branch_gradients = []
+        for source in range(4):
+            logits = -3.0 * mixed[source] / message_support
+            maximum = float(np.max(logits))
+            exponential = np.exp(logits - maximum)
+            probabilities = exponential / float(exponential.sum())
+            branch_values.append(
+                message_support
+                * (maximum + math.log(float(exponential.sum())))
+                / 3.0
+            )
+            branch_gradients.append(
+                -np.tensordot(
+                    costs[:, source, :], probabilities, axes=(1, 0)
+                )
+            )
+        return np.array(branch_values), np.stack(branch_gradients)
+
+    cut_count = len(cuts)
+    single_values = []
+    for cut_index in range(cut_count):
+        start = np.zeros(cut_count)
+        start[cut_index] = 1.0
+        values, _ = branch_values_and_gradients(start)
+        single_values.append(float(values.max()))
+    best_single = int(np.argmin(single_values))
+    one_hot = np.zeros(cut_count)
+    one_hot[best_single] = 1.0
+    starts = [one_hot, np.full(cut_count, 1.0 / cut_count)]
+    best = None
+    for start_weights in starts:
+        start_values, _ = branch_values_and_gradients(start_weights)
+        start = np.concatenate((start_weights, [float(start_values.max())]))
+
+        def objective(point: np.ndarray) -> float:
+            return float(point[-1])
+
+        def objective_gradient(point: np.ndarray) -> np.ndarray:
+            gradient = np.zeros_like(point)
+            gradient[-1] = 1.0
+            return gradient
+
+        def epigraph(point: np.ndarray) -> np.ndarray:
+            values, _ = branch_values_and_gradients(point[:-1])
+            return point[-1] - values
+
+        def epigraph_jacobian(point: np.ndarray) -> np.ndarray:
+            _, gradients = branch_values_and_gradients(point[:-1])
+            return np.concatenate(
+                (-gradients, np.ones((4, 1))), axis=1
+            )
+
+        equality = {
+            "type": "eq",
+            "fun": lambda point: float(point[:-1].sum() - 1.0),
+            "jac": lambda point: np.concatenate((np.ones(cut_count), [0.0])),
+        }
+        inequality = {
+            "type": "ineq",
+            "fun": epigraph,
+            "jac": epigraph_jacobian,
+        }
+        result = minimize(
+            objective,
+            start,
+            jac=objective_gradient,
+            method="SLSQP",
+            bounds=[(0.0, 1.0)] * cut_count + [(None, None)],
+            constraints=(equality, inequality),
+            options={"ftol": 1e-12, "maxiter": 500, "disp": False},
+        )
+        if result.success and (best is None or result.fun < best.fun):
+            best = result
+    if best is None:
+        return None
+    weights = rational_mixture(best.x[:-1])
+    indexed = tuple(
+        (cut_index, weight)
+        for cut_index, weight in enumerate(weights)
+        if weight != ZERO
+    )
+    multiplier_rows = []
+    scale = 1 << 40
+    for source in range(1, 5):
+        exact_costs = np.array(
+            [
+                float(
+                    evaluate_affine(
+                        mixed_coefficients(cuts, indexed, difference, source),
+                        first_vertex,
+                    )
+                )
+                for difference in range(1, 5)
+            ]
+        )
+        _, _, pool = anchored_adversary(
+            -3.0 * exact_costs / message_support
+        )
+        mean_cost = float(np.mean(exact_costs[list(pool)]))
+        multipliers = [ZERO] * 4
+        for index in pool:
+            if index != 0:
+                value = max(0.0, mean_cost - exact_costs[index])
+                multipliers[index] = Fraction(round(value * scale), scale)
+        multiplier_rows.append(tuple(multipliers))
+    return Certificate(
+        tuple(indexed for _ in range(4)),
+        tuple(multiplier_rows),
+    )
+
+
 def anchored_adversary(logits: np.ndarray) -> tuple[float, np.ndarray, set[int]]:
     pool = {0}
     while True:
@@ -142,6 +329,7 @@ def local_certificate(
     box: Box,
     cuts: tuple[Cut, ...],
 ) -> tuple[tuple[Cut, ...], Certificate] | None:
+    """Construct the retired branch-dependent proposal used by audit tests."""
     vertices = joint_support_vertices(box)
     reference = tuple(
         sum((vertex[index] for vertex in vertices), ZERO) / len(vertices)
@@ -219,6 +407,79 @@ def local_certificate(
     )
 
 
+def local_second_stage_cuts(box: Box) -> tuple[Cut, ...]:
+    vertices = joint_support_vertices(box)
+    reference = tuple(
+        sum((vertex[index] for vertex in vertices), ZERO) / len(vertices)
+        for index in range(5)
+    )
+    middle_support = float(reference[1])
+    output_support = float(reference[2])
+    crossing = float(reference[4])
+    tiny = 2.5e-9
+    cuts = []
+    for middle_symbol in range(1, 5):
+        increment_conditional = np.full(4, tiny)
+        increment_conditional[middle_symbol - 1] += 1.0 - 4 * tiny
+        increment = np.concatenate(
+            ([1.0 - middle_support], middle_support * increment_conditional)
+        )
+        for output_symbol in range(1, 5):
+            state_conditional = np.full(4, tiny)
+            state_conditional[output_symbol - 1] += 1.0 - 4 * tiny
+            state = np.concatenate(
+                ([1.0 - output_support], output_support * state_conditional)
+            )
+            try:
+                cuts.append(make_cut(increment, state, crossing))
+            except ValueError:
+                continue
+    return tuple(cuts)
+
+
+def local_stationary_cuts(box: Box) -> tuple[StationaryCut, ...]:
+    """Propose an orbit-complete stationary bank at a support-box center."""
+    vertices = joint_support_vertices(box)
+    reference = tuple(
+        sum((vertex[index] for vertex in vertices), ZERO) / len(vertices)
+        for index in range(5)
+    )
+    tiny = 1.0e-5
+    cuts = []
+    for increment_support, state_support, crossing in (
+        (float(reference[0]), float(reference[1]), float(reference[3])),
+        (float(reference[1]), float(reference[2]), float(reference[4])),
+    ):
+        for ratio in range(1, 5):
+            increment_conditional = np.full(4, tiny)
+            increment_conditional[ratio - 1] += 1.0 - 4 * tiny
+            increment = np.concatenate(
+                (
+                    [1.0 - increment_support],
+                    increment_support * increment_conditional,
+                )
+            )
+            state_conditional = np.full(4, tiny)
+            state_conditional[0] += 1.0 - 4 * tiny
+            state = np.concatenate(
+                (
+                    [1.0 - state_support],
+                    state_support * state_conditional,
+                )
+            )
+            try:
+                representative = make_stationary_cut(
+                    increment, state, crossing
+                )
+            except ValueError:
+                continue
+            cuts.extend(
+                multiply_stationary_cut(representative, multiplier)
+                for multiplier in range(1, 5)
+            )
+    return tuple(cuts)
+
+
 def trim_certificate_bank(
     cuts: tuple[Cut, ...],
     certificates: tuple[Certificate, ...],
@@ -263,6 +524,104 @@ def trim_certificate_bank(
         )
 
     return retained_cuts, tuple(remap(certificate) for certificate in retained_certificates)
+
+
+def expand_certificate(
+    certificate: Certificate, cuts: tuple[Cut, ...]
+) -> ExpandedCertificate:
+    return ExpandedCertificate(
+        tuple(
+            tuple((cuts[cut_index], weight) for cut_index, weight in weights)
+            for weights in certificate.first_weights
+        ),
+        certificate.order_multipliers,
+    )
+
+
+def materialize_certificates(
+    base_cuts: tuple[Cut, ...],
+    certificates: tuple[ExpandedCertificate, ...],
+) -> tuple[tuple[Cut, ...], tuple[Certificate, ...]]:
+    cuts = list(base_cuts)
+    cut_indices = {cut: index for index, cut in enumerate(cuts)}
+    materialized = []
+    for certificate in certificates:
+        first_weights = []
+        for weights in certificate.first_weights:
+            indexed = []
+            for cut, weight in weights:
+                cut_index = cut_indices.get(cut)
+                if cut_index is None:
+                    cut_index = len(cuts)
+                    cut_indices[cut] = cut_index
+                    cuts.append(cut)
+                indexed.append((cut_index, weight))
+            first_weights.append(tuple(indexed))
+        materialized.append(
+            Certificate(tuple(first_weights), certificate.order_multipliers)
+        )
+    return tuple(cuts), tuple(materialized)
+
+
+def regional_distance(first: Box, second: Box, eta: Fraction) -> float:
+    distance = 0.0
+    for index in range(5):
+        gap = max(
+            ZERO,
+            first.lower[index] - second.upper[index],
+            second.lower[index] - first.upper[index],
+        )
+        scale_index = index if index < 3 else index - 3
+        scale = max(
+            first.upper[scale_index],
+            second.upper[scale_index],
+            eta,
+        )
+        distance += float(gap / scale) ** 2
+    return distance
+
+
+def regional_width(box: Box, eta: Fraction) -> float:
+    width = 0.0
+    for index in range(5):
+        scale_index = index if index < 3 else index - 3
+        scale = max(box.upper[scale_index], eta)
+        width += float((box.upper[index] - box.lower[index]) / scale)
+    return width
+
+
+def regional_relation(target: Box, source: Box) -> int:
+    if all(
+        source.lower[index] <= target.lower[index]
+        and target.upper[index] <= source.upper[index]
+        for index in range(5)
+    ):
+        return 0
+    if all(
+        source.lower[index] <= target.upper[index]
+        and target.lower[index] <= source.upper[index]
+        for index in range(5)
+    ):
+        return 1
+    return 2
+
+
+def select_regional_certificates(
+    box: Box,
+    regional: tuple[RegionalCertificate, ...],
+    eta: Fraction,
+    limit: int,
+) -> tuple[ExpandedCertificate, ...]:
+    ranked = sorted(
+        enumerate(regional),
+        key=lambda item: (
+            regional_relation(box, item[1].box),
+            regional_distance(box, item[1].box, eta),
+            regional_width(item[1].box, eta),
+            -item[0],
+        ),
+    )
+    return tuple(item.certificate for _, item in ranked[:limit])
 
 
 def tighten(raw: Box, eta: Fraction, delta: Fraction) -> Box | None:
@@ -314,9 +673,11 @@ def affine_extrema(
 
 @lru_cache(maxsize=None)
 def pure_cut_coefficients(
-    cut: Cut, difference: int, source: int
+    cut: DualCut, difference: int, source: int
 ) -> tuple[Fraction, Fraction, Fraction, Fraction]:
     target = (difference + source) % 5
+    if isinstance(cut, StationaryCut):
+        return stationary_pure_coefficients(cut, difference, source)
     row_zero = cut.exponential_minus_one[0][0].upper
     row_state = cut.exponential_minus_one[1][source].upper
     row_increment = cut.exponential_minus_one[2][difference].upper
@@ -377,6 +738,7 @@ def conditional_envelope_upper(
     cuts: tuple[Cut, ...],
     certificates: tuple[Certificate, ...],
 ) -> Fraction:
+    """Evaluate the retired branch-wise envelope; do not use for certificates."""
     message = Interval(box.lower[0], box.upper[0])
     middle = Interval(box.lower[1], box.upper[1])
     output = Interval(box.lower[2], box.upper[2])
@@ -436,6 +798,7 @@ def second_stage_mixture(
     state: Interval,
     crossing: Interval,
 ) -> tuple[Fraction, ...]:
+    """Optimize one retired pure branch; the production checker uses a common mix."""
     vertices = support_vertices(increment, state, crossing)
     values = tuple(
         tuple(
@@ -473,6 +836,52 @@ def second_stage_mixture(
     return tuple(ONE if index == best_cut else ZERO for index in range(cut_count))
 
 
+def global_second_stage_mixture(
+    cuts: tuple[Cut, ...],
+    increment: Interval,
+    state: Interval,
+    crossing: Interval,
+) -> tuple[Fraction, ...]:
+    vertices = support_vertices(increment, state, crossing)
+    branches = tuple(itertools.product(range(1, 5), repeat=2))
+    values = tuple(
+        tuple(
+            evaluate_affine(
+                pure_cut_coefficients(cut, difference, source), vertex
+            )
+            for difference, source in branches
+            for vertex in vertices
+        )
+        for cut in cuts
+    )
+    cut_count = len(cuts)
+    constraint_count = len(branches) * len(vertices)
+    objective = np.zeros(cut_count + 1)
+    objective[-1] = -1.0
+    upper = np.zeros((constraint_count, cut_count + 1))
+    for constraint_index in range(constraint_count):
+        upper[constraint_index, :cut_count] = [
+            -float(values[cut_index][constraint_index])
+            for cut_index in range(cut_count)
+        ]
+        upper[constraint_index, -1] = 1.0
+    equality = np.zeros((1, cut_count + 1))
+    equality[0, :cut_count] = 1.0
+    result = linprog(
+        objective,
+        A_ub=upper,
+        b_ub=np.zeros(constraint_count),
+        A_eq=equality,
+        b_eq=np.ones(1),
+        bounds=[(0.0, 1.0)] * cut_count + [(None, None)],
+        method="highs",
+    )
+    if result.success:
+        return rational_mixture(result.x[:cut_count])
+    best_cut = max(range(cut_count), key=lambda index: min(values[index]))
+    return tuple(ONE if index == best_cut else ZERO for index in range(cut_count))
+
+
 def second_stage_lower(
     cuts: tuple[Cut, ...],
     difference: int,
@@ -481,6 +890,7 @@ def second_stage_lower(
     state: Interval,
     crossing: Interval,
 ) -> Fraction:
+    """Evaluate a retired branch-specific second-stage proposal."""
     weights = second_stage_mixture(
         cuts, difference, source, increment, state, crossing
     )
@@ -899,30 +1309,18 @@ def joint_envelope_bounds(
     middle = Interval(box.lower[1], box.upper[1])
     output = Interval(box.lower[2], box.upper[2])
     crossing2 = Interval(box.lower[4], box.upper[4])
-    second_mixtures = {
-        (middle_symbol, output_symbol): second_stage_mixture(
-            cuts,
-            middle_symbol,
-            output_symbol,
-            middle,
-            output,
-            crossing2,
-        )
-        for middle_symbol in range(1, 5)
-        for output_symbol in range(1, 5)
-    }
+    second_weights = global_second_stage_mixture(
+        cuts, middle, output, crossing2
+    )
     first_cache: dict[tuple[int, int, tuple[Fraction, ...]], Fraction] = {}
     second_cache: dict[tuple[int, int, tuple[Fraction, ...]], Fraction] = {}
     best_full: Fraction | None = None
     best_conditional: Fraction | None = None
-    for middle_symbol in range(1, 5):
-        for output_symbol in range(1, 5):
-            branch_full: Fraction | None = None
-            branch_conditional: Fraction | None = None
-            weights = second_mixtures[(middle_symbol, output_symbol)]
-            for certificate_index, certificate in enumerate(certificates):
-                certificate_full: Fraction | None = None
-                certificate_conditional: Fraction | None = None
+    for certificate_index, certificate in enumerate(certificates):
+        certificate_full: Fraction | None = None
+        certificate_conditional: Fraction | None = None
+        for middle_symbol in range(1, 5):
+            for output_symbol in range(1, 5):
                 for vertex_index, vertex in enumerate(vertices):
                     first_vertex = (vertex[0], vertex[1], vertex[3])
                     first_key = (
@@ -955,7 +1353,7 @@ def joint_envelope_bounds(
                                     second_vertex,
                                 )
                                 for cut, weight in zip(
-                                    cuts, weights, strict=True
+                                    cuts, second_weights, strict=True
                                 )
                             ),
                             ZERO,
@@ -974,55 +1372,30 @@ def joint_envelope_bounds(
                         if certificate_conditional is None
                         else max(certificate_conditional, conditional)
                     )
-                if certificate_full is None or certificate_conditional is None:
-                    raise RuntimeError("empty joint support polytope")
-                branch_full = (
-                    certificate_full
-                    if branch_full is None
-                    else min(branch_full, certificate_full)
-                )
-                branch_conditional = (
-                    certificate_conditional
-                    if branch_conditional is None
-                    else min(branch_conditional, certificate_conditional)
-                )
-            if branch_full is None or branch_conditional is None:
-                raise RuntimeError("empty first-stage certificate bank")
-            best_full = (
-                branch_full
-                if best_full is None
-                else max(best_full, branch_full)
-            )
-            best_conditional = (
-                branch_conditional
-                if best_conditional is None
-                else max(best_conditional, branch_conditional)
-            )
+        if certificate_full is None or certificate_conditional is None:
+            raise RuntimeError("empty joint support polytope")
+        best_full = (
+            certificate_full
+            if best_full is None
+            else min(best_full, certificate_full)
+        )
+        best_conditional = (
+            certificate_conditional
+            if best_conditional is None
+            else min(best_conditional, certificate_conditional)
+        )
     if best_full is None or best_conditional is None:
         raise RuntimeError("empty symbol branch set")
     return best_full, best_conditional
 
 
-def box_bound(
-    raw: Box,
+def evaluate_box_bound(
+    box: Box,
     cuts: tuple[Cut, ...],
     certificates: tuple[Certificate, ...],
-    eta: Fraction,
-    delta: Fraction,
-) -> Bound | None:
-    box = tighten(raw, eta, delta)
-    if box is None:
-        return None
-    cuts, certificates = trim_certificate_bank(cuts, certificates)
-    proposed = local_certificate(box, cuts)
-    if proposed is None:
-        active_cuts = cuts
-        active_certificates = certificates
-    else:
-        active_cuts, certificate = proposed
-        active_certificates = certificates + (certificate,)
+) -> Bound:
     full_upper, conditional_upper = joint_envelope_bounds(
-        box, active_cuts, active_certificates
+        box, cuts, certificates
     )
     support_result = support_indicator_box_bound(
         SupportBox(box.lower[:3], box.upper[:3]),
@@ -1047,9 +1420,83 @@ def box_bound(
         value,
         box,
         max(range(5), key=scores.__getitem__),
-        active_cuts,
-        active_certificates,
+        cuts,
+        certificates,
+        full_upper,
+        conditional_upper,
+        local_support_upper,
     )
+
+
+def box_bound(
+    raw: Box,
+    cuts: tuple[Cut, ...],
+    certificates: tuple[Certificate, ...],
+    eta: Fraction,
+    delta: Fraction,
+) -> Bound | None:
+    box = tighten(raw, eta, delta)
+    if box is None:
+        return None
+    certificates = tuple(
+        certificate
+        for certificate in certificates
+        if has_common_first_cut(certificate)
+    )
+    if not certificates:
+        certificates = common_cut_certificates(cuts)
+    static_count = len(cuts)
+    if len(certificates) > static_count + 5:
+        certificates = certificates[:static_count] + certificates[-5:]
+    proposed = common_first_certificate(box, cuts)
+    if proposed is not None and proposed not in certificates:
+        certificates += (proposed,)
+    return evaluate_box_bound(box, cuts, certificates)
+
+
+def regional_box_bound(
+    raw: Box,
+    base_cuts: tuple[Cut, ...],
+    static_certificates: tuple[ExpandedCertificate, ...],
+    regional: dict[tuple[Box, int], RegionalCertificate],
+    eta: Fraction,
+    delta: Fraction,
+    regional_limit: int,
+) -> Bound | None:
+    box = tighten(raw, eta, delta)
+    if box is None:
+        return None
+    selected = select_regional_certificates(
+        box, tuple(regional.values()), eta, regional_limit
+    )
+    cuts, certificates = materialize_certificates(
+        base_cuts, static_certificates + selected
+    )
+    if not any(regional_box == box for regional_box, _ in regional):
+        proposals = (
+            common_first_certificate(box, base_cuts),
+            common_first_certificate(box, cuts),
+        )
+        variant = 0
+        for proposed in proposals:
+            if proposed is None:
+                continue
+            expanded = expand_certificate(proposed, cuts)
+            if any(
+                existing.box == box and existing.certificate == expanded
+                for existing in regional.values()
+            ):
+                continue
+            regional[(box, variant)] = RegionalCertificate(box, expanded)
+            variant += 1
+        if variant > 0:
+            selected = select_regional_certificates(
+                box, tuple(regional.values()), eta, regional_limit
+            )
+            cuts, certificates = materialize_certificates(
+                base_cuts, static_certificates + selected
+            )
+    return evaluate_box_bound(box, cuts, certificates)
 
 
 def split(box: Box, dimension: int) -> tuple[Box, Box]:
@@ -1061,50 +1508,14 @@ def split(box: Box, dimension: int) -> tuple[Box, Box]:
     return Box(box.lower, tuple(left_upper)), Box(tuple(right_lower), box.upper)
 
 
-def search(args: argparse.Namespace) -> dict[str, object]:
-    iv.dps = args.precision
-    cuts = default_cuts()
-    certificates = reference_certificates()
-    initial_box = Box(
-        (args.eta, ZERO, ZERO, ZERO, ZERO),
-        (4 * args.delta, 2 * args.delta, args.delta, 2 * args.delta, args.delta),
-    )
-    initial = box_bound(initial_box, cuts, certificates, args.eta, args.delta)
-    if initial is None:
-        raise RuntimeError("initial eliminated domain is infeasible")
-    queue = [(-initial.value, 0, initial)]
-    identifier = 1
-    splits = 0
-    maximum_queue = 1
-    while queue and splits < args.max_boxes:
-        _, _, current = heapq.heappop(queue)
-        if current.value < ZERO:
-            return {
-                "status": "verified negative eliminated-composition cover",
-                "upper_bound": float(current.value),
-                "upper_bound_numerator": str(current.value.numerator),
-                "upper_bound_denominator": str(current.value.denominator),
-                "upper_bound_is_exactly_negative": True,
-                "boxes_split": splits,
-                "boxes_remaining": len(queue) + 1,
-                "maximum_queue_size": maximum_queue,
-            }
-        for child in split(current.box, current.split_dimension):
-            bounded = box_bound(
-                child,
-                current.cuts,
-                current.certificates,
-                args.eta,
-                args.delta,
-            )
-            if bounded is None:
-                continue
-            heapq.heappush(queue, (-bounded.value, identifier, bounded))
-            identifier += 1
-        splits += 1
-        maximum_queue = max(maximum_queue, len(queue))
+def incomplete_result(
+    queue: list[tuple[Fraction, int, Bound]],
+    splits: int,
+    maximum_queue: int,
+    extra: dict[str, object] | None = None,
+) -> dict[str, object]:
     worst = queue[0][2] if queue else None
-    return {
+    result = {
         "status": "exact eliminated-composition cover incomplete",
         "current_upper_bound": float(-queue[0][0]) if queue else None,
         "current_upper_bound_numerator": (
@@ -1125,11 +1536,176 @@ def search(args: argparse.Namespace) -> dict[str, object]:
                 "split_dimension": worst.split_dimension,
                 "active_cuts": len(worst.cuts),
                 "active_certificates": len(worst.certificates),
+                "full_upper": float(worst.full_upper),
+                "conditional_upper": float(worst.conditional_upper),
+                "support_plus_conditional_upper": float(
+                    worst.local_support_upper + worst.conditional_upper
+                ),
+                "fixed_support_plus_conditional_upper": float(
+                    Fraction(1, 10_000) + worst.conditional_upper
+                ),
             }
             if worst is not None
             else None
         ),
     }
+    if extra is not None:
+        result.update(extra)
+    return result
+
+
+def verified_result(
+    current: Bound,
+    splits: int,
+    boxes_remaining: int,
+    maximum_queue: int,
+    extra: dict[str, object] | None = None,
+) -> dict[str, object]:
+    result = {
+        "status": "verified negative eliminated-composition cover",
+        "upper_bound": float(current.value),
+        "upper_bound_numerator": str(current.value.numerator),
+        "upper_bound_denominator": str(current.value.denominator),
+        "upper_bound_is_exactly_negative": True,
+        "boxes_split": splits,
+        "boxes_remaining": boxes_remaining,
+        "maximum_queue_size": maximum_queue,
+    }
+    if extra is not None:
+        result.update(extra)
+    return result
+
+
+def search_ancestral(args: argparse.Namespace) -> dict[str, object]:
+    iv.dps = args.precision
+    cuts = default_hybrid_cuts()
+    certificates = common_cut_certificates(cuts)
+    initial_box = Box(
+        (args.eta, ZERO, ZERO, ZERO, ZERO),
+        (4 * args.delta, 2 * args.delta, args.delta, 2 * args.delta, args.delta),
+    )
+    initial = box_bound(initial_box, cuts, certificates, args.eta, args.delta)
+    if initial is None:
+        raise RuntimeError("initial eliminated domain is infeasible")
+    queue = [(-initial.value, 0, initial)]
+    identifier = 1
+    splits = 0
+    maximum_queue = 1
+    while queue and splits < args.max_boxes:
+        _, _, current = heapq.heappop(queue)
+        if current.value < ZERO:
+            return verified_result(
+                current, splits, len(queue) + 1, maximum_queue
+            )
+        for child in split(current.box, current.split_dimension):
+            bounded = box_bound(
+                child,
+                current.cuts,
+                current.certificates,
+                args.eta,
+                args.delta,
+            )
+            if bounded is None:
+                continue
+            heapq.heappush(queue, (-bounded.value, identifier, bounded))
+            identifier += 1
+        splits += 1
+        maximum_queue = max(maximum_queue, len(queue))
+    return incomplete_result(queue, splits, maximum_queue)
+
+
+def search_regional(args: argparse.Namespace) -> dict[str, object]:
+    iv.dps = args.precision
+    base_cuts = default_hybrid_cuts()
+    static_certificates = tuple(
+        expand_certificate(certificate, base_cuts)
+        for certificate in common_cut_certificates(base_cuts)
+    )
+    regional: dict[tuple[Box, int], RegionalCertificate] = {}
+    initial_box = Box(
+        (args.eta, ZERO, ZERO, ZERO, ZERO),
+        (4 * args.delta, 2 * args.delta, args.delta, 2 * args.delta, args.delta),
+    )
+    initial = regional_box_bound(
+        initial_box,
+        base_cuts,
+        static_certificates,
+        regional,
+        args.eta,
+        args.delta,
+        args.regional_certificates,
+    )
+    if initial is None:
+        raise RuntimeError("initial eliminated domain is infeasible")
+    queue = [(-initial.value, 0, initial)]
+    identifier = 1
+    splits = 0
+    refreshes = 0
+    maximum_queue = 1
+    while queue and splits < args.max_boxes:
+        _, _, current = heapq.heappop(queue)
+        refreshed = regional_box_bound(
+            current.box,
+            base_cuts,
+            static_certificates,
+            regional,
+            args.eta,
+            args.delta,
+            args.regional_certificates,
+        )
+        if refreshed is None:
+            continue
+        refreshes += 1
+        next_value = -queue[0][0] if queue else None
+        if next_value is not None and refreshed.value < next_value:
+            heapq.heappush(queue, (-refreshed.value, identifier, refreshed))
+            identifier += 1
+            continue
+        current = refreshed
+        if current.value < ZERO:
+            return verified_result(
+                current,
+                splits,
+                len(queue) + 1,
+                maximum_queue,
+                {
+                    "regional_bank": True,
+                    "regional_certificates_generated": len(regional),
+                    "regional_refreshes": refreshes,
+                },
+            )
+        for child in split(current.box, current.split_dimension):
+            bounded = regional_box_bound(
+                child,
+                base_cuts,
+                static_certificates,
+                regional,
+                args.eta,
+                args.delta,
+                args.regional_certificates,
+            )
+            if bounded is None:
+                continue
+            heapq.heappush(queue, (-bounded.value, identifier, bounded))
+            identifier += 1
+        splits += 1
+        maximum_queue = max(maximum_queue, len(queue))
+    return incomplete_result(
+        queue,
+        splits,
+        maximum_queue,
+        {
+            "regional_bank": True,
+            "regional_certificates_generated": len(regional),
+            "regional_refreshes": refreshes,
+        },
+    )
+
+
+def search(args: argparse.Namespace) -> dict[str, object]:
+    if getattr(args, "regional_bank", False):
+        return search_regional(args)
+    return search_ancestral(args)
 
 
 def parse_args() -> argparse.Namespace:
@@ -1139,9 +1715,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--eta", type=Fraction, default=Fraction(1, 500))
     parser.add_argument("--precision", type=int, default=80)
     parser.add_argument("--max-boxes", type=int, default=100_000)
+    parser.add_argument("--regional-bank", action="store_true")
+    parser.add_argument("--regional-certificates", type=int, default=12)
     args = parser.parse_args()
     if args.prime != 5:
         parser.error("this first eliminated checker is specialized to p=5")
+    if args.regional_certificates < 1:
+        parser.error("regional-certificates must be positive")
     return args
 
 

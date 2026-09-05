@@ -1,0 +1,127 @@
+{
+  "best_stratum": "opposite_pair",
+  "implication": "Pinsker gives L >= (2*e0^2+||e_nonzero||_2^2)/max(A,B).",
+  "minimum_found": 0.4105458279390243,
+  "prime": 5,
+  "ratio": "(2*e0^2+||e_nonzero||_2^2)/R",
+  "status": "floating multistart audit; not a global certificate",
+  "strata": {
+    "four_symbols": {
+      "crossing_ratio": 0.41789083124950305,
+      "increment_nonzero_law": [
+        1.8898376706147893e-16,
+        0.4999999994847115,
+        0.4999999994847115,
+        1.0305768101571902e-09
+      ],
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "residual_ratio": 0.4105458290502866,
+      "scale_free_defect": 0.14405828866488568,
+      "state_nonzero_law": [
+        2.783818020668139e-16,
+        0.4999999994847114,
+        0.4999999994847114,
+        1.03057681015719e-09
+      ],
+      "support": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "nonopposite_pair": {
+      "crossing_ratio": 0.39999999423358323,
+      "increment_nonzero_law": [
+        2.0611536181902033e-09,
+        0.9999999979388463,
+        0.0,
+        0.0
+      ],
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "residual_ratio": 1.0000000010305785,
+      "scale_free_defect": 0.1599999973336012,
+      "state_nonzero_law": [
+        2.8322361424427497e-18,
+        0.6666666601343387,
+        0.3333333384915589,
+        1.3741024014949073e-09
+      ],
+      "support": [
+        0,
+        1
+      ]
+    },
+    "opposite_pair": {
+      "crossing_ratio": 0.4178909186658901,
+      "increment_nonzero_law": [
+        0.5000022985686197,
+        0.0,
+        0.0,
+        0.4999977014313803
+      ],
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "residual_ratio": 0.4105458279390243,
+      "scale_free_defect": 0.14405831022222826,
+      "state_nonzero_law": [
+        0.5000006700662457,
+        1.8216272053505336e-09,
+        1.0330777510551727e-09,
+        0.49999932707904937
+      ],
+      "support": [
+        0,
+        3
+      ]
+    },
+    "singleton": {
+      "crossing_ratio": 0.3999999878237819,
+      "increment_nonzero_law": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "residual_ratio": 1.0000000015458728,
+      "scale_free_defect": 0.15999999839399354,
+      "state_nonzero_law": [
+        0.6666666681136402,
+        6.870512016648499e-10,
+        6.870512016648499e-10,
+        0.33333333051225755
+      ],
+      "support": [
+        0
+      ]
+    },
+    "three_symbols": {
+      "crossing_ratio": 0.41789085678114496,
+      "increment_nonzero_law": [
+        1.030589840582103e-09,
+        0.49999367757604957,
+        0.5000063213933607,
+        0.0
+      ],
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "residual_ratio": 0.4105458291622056,
+      "scale_free_defect": 0.14405829514156213,
+      "state_nonzero_law": [
+        2.343007667512069e-17,
+        0.49999999948471163,
+        0.49999999948471163,
+        1.0305768101571904e-09
+      ],
+      "support": [
+        0,
+        1,
+        2
+      ]
+    }
+  }
+}

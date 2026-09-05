@@ -1,0 +1,100 @@
+{
+  "status": "exact support scans for sampled encoders",
+  "ensemble": {
+    "local_map": "repetition3",
+    "master_seed": 1,
+    "sampling": "independent SplitMix64 interleaver pairs; the same integer encoder is compared across characteristics"
+  },
+  "length_9": {
+    "samples_per_schedule": 100000,
+    "PAPA": {
+      "deletion_sets_below_binary_distance": 4269016,
+      "characteristic_zero_dependency_sets": 0,
+      "bad_prime_support_counts": {
+        "3": 86520,
+        "5": 678,
+        "7": 91,
+        "11": 5
+      },
+      "bad_prime_encoder_counts": {
+        "3": 17998,
+        "5": 533,
+        "7": 90,
+        "11": 5
+      },
+      "largest_bad_prime": 11
+    },
+    "APAP": {
+      "deletion_sets_below_binary_distance": 3761884,
+      "characteristic_zero_dependency_sets": 0,
+      "bad_prime_support_counts": {
+        "3": 734377,
+        "5": 8447,
+        "7": 344
+      },
+      "bad_prime_encoder_counts": {
+        "3": 60653,
+        "5": 3665,
+        "7": 344
+      },
+      "largest_bad_prime": 7
+    }
+  },
+  "length_12": {
+    "samples_per_schedule": 10000,
+    "PAPA": {
+      "deletion_sets_below_binary_distance": 1493973,
+      "characteristic_zero_dependency_sets": 0,
+      "bad_prime_support_counts": {
+        "3": 14487,
+        "5": 38,
+        "7": 5,
+        "11": 1
+      },
+      "bad_prime_encoder_counts": {
+        "3": 1400,
+        "5": 37,
+        "7": 5,
+        "11": 1
+      },
+      "largest_bad_prime": 11
+    },
+    "APAP": {
+      "deletion_sets_below_binary_distance": 1083964,
+      "characteristic_zero_dependency_sets": 0,
+      "bad_prime_support_counts": {
+        "3": 189594,
+        "5": 949,
+        "7": 30,
+        "13": 1
+      },
+      "bad_prime_encoder_counts": {
+        "3": 6691,
+        "5": 274,
+        "7": 21,
+        "13": 1
+      },
+      "largest_bad_prime": 13
+    }
+  },
+  "apap_p13_counterexample": {
+    "sample": 7912,
+    "sample_seed": 12380526508519931293,
+    "first_permutation": [4, 11, 10, 7, 6, 8, 9, 3, 1, 0, 5, 2],
+    "second_permutation": [4, 9, 2, 0, 6, 11, 5, 1, 7, 8, 3, 10],
+    "binary_distance": 5,
+    "prime": 13,
+    "prime_distance": 4,
+    "prime_message": [0, 0, 1, 4],
+    "prime_codeword": [3, 0, 0, 0, 0, 0, 6, 2, 0, 0, 2, 0],
+    "prime_support": [0, 6, 7, 10],
+    "retained_top_determinantal_divisor": 39
+  },
+  "commands": [
+    "python scripts/scan_bad_primes.py --blocks 3 --samples 100000 --schedule PAPA --seed 1",
+    "python scripts/scan_bad_primes.py --blocks 3 --samples 100000 --schedule APAP --seed 1",
+    "python scripts/scan_bad_primes.py --blocks 4 --samples 10000 --schedule PAPA --seed 1",
+    "python scripts/scan_bad_primes.py --blocks 4 --samples 10000 --schedule APAP --seed 1"
+  ],
+  "limitation": "The scans are exhaustive over supports for each sampled encoder, but the interleaver pairs at lengths nine and twelve are sampled rather than exhaustive."
+}

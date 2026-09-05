@@ -1,0 +1,63 @@
+{
+  "parameters": {
+    "prime": 5,
+    "repetition": 3,
+    "delta": 0.1323,
+    "eta": 0.002,
+    "bank_iterations": 18,
+    "bank_restarts": 12,
+    "seed": 11,
+    "initial_cuts_per_stage": 76,
+    "final_cuts_per_stage": 120
+  },
+  "initial_finite_bank_search_upper": -0.0007291058250162483,
+  "global_cover_discrepancy": {
+    "splits": 3000,
+    "escaped_bank_value": 0.0000455301892475779,
+    "locally_fitted_projection_upper": -0.14889751377548627,
+    "resolution": "added the fitted cut pair and its multiplicative orbits"
+  },
+  "milestones": [
+    {
+      "splits": 1500,
+      "floating_lp_upper": 0.003612920529570768,
+      "cuts_per_stage": 76
+    },
+    {
+      "splits": 3000,
+      "floating_lp_upper": 0.002130805039602751,
+      "cuts_per_stage": 76
+    },
+    {
+      "splits": 3250,
+      "floating_lp_upper": 0.0011372233650472907,
+      "cuts_per_stage": 120
+    },
+    {
+      "splits": 3500,
+      "floating_lp_upper": 0.0004818654398203309,
+      "cuts_per_stage": 120
+    },
+    {
+      "splits": 3750,
+      "floating_lp_upper": 0.00008859186508639386,
+      "cuts_per_stage": 120
+    },
+    {
+      "splits": 3799,
+      "floating_lp_upper": -6.328991926738553e-7,
+      "cuts_per_stage": 120,
+      "status": "first floating zero crossing"
+    },
+    {
+      "splits": 3854,
+      "floating_lp_upper": -0.0001036132929906064,
+      "cuts_per_stage": 120,
+      "outer_tangent_iterations": 12,
+      "status": "floating margin target reached"
+    }
+  ],
+  "tests_passed": 87,
+  "status": "global floating LP cover closed with margin",
+  "scope": "The LP relaxation is mathematically valid for the finite floating cut bank. Floating potentials, transcendental constants, and LP solves still require directed or exact replay."
+}

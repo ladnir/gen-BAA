@@ -1,0 +1,38 @@
+{
+  "delta": 0.22,
+  "eta": 0.002,
+  "maximum_zero_payment_defect": 1e-06,
+  "prime": 5,
+  "repetition": 3,
+  "rows": [
+    {
+      "maximum_upper_bound_found": 0.00016146194129923442,
+      "projection": "normalized-coercive",
+      "restarts": 64,
+      "seed": 43,
+      "zero_payment_defect": 1.0000002998489175e-06
+    },
+    {
+      "maximum_upper_bound_found": -0.0005076877517645406,
+      "optimizer_success": true,
+      "projection": "normalized-cancellation",
+      "restarts": 64,
+      "seed": 43,
+      "zero_payment_defect": 1.000000052941729e-06
+    },
+    {
+      "maximum_upper_bound_found": -0.0005064232991186444,
+      "optimizer_success": true,
+      "projection": "residual-cancellation",
+      "restarts": 64,
+      "seed": 43,
+      "zero_payment_defect": 1.0000001552216414e-06
+    }
+  ],
+  "status": "floating constrained multistart diagnostics; not global certificates",
+  "theorem_status": {
+    "cancellation_floor": "proved",
+    "normalized_coercive": "conjectural constant 4/5",
+    "residual_cancellation": "uses conjectural algebraic constant 2/5"
+  }
+}

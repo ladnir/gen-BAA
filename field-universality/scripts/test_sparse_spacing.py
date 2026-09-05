@@ -90,6 +90,15 @@ class SparseSpacingTests(unittest.TestCase):
             (ratio - 3) ** 3,
         )
 
+    def test_septic_sparse_constant_at_eleven_over_fifty(self) -> None:
+        self.assertLess(429, 21**2)
+        self.assertLess(21, 299_997)
+        ratio = 300_000
+        self.assertLess(
+            100 * 3 * 6**2 * 3**2 * ratio**2 * 21**3,
+            49 * 4**3 * (ratio - 3) ** 3,
+        )
+
     def test_quinary_sparse_constant_at_larger_cutoff(self) -> None:
         self.assertLess(19, 5**2)
         self.assertLess(3, 29_997)

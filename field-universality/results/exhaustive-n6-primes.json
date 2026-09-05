@@ -1,0 +1,84 @@
+{
+  "status": "complete enumeration of every ordered pair of length-six interleavers",
+  "ensemble": {
+    "local_map": "repetition3",
+    "length": 6,
+    "dimension": 2,
+    "interleavers_per_stage": 720,
+    "ordered_interleaver_pairs_per_schedule": 518400
+  },
+  "PAPA": {
+    "binary_distance_pair_counts": {
+      "1": 69120,
+      "2": 264960,
+      "3": 164736,
+      "4": 19584
+    },
+    "rational_distance_pair_counts": {
+      "2": 20736,
+      "3": 75096,
+      "4": 243288,
+      "5": 179280
+    },
+    "characteristic_zero_distance_beating_pairs": 0,
+    "bad_odd_prime_pair_counts": {
+      "3": 129960,
+      "5": 9864,
+      "7": 2448,
+      "11": 432
+    },
+    "bad_odd_prime_pair_fractions": {
+      "3": 0.25069444444444444,
+      "5": 0.01902777777777778,
+      "7": 0.004722222222222222,
+      "11": 0.0008333333333333334
+    },
+    "largest_bad_odd_prime": 11
+  },
+  "APAP": {
+    "binary_distance_pair_counts": {
+      "1": 172800,
+      "2": 172800,
+      "3": 155520,
+      "4": 17280
+    },
+    "rational_distance_pair_counts": {
+      "3": 25920,
+      "4": 266400,
+      "5": 226080
+    },
+    "characteristic_zero_distance_beating_pairs": 0,
+    "bad_odd_prime_pair_counts": {
+      "3": 254160,
+      "5": 28080,
+      "7": 1440
+    },
+    "bad_odd_prime_pair_fractions": {
+      "3": 0.49027777777777776,
+      "5": 0.05416666666666667,
+      "7": 0.002777777777777778
+    },
+    "largest_bad_odd_prime": 7
+  },
+  "global_diagnostics": {
+    "candidate_odd_primes": [
+      3,
+      5,
+      7,
+      11,
+      13,
+      17,
+      19,
+      23,
+      29
+    ],
+    "largest_candidate_odd_prime": 29,
+    "maximum_abs_projective_determinant_or_column_content": 39,
+    "interpretation": "The listed primes can change projective column data for some encoder. Among them, 13, 17, 19, 23, and 29 never lower distance below the coupled binary distance. No prime above 29 can change that data at length six."
+  },
+  "commands": [
+    "python scripts/scan_bad_primes.py --blocks 2 --schedule PAPA --exhaustive-interleavers",
+    "python scripts/scan_bad_primes.py --blocks 2 --schedule APAP --exhaustive-interleavers"
+  ],
+  "limitation": "The result is complete at length six only. It gives no uniform bound on bad characteristics as the block count grows."
+}

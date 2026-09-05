@@ -1,0 +1,1256 @@
+{
+  "analytic_obstruction": "For t=1/5 and uniform nonzero increments, L/A equals s*D(v||(1-1/s)v+u4/s), while R/A^2 equals 0.64*||v-u4||_2^2. Hence A*L/R tends to zero as s tends to infinity for every fixed positive nonuniform v.",
+  "minimum_increment_normalized_ratio": 0.004363046838199069,
+  "minimum_max_support_normalized_ratio": 0.8809162730249986,
+  "normalization": {
+    "increment": "A*L/R",
+    "max_support": "max(A,B)*L/R",
+    "support_ratio": "s=B/A"
+  },
+  "prime": 5,
+  "rows": [
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.3327612033358945,
+      "explicit_family_increment_normalized_ratio": null,
+      "explicit_family_max_support_normalized_ratio": null,
+      "increment_nonzero_law": [
+        0.0,
+        0.500000021101454,
+        0.49999997889854597,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.9899700744754734,
+      "max_support_normalized_ratio": 0.9899700744754734,
+      "opposite_pair": {
+        "crossing_ratio": 0.3327612033358945,
+        "increment_nonzero_law": [
+          0.0,
+          0.500000021101454,
+          0.49999997889854597,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.9899700744754734,
+        "max_support_normalized_ratio": 0.9899700744754734,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.043762590992240336,
+        "scale_free_payment": 0.04332365546382785,
+        "state_nonzero_law": [
+          0.13953484532160776,
+          0.36046516209850193,
+          0.3604651285619379,
+          0.13953486401795245
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.043762590992240336,
+      "scale_free_payment": 0.04332365546382785,
+      "state_nonzero_law": [
+        0.13953484532160776,
+        0.36046516209850193,
+        0.3604651285619379,
+        0.13953486401795245
+      ],
+      "support_ratio": 0.75
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.32803757260064864,
+      "explicit_family_increment_normalized_ratio": 4.094548779790913,
+      "explicit_family_max_support_normalized_ratio": 4.094548779790913,
+      "increment_nonzero_law": [
+        0.0,
+        0.4999999919829241,
+        0.5000000080170759,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.9670852417376241,
+      "max_support_normalized_ratio": 0.9670852417376241,
+      "opposite_pair": {
+        "crossing_ratio": 0.32803757260064864,
+        "increment_nonzero_law": [
+          0.0,
+          0.4999999919829241,
+          0.5000000080170759,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.9670852417376241,
+        "max_support_normalized_ratio": 0.9670852417376241,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.041435016452797575,
+        "scale_free_payment": 0.04007119290265618,
+        "state_nonzero_law": [
+          0.1423177327387913,
+          0.3576822351977289,
+          0.3576823889562665,
+          0.14231764310721332
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.041435016452797575,
+      "scale_free_payment": 0.04007119290265618,
+      "state_nonzero_law": [
+        0.1423177327387913,
+        0.3576822351977289,
+        0.3576823889562665,
+        0.14231764310721332
+      ],
+      "support_ratio": 0.8
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.32344873507228694,
+      "explicit_family_increment_normalized_ratio": 3.8685386650114086,
+      "explicit_family_max_support_normalized_ratio": 3.8685386650114086,
+      "increment_nonzero_law": [
+        0.0,
+        0.5000000037770054,
+        0.4999999962229946,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.9451144871224838,
+      "max_support_normalized_ratio": 0.9451144871224838,
+      "opposite_pair": {
+        "crossing_ratio": 0.32344873507228694,
+        "increment_nonzero_law": [
+          0.0,
+          0.5000000037770054,
+          0.4999999962229946,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.9451144871224838,
+        "max_support_normalized_ratio": 0.9451144871224838,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.03920362882297169,
+        "scale_free_payment": 0.03705191754836311,
+        "state_nonzero_law": [
+          0.14508168254705223,
+          0.3549183154817392,
+          0.35491837927173536,
+          0.14508162269947314
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.03920362882297169,
+      "scale_free_payment": 0.03705191754836311,
+      "state_nonzero_law": [
+        0.14508168254705223,
+        0.3549183154817392,
+        0.35491837927173536,
+        0.14508162269947314
+      ],
+      "support_ratio": 0.85
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.3189956256883695,
+      "explicit_family_increment_normalized_ratio": 3.672364843496945,
+      "explicit_family_max_support_normalized_ratio": 3.672364843496945,
+      "increment_nonzero_law": [
+        0.0,
+        0.5000000044249854,
+        0.4999999955750146,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.9239940592144557,
+      "max_support_normalized_ratio": 0.9239940592144557,
+      "opposite_pair": {
+        "crossing_ratio": 0.3189956256883695,
+        "increment_nonzero_law": [
+          0.0,
+          0.5000000044249854,
+          0.4999999955750146,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.9239940592144557,
+        "max_support_normalized_ratio": 0.9239940592144557,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.03706843304452625,
+        "scale_free_payment": 0.03425101191753107,
+        "state_nonzero_law": [
+          0.14781957002251858,
+          0.352180345585789,
+          0.3521806064849359,
+          0.14781947790675656
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.03706843304452625,
+      "scale_free_payment": 0.03425101191753107,
+      "state_nonzero_law": [
+        0.14781957002251858,
+        0.352180345585789,
+        0.3521806064849359,
+        0.14781947790675656
+      ],
+      "support_ratio": 0.9
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.3168201044344595,
+      "explicit_family_increment_normalized_ratio": 3.5834396299935447,
+      "explicit_family_max_support_normalized_ratio": 3.5834396299935447,
+      "increment_nonzero_law": [
+        0.0,
+        0.4999998495013648,
+        0.5000001504986352,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.9137351043036833,
+      "max_support_normalized_ratio": 0.9137351043036833,
+      "opposite_pair": {
+        "crossing_ratio": 0.3168201044344595,
+        "increment_nonzero_law": [
+          0.0,
+          0.4999998495013648,
+          0.5000001504986352,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.9137351043036833,
+        "max_support_normalized_ratio": 0.9137351043036833,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.03603671101704464,
+        "scale_free_payment": 0.03292800789992098,
+        "state_nonzero_law": [
+          0.14917694105024357,
+          0.3508227388175914,
+          0.3508237208533543,
+          0.1491765992788107
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.03603671101704464,
+      "scale_free_payment": 0.03292800789992098,
+      "state_nonzero_law": [
+        0.14917694105024357,
+        0.3508227388175914,
+        0.3508237208533543,
+        0.1491765992788107
+      ],
+      "support_ratio": 0.925
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.3147379828991364,
+      "explicit_family_increment_normalized_ratio": 3.4997817133073634,
+      "explicit_family_max_support_normalized_ratio": 3.4997817133073634,
+      "increment_nonzero_law": [
+        0.0,
+        0.5033589105251943,
+        0.4966410894748057,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.9036589159954665,
+      "max_support_normalized_ratio": 0.9036589159954665,
+      "opposite_pair": {
+        "crossing_ratio": 0.3147379828991364,
+        "increment_nonzero_law": [
+          0.0,
+          0.5033589105251943,
+          0.4966410894748057,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.9036589159954665,
+        "max_support_normalized_ratio": 0.9036589159954665,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.035475114787785346,
+        "scale_free_payment": 0.03205740377394485,
+        "state_nonzero_law": [
+          0.14357116912202852,
+          0.3684446273418129,
+          0.33080690320813505,
+          0.15717730032802354
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.035475114787785346,
+      "scale_free_payment": 0.03205740377394485,
+      "state_nonzero_law": [
+        0.14357116912202852,
+        0.3684446273418129,
+        0.33080690320813505,
+        0.15717730032802354
+      ],
+      "support_ratio": 0.95
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.31268227659590153,
+      "explicit_family_increment_normalized_ratio": 3.4208723355687973,
+      "explicit_family_max_support_normalized_ratio": 3.4208723355687973,
+      "increment_nonzero_law": [
+        0.0,
+        0.508590834142015,
+        0.491409165857985,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.8928146988005433,
+      "max_support_normalized_ratio": 0.8928146988005433,
+      "opposite_pair": {
+        "crossing_ratio": 0.31268227659590153,
+        "increment_nonzero_law": [
+          0.0,
+          0.508590834142015,
+          0.491409165857985,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.8928146988005433,
+        "max_support_normalized_ratio": 0.8928146988005433,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.038191118399252905,
+        "scale_free_payment": 0.03409759187048487,
+        "state_nonzero_law": [
+          0.12957531190593224,
+          0.4083642730956711,
+          0.2899598881981677,
+          0.17210052680022903
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.038191118399252905,
+      "scale_free_payment": 0.03409759187048487,
+      "state_nonzero_law": [
+        0.12957531190593224,
+        0.4083642730956711,
+        0.2899598881981677,
+        0.17210052680022903
+      ],
+      "support_ratio": 0.975
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.30995567719513556,
+      "explicit_family_increment_normalized_ratio": 3.3462631427388465,
+      "explicit_family_max_support_normalized_ratio": 3.3462631427388465,
+      "increment_nonzero_law": [
+        0.0,
+        0.4907232065890545,
+        0.5092767934109454,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.8809162730249986,
+      "max_support_normalized_ratio": 0.8809162730249986,
+      "opposite_pair": {
+        "crossing_ratio": 0.30995567719513556,
+        "increment_nonzero_law": [
+          0.0,
+          0.4907232065890545,
+          0.5092767934109454,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.8809162730249986,
+        "max_support_normalized_ratio": 0.8809162730249986,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.039972658819657766,
+        "scale_free_payment": 0.03521256563031276,
+        "state_nonzero_law": [
+          0.1802759165408713,
+          0.26950125736466474,
+          0.42628345936131684,
+          0.12393936673314696
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.039972658819657766,
+      "scale_free_payment": 0.03521256563031276,
+      "state_nonzero_law": [
+        0.1802759165408713,
+        0.26950125736466474,
+        0.42628345936131684,
+        0.12393936673314696
+      ],
+      "support_ratio": 1.0
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.30677793574013523,
+      "explicit_family_increment_normalized_ratio": 3.2755642576708692,
+      "explicit_family_max_support_normalized_ratio": 3.3574533641126405,
+      "increment_nonzero_law": [
+        0.0,
+        0.5087536050484637,
+        0.4912463949515363,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.868323397543996,
+      "max_support_normalized_ratio": 0.8900314824825958,
+      "opposite_pair": {
+        "crossing_ratio": 0.30677793574013523,
+        "increment_nonzero_law": [
+          0.0,
+          0.5087536050484637,
+          0.4912463949515363,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.868323397543996,
+        "max_support_normalized_ratio": 0.8900314824825958,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.04101930959019043,
+        "scale_free_payment": 0.03561802626826317,
+        "state_nonzero_law": [
+          0.12100282100440637,
+          0.4372280234388224,
+          0.2548756054975484,
+          0.18689355005922273
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.04101930959019043,
+      "scale_free_payment": 0.03561802626826317,
+      "state_nonzero_law": [
+        0.12100282100440637,
+        0.4372280234388224,
+        0.2548756054975484,
+        0.18689355005922273
+      ],
+      "support_ratio": 1.025
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.3032815192418006,
+      "explicit_family_increment_normalized_ratio": 3.2084347389618633,
+      "explicit_family_max_support_normalized_ratio": 3.3688564759099564,
+      "increment_nonzero_law": [
+        0.0,
+        0.507708052369312,
+        0.49229194763068795,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.8552862739217617,
+      "max_support_normalized_ratio": 0.8980505876178498,
+      "opposite_pair": {
+        "crossing_ratio": 0.3032815192418006,
+        "increment_nonzero_law": [
+          0.0,
+          0.507708052369312,
+          0.49229194763068795,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.8552862739217617,
+        "max_support_normalized_ratio": 0.8980505876178498,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.041477594852178334,
+        "scale_free_payment": 0.03547521755235605,
+        "state_nonzero_law": [
+          0.11963208861264486,
+          0.44408230913893887,
+          0.24349093659378626,
+          0.19279466565463002
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.041477594852178334,
+      "scale_free_payment": 0.03547521755235605,
+      "state_nonzero_law": [
+        0.11963208861264486,
+        0.44408230913893887,
+        0.24349093659378626,
+        0.19279466565463002
+      ],
+      "support_ratio": 1.05
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.2995538508100898,
+      "explicit_family_increment_normalized_ratio": 3.144574881085635,
+      "explicit_family_max_support_normalized_ratio": 3.3804179971670574,
+      "increment_nonzero_law": [
+        0.0,
+        0.5064254957940294,
+        0.4935745042059706,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.8419847868648297,
+      "max_support_normalized_ratio": 0.9051336458796919,
+      "opposite_pair": {
+        "crossing_ratio": 0.2995538508100898,
+        "increment_nonzero_law": [
+          0.0,
+          0.5064254957940294,
+          0.4935745042059706,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.8419847868648297,
+        "max_support_normalized_ratio": 0.9051336458796919,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.0414590906080747,
+        "scale_free_payment": 0.03490792356924944,
+        "state_nonzero_law": [
+          0.11932358911062792,
+          0.44812502203956367,
+          0.2342652051686478,
+          0.19828618368116052
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.0414590906080747,
+      "scale_free_payment": 0.03490792356924944,
+      "state_nonzero_law": [
+        0.11932358911062792,
+        0.44812502203956367,
+        0.2342652051686478,
+        0.19828618368116052
+      ],
+      "support_ratio": 1.075
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.29565772798837625,
+      "explicit_family_increment_normalized_ratio": 3.083719949841808,
+      "explicit_family_max_support_normalized_ratio": 3.392091944825989,
+      "increment_nonzero_law": [
+        0.0,
+        0.5050496401236949,
+        0.4949503598763051,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.8285514552382603,
+      "max_support_normalized_ratio": 0.9114066007620865,
+      "opposite_pair": {
+        "crossing_ratio": 0.29565772798837625,
+        "increment_nonzero_law": [
+          0.0,
+          0.5050496401236949,
+          0.4949503598763051,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.8285514552382603,
+        "max_support_normalized_ratio": 0.9114066007620865,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.041051960747252744,
+        "scale_free_payment": 0.034013661817520205,
+        "state_nonzero_law": [
+          0.11979661460226353,
+          0.45008094591102693,
+          0.22661591131480968,
+          0.20350652817190001
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.041051960747252744,
+      "scale_free_payment": 0.034013661817520205,
+      "state_nonzero_law": [
+        0.11979661460226353,
+        0.45008094591102693,
+        0.22661591131480968,
+        0.20350652817190001
+      ],
+      "support_ratio": 1.1
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.2916403608054158,
+      "explicit_family_increment_normalized_ratio": 3.025635047052555,
+      "explicit_family_max_support_normalized_ratio": 3.403839427934124,
+      "increment_nonzero_law": [
+        0.0,
+        0.4963397031504052,
+        0.5036602968495948,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.8150856955980865,
+      "max_support_normalized_ratio": 0.9169714075478473,
+      "opposite_pair": {
+        "crossing_ratio": 0.2916403608054158,
+        "increment_nonzero_law": [
+          0.0,
+          0.4963397031504052,
+          0.5036602968495948,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.8150856955980865,
+        "max_support_normalized_ratio": 0.9169714075478473,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.04032701217507589,
+        "scale_free_payment": 0.032869970770114235,
+        "state_nonzero_law": [
+          0.2085237391804969,
+          0.22018560695096875,
+          0.4504147559874429,
+          0.12087589788109157
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.04032701217507589,
+      "scale_free_payment": 0.032869970770114235,
+      "state_nonzero_law": [
+        0.2085237391804969,
+        0.22018560695096875,
+        0.4504147559874429,
+        0.12087589788109157
+      ],
+      "support_ratio": 1.125
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.2875390210473585,
+      "explicit_family_increment_normalized_ratio": 2.97011087136023,
+      "explicit_family_max_support_normalized_ratio": 3.4156275020642646,
+      "increment_nonzero_law": [
+        0.0,
+        0.5023043301725139,
+        0.49769566982748614,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.8016630924000883,
+      "max_support_normalized_ratio": 0.9219125562601014,
+      "opposite_pair": {
+        "crossing_ratio": 0.2875390210473585,
+        "increment_nonzero_law": [
+          0.0,
+          0.5023043301725139,
+          0.49769566982748614,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.8016630924000883,
+        "max_support_normalized_ratio": 0.9219125562601014,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.03934246188764418,
+        "scale_free_payment": 0.03153939965948145,
+        "state_nonzero_law": [
+          0.12244343447035108,
+          0.44944923239833123,
+          0.21473577545317696,
+          0.21337155767814064
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.03934246188764418,
+      "scale_free_payment": 0.03153939965948145,
+      "state_nonzero_law": [
+        0.12244343447035108,
+        0.44944923239833123,
+        0.21473577545317696,
+        0.21337155767814064
+      ],
+      "support_ratio": 1.15
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.2792016885969087,
+      "explicit_family_increment_normalized_ratio": 2.8660149231221426,
+      "explicit_family_max_support_normalized_ratio": 3.439217907746571,
+      "increment_nonzero_law": [
+        0.0,
+        0.5002062477316627,
+        0.49979375226833733,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.7751660400728925,
+      "max_support_normalized_ratio": 0.9301992480874709,
+      "opposite_pair": {
+        "crossing_ratio": 0.2792016885969087,
+        "increment_nonzero_law": [
+          0.0,
+          0.5002062477316627,
+          0.49979375226833733,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.7751660400728925,
+        "max_support_normalized_ratio": 0.9301992480874709,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.036781183216118285,
+        "scale_free_payment": 0.028511524142833946,
+        "state_nonzero_law": [
+          0.22260877477390023,
+          0.20615227066935038,
+          0.4445089434928272,
+          0.12673001106392212
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.036781183216118285,
+      "scale_free_payment": 0.028511524142833946,
+      "state_nonzero_law": [
+        0.22260877477390023,
+        0.20615227066935038,
+        0.4445089434928272,
+        0.12673001106392212
+      ],
+      "support_ratio": 1.2
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.2708311155204604,
+      "explicit_family_increment_normalized_ratio": 2.770149372355293,
+      "explicit_family_max_support_normalized_ratio": 3.462686715444116,
+      "increment_nonzero_law": [
+        0.0,
+        0.5023663003186327,
+        0.4976336996813673,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.7493824092637658,
+      "max_support_normalized_ratio": 0.9367280115797072,
+      "opposite_pair": {
+        "crossing_ratio": 0.2708311155204604,
+        "increment_nonzero_law": [
+          0.0,
+          0.5023663003186327,
+          0.4976336996813673,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.7493824092637658,
+        "max_support_normalized_ratio": 0.9367280115797072,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.03367011343929092,
+        "scale_free_payment": 0.025231790729320126,
+        "state_nonzero_law": [
+          0.23124265296690902,
+          0.19998142335099572,
+          0.4365606367346948,
+          0.13221528694740053
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.03367011343929092,
+      "scale_free_payment": 0.025231790729320126,
+      "state_nonzero_law": [
+        0.23124265296690902,
+        0.19998142335099572,
+        0.4365606367346948,
+        0.13221528694740053
+      ],
+      "support_ratio": 1.25
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.2625519555586946,
+      "explicit_family_increment_normalized_ratio": 2.6814669873114165,
+      "explicit_family_max_support_normalized_ratio": 3.485907083504842,
+      "increment_nonzero_law": [
+        0.0,
+        0.49586032099372523,
+        0.5041396790062748,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.7245015020936024,
+      "max_support_normalized_ratio": 0.9418519527216832,
+      "opposite_pair": {
+        "crossing_ratio": 0.2625519555586946,
+        "increment_nonzero_law": [
+          0.0,
+          0.49586032099372523,
+          0.5041396790062748,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.7245015020936024,
+        "max_support_normalized_ratio": 0.9418519527216832,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.030223384245892992,
+        "scale_free_payment": 0.021896887284501593,
+        "state_nonzero_law": [
+          0.13864832319711276,
+          0.42640538013142376,
+          0.19570680426262776,
+          0.23923949240883563
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.030223384245892992,
+      "scale_free_payment": 0.021896887284501593,
+      "state_nonzero_law": [
+        0.13864832319711276,
+        0.42640538013142376,
+        0.19570680426262776,
+        0.23923949240883563
+      ],
+      "support_ratio": 1.3
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.24645500136439183,
+      "explicit_family_increment_normalized_ratio": 2.522333312684066,
+      "explicit_family_max_support_normalized_ratio": 3.531266637757692,
+      "increment_nonzero_law": [
+        0.0,
+        0.506522645243744,
+        0.493477354756256,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.6778093469716446,
+      "max_support_normalized_ratio": 0.9489330857603024,
+      "opposite_pair": {
+        "crossing_ratio": 0.24645500136439183,
+        "increment_nonzero_law": [
+          0.0,
+          0.506522645243744,
+          0.493477354756256,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.6778093469716446,
+        "max_support_normalized_ratio": 0.9489330857603024,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.02282993391171786,
+        "scale_free_payment": 0.015474342596107289,
+        "state_nonzero_law": [
+          0.25318256063682265,
+          0.19172426505747994,
+          0.40110035411070766,
+          0.15399282019498994
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.02282993391171786,
+      "scale_free_payment": 0.015474342596107289,
+      "state_nonzero_law": [
+        0.25318256063682265,
+        0.19172426505747994,
+        0.40110035411070766,
+        0.15399282019498994
+      ],
+      "support_ratio": 1.4
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.23043764287206805,
+      "explicit_family_increment_normalized_ratio": 2.3832349439957206,
+      "explicit_family_max_support_normalized_ratio": 3.574852415993581,
+      "increment_nonzero_law": [
+        0.0,
+        0.5073326677173265,
+        0.49266733228267345,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.6353386599143531,
+      "max_support_normalized_ratio": 0.9530079898715297,
+      "opposite_pair": {
+        "crossing_ratio": 0.23043764287206805,
+        "increment_nonzero_law": [
+          0.0,
+          0.5073326677173265,
+          0.49266733228267345,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.6353386599143531,
+        "max_support_normalized_ratio": 0.9530079898715297,
+        "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "optimizer_success": true,
+        "scale_free_defect": 0.014942426800779037,
+        "scale_free_payment": 0.009493501419475268,
+        "state_nonzero_law": [
+          0.26421719584499936,
+          0.19350383187942263,
+          0.368576140507343,
+          0.17370283176823498
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "optimizer_success": true,
+      "scale_free_defect": 0.014942426800779037,
+      "scale_free_payment": 0.009493501419475268,
+      "state_nonzero_law": [
+        0.26421719584499936,
+        0.19350383187942263,
+        0.368576140507343,
+        0.17370283176823498
+      ],
+      "support_ratio": 1.5
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.200021771785616,
+      "explicit_family_increment_normalized_ratio": 1.8815393831774703,
+      "explicit_family_max_support_normalized_ratio": 3.7630787663549405,
+      "increment_nonzero_law": [
+        0.0,
+        0.5004485498809278,
+        0.4995514501190722,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.4774604515954242,
+      "max_support_normalized_ratio": 0.9549209031908484,
+      "opposite_pair": {
+        "crossing_ratio": 0.200021771785616,
+        "increment_nonzero_law": [
+          0.0,
+          0.5004485498809278,
+          0.4995514501190722,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.4774604515954242,
+        "max_support_normalized_ratio": 0.9549209031908484,
+        "optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "optimizer_success": true,
+        "scale_free_defect": 1.1789915831196797e-05,
+        "scale_free_payment": 5.629218537035264e-06,
+        "state_nonzero_law": [
+          0.25157138537895024,
+          0.24744227044980957,
+          0.2526055345648357,
+          0.2483808096064046
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "optimizer_success": true,
+      "scale_free_defect": 1.1789915831196797e-05,
+      "scale_free_payment": 5.629218537035264e-06,
+      "state_nonzero_law": [
+        0.25157138537895024,
+        0.24744227044980957,
+        0.2526055345648357,
+        0.2483808096064046
+      ],
+      "support_ratio": 2.0
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.20001318409865904,
+      "explicit_family_increment_normalized_ratio": 1.3402131498950607,
+      "explicit_family_max_support_normalized_ratio": 4.0206394496851825,
+      "increment_nonzero_law": [
+        0.0,
+        0.5003270018926989,
+        0.49967299810730115,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.318307989018681,
+      "max_support_normalized_ratio": 0.954923967056043,
+      "opposite_pair": {
+        "crossing_ratio": 0.20001318409865904,
+        "increment_nonzero_law": [
+          0.0,
+          0.5003270018926989,
+          0.49967299810730115,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.318307989018681,
+        "max_support_normalized_ratio": 0.954923967056043,
+        "optimizer_message": "ABNORMAL: ",
+        "optimizer_success": false,
+        "scale_free_defect": 8.758336725217103e-06,
+        "scale_free_payment": 2.7878485501523164e-06,
+        "state_nonzero_law": [
+          0.25135915528242525,
+          0.24779077874348576,
+          0.2522410375266337,
+          0.24860902844745528
+        ]
+      },
+      "optimizer_message": "ABNORMAL: ",
+      "optimizer_success": false,
+      "scale_free_defect": 8.758336725217103e-06,
+      "scale_free_payment": 2.7878485501523164e-06,
+      "state_nonzero_law": [
+        0.25135915528242525,
+        0.24779077874348576,
+        0.2522410375266337,
+        0.24860902844745528
+      ],
+      "support_ratio": 3.0
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.20001895660091898,
+      "explicit_family_increment_normalized_ratio": 0.8590607883915938,
+      "explicit_family_max_support_normalized_ratio": 4.295303941957969,
+      "increment_nonzero_law": [
+        0.0,
+        0.4996918651315561,
+        0.5003081348684439,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.19098718833925601,
+      "max_support_normalized_ratio": 0.95493594169628,
+      "opposite_pair": {
+        "crossing_ratio": 0.20001895660091898,
+        "increment_nonzero_law": [
+          0.0,
+          0.4996918651315561,
+          0.5003081348684439,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.19098718833925601,
+        "max_support_normalized_ratio": 0.95493594169628,
+        "optimizer_message": "ABNORMAL: ",
+        "optimizer_success": false,
+        "scale_free_defect": 1.4750799075370062e-05,
+        "scale_free_payment": 2.8172136411622256e-06,
+        "state_nonzero_law": [
+          0.24819062951036633,
+          0.2529125760267443,
+          0.24713722198101787,
+          0.25175957248187153
+        ]
+      },
+      "optimizer_message": "ABNORMAL: ",
+      "optimizer_success": false,
+      "scale_free_defect": 1.4750799075370062e-05,
+      "scale_free_payment": 2.8172136411622256e-06,
+      "state_nonzero_law": [
+        0.24819062951036633,
+        0.2529125760267443,
+        0.24713722198101787,
+        0.25175957248187153
+      ],
+      "support_ratio": 5.0
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.2000680892507719,
+      "explicit_family_increment_normalized_ratio": 0.45565655922332743,
+      "explicit_family_max_support_normalized_ratio": 4.556565592233274,
+      "increment_nonzero_law": [
+        0.0,
+        0.49746002800134126,
+        0.5025399719986587,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.09550024312972438,
+      "max_support_normalized_ratio": 0.9550024312972438,
+      "opposite_pair": {
+        "crossing_ratio": 0.2000680892507719,
+        "increment_nonzero_law": [
+          0.0,
+          0.49746002800134126,
+          0.5025399719986587,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.09550024312972438,
+        "max_support_normalized_ratio": 0.9550024312972438,
+        "optimizer_message": "ABNORMAL: ",
+        "optimizer_success": false,
+        "scale_free_defect": 3.996002435883834e-05,
+        "scale_free_payment": 3.8161920417387705e-06,
+        "state_nonzero_law": [
+          0.24698458800229048,
+          0.2548313514944651,
+          0.24532668655486636,
+          0.25285737394837804
+        ]
+      },
+      "optimizer_message": "ABNORMAL: ",
+      "optimizer_success": false,
+      "scale_free_defect": 3.996002435883834e-05,
+      "scale_free_payment": 3.8161920417387705e-06,
+      "state_nonzero_law": [
+        0.24698458800229048,
+        0.2548313514944651,
+        0.24532668655486636,
+        0.25285737394837804
+      ],
+      "support_ratio": 10.0
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.20014053136184132,
+      "explicit_family_increment_normalized_ratio": 0.23551235850343175,
+      "explicit_family_max_support_normalized_ratio": 4.710247170068635,
+      "increment_nonzero_law": [
+        0.0,
+        0.49531684788500474,
+        0.5046831521149953,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.047756607466186096,
+      "max_support_normalized_ratio": 0.9551321493237219,
+      "opposite_pair": {
+        "crossing_ratio": 0.20014053136184132,
+        "increment_nonzero_law": [
+          0.0,
+          0.49531684788500474,
+          0.5046831521149953,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.047756607466186096,
+        "max_support_normalized_ratio": 0.9551321493237219,
+        "optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "optimizer_success": true,
+        "scale_free_defect": 7.10618789911912e-05,
+        "scale_free_payment": 3.3936742607919343e-06,
+        "state_nonzero_law": [
+          0.24593029633829946,
+          0.25649462132310163,
+          0.2438200512162926,
+          0.25375503112230624
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "optimizer_success": true,
+      "scale_free_defect": 7.10618789911912e-05,
+      "scale_free_payment": 3.3936742607919343e-06,
+      "state_nonzero_law": [
+        0.24593029633829946,
+        0.25649462132310163,
+        0.2438200512162926,
+        0.25375503112230624
+      ],
+      "support_ratio": 20.0
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.20054228195736498,
+      "explicit_family_increment_normalized_ratio": 0.09622629194825703,
+      "explicit_family_max_support_normalized_ratio": 4.811314597412852,
+      "increment_nonzero_law": [
+        0.0,
+        0.5058947508641346,
+        0.4941052491358654,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.01911293248205539,
+      "max_support_normalized_ratio": 0.9556466241027696,
+      "opposite_pair": {
+        "crossing_ratio": 0.20054228195736498,
+        "increment_nonzero_law": [
+          0.0,
+          0.5058947508641346,
+          0.4941052491358654,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.01911293248205539,
+        "max_support_normalized_ratio": 0.9556466241027696,
+        "optimizer_message": "ABNORMAL: ",
+        "optimizer_success": false,
+        "scale_free_defect": 0.00034607570330280363,
+        "scale_free_payment": 6.61452155090632e-06,
+        "state_nonzero_law": [
+          0.25792803821874843,
+          0.23669492728877753,
+          0.26465862557082703,
+          0.24071840892164695
+        ]
+      },
+      "optimizer_message": "ABNORMAL: ",
+      "optimizer_success": false,
+      "scale_free_defect": 0.00034607570330280363,
+      "scale_free_payment": 6.61452155090632e-06,
+      "state_nonzero_law": [
+        0.25792803821874843,
+        0.23669492728877753,
+        0.26465862557082703,
+        0.24071840892164695
+      ],
+      "support_ratio": 50.0
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.20092646524549618,
+      "explicit_family_increment_normalized_ratio": 0.048466325381504666,
+      "explicit_family_max_support_normalized_ratio": 4.846632538150467,
+      "increment_nonzero_law": [
+        0.0,
+        0.5051672156723456,
+        0.49483278432765443,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.009563172702320938,
+      "max_support_normalized_ratio": 0.9563172702320938,
+      "opposite_pair": {
+        "crossing_ratio": 0.20092646524549618,
+        "increment_nonzero_law": [
+          0.0,
+          0.5051672156723456,
+          0.49483278432765443,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.009563172702320938,
+        "max_support_normalized_ratio": 0.9563172702320938,
+        "optimizer_message": "ABNORMAL: ",
+        "optimizer_success": false,
+        "scale_free_defect": 0.0007263653903042414,
+        "scale_free_payment": 6.946357672468214e-06,
+        "state_nonzero_law": [
+          0.26118154272736493,
+          0.23096666282889708,
+          0.27150114580180246,
+          0.23635064864193558
+        ]
+      },
+      "optimizer_message": "ABNORMAL: ",
+      "optimizer_success": false,
+      "scale_free_defect": 0.0007263653903042414,
+      "scale_free_payment": 6.946357672468214e-06,
+      "state_nonzero_law": [
+        0.26118154272736493,
+        0.23096666282889708,
+        0.27150114580180246,
+        0.23635064864193558
+      ],
+      "support_ratio": 100.0
+    },
+    {
+      "best_family": "opposite-pair boundary",
+      "crossing_ratio": 0.19987352041199816,
+      "explicit_family_increment_normalized_ratio": 0.022119355784570933,
+      "explicit_family_max_support_normalized_ratio": 4.866258272605605,
+      "increment_nonzero_law": [
+        0.0,
+        0.481118901374164,
+        0.518881098625836,
+        0.0
+      ],
+      "increment_normalized_ratio": 0.004363046838199069,
+      "max_support_normalized_ratio": 0.9598703044037952,
+      "opposite_pair": {
+        "crossing_ratio": 0.19987352041199816,
+        "increment_nonzero_law": [
+          0.0,
+          0.481118901374164,
+          0.518881098625836,
+          0.0
+        ],
+        "increment_normalized_ratio": 0.004363046838199069,
+        "max_support_normalized_ratio": 0.9598703044037952,
+        "optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "optimizer_success": true,
+        "scale_free_defect": 0.0006442541114349387,
+        "scale_free_payment": 2.8109108638929597e-06,
+        "state_nonzero_law": [
+          0.26122200019480346,
+          0.23142165587374028,
+          0.2696179262381309,
+          0.2377384176933253
+        ]
+      },
+      "optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "optimizer_success": true,
+      "scale_free_defect": 0.0006442541114349387,
+      "scale_free_payment": 2.8109108638929597e-06,
+      "state_nonzero_law": [
+        0.26122200019480346,
+        0.23142165587374028,
+        0.2696179262381309,
+        0.2377384176933253
+      ],
+      "support_ratio": 220.0
+    }
+  ],
+  "status": "floating multistart minimization; not a global certificate"
+}

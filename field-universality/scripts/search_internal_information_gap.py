@@ -111,6 +111,14 @@ def search(args: argparse.Namespace) -> dict[str, object]:
     equality, equality_target, upper, upper_target = bulk.constraints(
         layout, args.eta, args.delta
     )
+    fixed_message_weight = getattr(args, "fixed_message_weight", None)
+    if fixed_message_weight is not None:
+        fixed_row = np.zeros(layout.size)
+        fixed_row[layout.mu.start + 1 : layout.mu.stop] = 1.0
+        equality = np.vstack((equality, fixed_row))
+        equality_target = np.concatenate(
+            (equality_target, np.array([fixed_message_weight]))
+        )
     if args.max_message_weight is not None:
         cap_row = np.zeros(layout.size)
         cap_row[layout.mu.start] = -1.0
@@ -222,6 +230,7 @@ def search(args: argparse.Namespace) -> dict[str, object]:
         "delta": args.delta,
         "eta": args.eta,
         "max_message_weight": args.max_message_weight,
+        "fixed_message_weight": fixed_message_weight,
         "mode": args.mode,
         "maximum_gap_constraint": (
             args.maximum_gap if args.mode == "max-exponent" else None
@@ -276,6 +285,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--maximum-gap", type=float, default=0.0)
     parser.add_argument("--gap-multiplier", type=float, default=1.5)
     parser.add_argument("--max-message-weight", type=float)
+    parser.add_argument("--fixed-message-weight", type=float)
     return parser.parse_args()
 
 

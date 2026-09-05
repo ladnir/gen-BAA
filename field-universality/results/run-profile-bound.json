@@ -1,0 +1,82 @@
+{
+  "status": "rigorous theorem; displayed numerical constants use floating-point evaluation",
+  "count_formula_verified_through_length": 10,
+  "count_profiles_checked": 345,
+  "parameters": {
+    "length": 1048575,
+    "deletion_size": 138726,
+    "deletion_runs": 120088,
+    "terminal_flag": 0,
+    "expansion_slack_fraction": 0.02,
+    "pairing_slack_fraction": 0.02
+  },
+  "run_profile": {
+    "initial_active_rows": 258814,
+    "expected_expanded_rows": 453746.36387859716,
+    "expanded_row_floor": 432774.86387859716,
+    "singleton_row_floor": 310645.7277571943,
+    "zero_row_floor": 530947,
+    "candidate_check_mean_floor": 209727.89994220602
+  },
+  "conclusion": {
+    "first_round_peeled_columns": 23594,
+    "fraction_of_deletion": 0.17007626544411286,
+    "failure_probability_upper_bound": 0.002953604656825703
+  },
+  "two_round_deferred_conclusion": {
+    "first_round_triples": 174762,
+    "second_round_triples": 174763,
+    "effective_first_round_triple_fraction": 0.49999856948716115,
+    "exposed_rows": 349524,
+    "stopping_cap": 17825,
+    "first_reserved_round_peeled_columns": 11204,
+    "second_round_singleton_floor": 130554.57309326413,
+    "second_round_zero_floor": 348722.2980176668,
+    "second_reserved_round_peeled_columns": 6237,
+    "total_peeled_columns": 17441,
+    "fraction_of_deletion": 0.12572264752101264,
+    "failure_probability_upper_bound": 0.003987258485388717,
+    "limitation": "The staged theorem is weaker numerically than the one-round theorem, but its second-round bound remains valid after conditioning on the first-round pivots."
+  },
+  "multi_round_conclusion": {
+    "rounds": 4,
+    "tail_per_event": 0.0001,
+    "reservoir_triples": [
+      87382,
+      87381,
+      87381,
+      87381
+    ],
+    "peeled_columns": [
+      4356,
+      3935,
+      3467,
+      2924
+    ],
+    "total_peeled_columns": 14682,
+    "fraction_of_deletion": 0.10583452272825569,
+    "failure_probability_upper_bound": 0.0039515740735941675,
+    "limitation": "The theorem is valid under adaptive conditioning, but additional reservoirs reduce this worst-case guarantee."
+  },
+  "zero_slack_continuum_limit": {
+    "peeled_fraction_of_length": 0.020138160048577325,
+    "peeled_fraction_of_deletion": 0.1522163918294838,
+    "all_partition_recurrence_ceiling_columns": 26216.0374959944,
+    "all_partition_recurrence_ceiling_fraction_of_deletion": 0.18897710231675677,
+    "limitation": "The fluid value and the all-partition ceiling constrain the current lower-bound recurrence, not actual peeling."
+  },
+  "observed_ten_interleaver_samples": {
+    "minimum_first_round_peeled_columns": 120466,
+    "mean_first_round_peeled_columns": 120625.4,
+    "maximum_first_round_peeled_columns": 120731,
+    "complete_peels": 10
+  },
+  "asymptotic_split_at_delta_0_1323": {
+    "positive_singleton_threshold_run_fraction": 0.0101453,
+    "typical_run_fraction": 0.114797,
+    "few_run_profile_entropy_bits_per_coordinate": 0.131315,
+    "all_deletion_entropy_bits_per_coordinate": 0.563712,
+    "surplus_fraction_needed_for_128_bit_field_on_few_run_profiles": 0.0010259
+  },
+  "limitation": "The multi-reservoir theorem controls adaptive rounds, but its current singleton-loss recurrence does not prove complete peeling, full rank, or a uniform minimum-distance result."
+}

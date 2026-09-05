@@ -40,11 +40,59 @@ The binary code uses the same sampled permutations and defines `Delta_{2,N}`.
 
 ## Research notes
 
+[`STATUS.md`](STATUS.md) gives the one-page research state: the surviving
+conjecture, disproved stronger claims, proved results, evidence, and the two
+remaining proof obligations.
+
+[`paper/main.tex`](paper/main.tex) is the publication-oriented manuscript.
+The Markdown files in this directory remain the proof audit, experimental
+record, and source for claims that are not ready for the paper.
+
+[`DENSE_BASELINE.md`](DENSE_BASELINE.md) gives a positive baseline outside the
+BAA ensemble. A random dense binary generator has constant rate and relative
+distance close to one half over the binary field and any prescribed finite
+collection of prime fields. Its encoding uses only additions but costs
+quadratically many of them. This result isolates efficient, structured field
+universality as the actual open problem.
+
 [`INITIAL_ANALYSIS.md`](INITIAL_ANALYSIS.md) records the counterexample search,
 the algebraic rank formulation, and the evidence that led away from literal
 field universality. [`CLEAN_THEORY.md`](CLEAN_THEORY.md) develops the current
 sparse--bulk theory, including an exact vector-composition enumerator and a
-finite-dimensional bulk exponent.
+finite-dimensional bulk exponent. [`F5_BOUND_OBSTRUCTION.md`](F5_BOUND_OBSTRUCTION.md)
+explains why the present quinary certificate stalls, separates verified facts
+from numerical evidence, and ranks the most promising routes to a stronger
+bound. [`SYMMETRY_REDUCTION.md`](SYMMETRY_REDUCTION.md) derives the exact
+stationary and two-stage symmetry groups, records the failure of unconditional
+sign averaging, and develops symmetry-adapted certificate and analytic routes.
+[`HIGH_CHARACTERISTIC.md`](HIGH_CHARACTERISTIC.md)
+studies the separate cryptographic regime `N=2^20` with a 128-bit prime. It
+gives deterministic dual-minor and residual-core bounds, an exact
+counterexample to the condition `p>N`, and a revised random-saturation target.
+It also records fixed-deletion experiments at the intended million-coordinate
+scale. The sparse harness builds only the requested columns of the dual matrix,
+peels field-independent pivots, and ranks the residual core. Run it with
+`--fixed-deletion-only --deletion-sizes D,... --no-rational`; the `prefix`,
+`even`, and `random` deletion patterns are available through
+`--deletion-pattern`.
+
+[`RUN_PROFILE_THEORY.md`](RUN_PROFILE_THEORY.md) proves the exact integer
+decomposition by deletion runs, counts every run profile, and gives a
+run-sensitive lower bound for the first peeling round. It also proves a
+multi-reservoir deferred-decision theorem whose later stages remain valid
+after conditioning on earlier pivots. At the intended parameters, the
+one-round theorem certifies 23,594 pivots. A four-round instance certifies
+14,682 pivots with failure probability below `0.003952`. The zero-slack
+fluid limit reaches 15.22% of the deletion. More generally, the recurrence
+cannot certify more than 18.90% for any reservoir partition, so reservoir
+splitting alone cannot prove complete peeling.
+
+[`WHT_RESTRICTED.md`](WHT_RESTRICTED.md) studies a separate
+Walsh-Hadamard quasi-abelian route. It proves that sign-only and every other
+fixed random spectral alphabet have vanishing relative distance. It also
+identifies a finite-parameter variant with a growing alphabet of small integer
+multipliers, for which the pointwise products can be implemented by short
+addition chains. The global distance theorem for that variant remains open.
 
 ## Current theorem
 
@@ -114,22 +162,140 @@ both stages, it produces a rigorous composition-only upper bound with
 `3p+2` variables. Numerical maximization is negative at the binary endpoint
 for `p=5,7,11`.
 
+A complementary projection retains the complete source and target symbols.
+After the support-preserving product law is pushed through addition, the true
+transition must lie among couplings whose row and column marginals are both
+the state composition. Its KL projection is a matrix-scaling problem with a
+low-dimensional dual over target potentials. Taking the larger of this
+stationary-coupling payment and the cell-target payment blocks different
+composition escape routes. At output fraction `0.22`, hybrid searches give
+`-0.00118836` over `F_5` and `-0.00004311` over `F_7`; these are numerical
+diagnostics, not global certificates.
+
+The hybrid relaxation is not sharp over `F_5`: its numerical transition lies
+between `0.225` and `0.230`, whereas the exact full-composition transition is
+near `0.260`. A new joint constrained projection explains the gap. It imposes
+the full increment marginal, both stationary state marginals, the support
+table, and the sum constraint on one comparison law. After minimizing over
+the support crossing, this projection equals the exact stationary information
+payment. At the hybrid false maximizers for output fractions `0.24` and
+`0.26`, it changes the respective values from `+0.00848367` and `+0.02260611`
+to `-0.01705459` and `-0.00677242`. These are numerical point diagnostics,
+not global certificates. The implementation is
+`scripts/diagnose_joint_information_projection.py`.
+
+The joint projection now has a 17-variable outer optimizer backed by the
+normalized KL dual. After removing an unintended distinguished-symbol
+constraint, it reproduces the full-composition values throughout the quinary
+transition. The largest observed gap is `1.87e-7`; the gaps at `0.26`,
+`0.260600`, `0.260612`, and `0.261` are below `1.11e-13`. The exponent is
+`-6.77e-6` at `0.260600` and `+2.15e-7` at `0.260612`. This is a numerical
+sign bracket, not a global certificate. The optimizer is
+`scripts/optimize_joint_projection_bound.py`, and the recorded sweep is
+`results/f5-joint-projection-sweep.json`.
+
+Two further diagnostics now separate the lower-bound and typical-distance
+questions. For the lower bound, the entropy differences of the two
+accumulators are optimized jointly; this lowers the root box upper at
+`delta=0.22` from `0.5364793` to `0.2772976`. The next cover will combine the
+existing broad projected-KL relaxation with conditional residual cuts from
+the exact joint projection. See `F5_BOUND_OBSTRUCTION.md`.
+
+For the typical-distance converse, stationary information tensorizes exactly
+at product pair compositions. At `delta=0.261`, the numerical pair exponent
+agrees with twice the single exponent to `3.2e-13`. The full 48-dimensional
+correlation Hessian at that product is negative definite, with largest
+eigenvalue `-2.50e-5`. This is local numerical evidence for a second-moment
+argument, not a global pair certificate. See `F5_TYPICAL_DISTANCE.md` and the
+three `diagnose_pair_*` scripts.
+
+The stationary payment also has a direct fixed-dual representation on two
+adjacent composition laws. A cut has the form
+`c+<u,(alpha,beta)>-log(alpha^T K beta)` and is valid globally. Keeping a bank
+of these cuts active at one shared middle law removes the quantifier loss of
+the earlier eliminated checker. A 72-cut bank finds no positive box on the
+saved `delta=0.22` frontier. A separate 93-cut bank gives a complete 101-box
+numerical scan at `delta=0.24`, with largest upper `-0.0005925298`.
+`scripts/scan_fixed_stationary_bank.py` records the latter scan with bank and
+frontier hashes. These are floating local-optimization audits, not distance
+theorems; the proved quinary bound remains `0.05` until the box maxima and
+transcendental constants receive exact replay.
+
+One local exact replay is now complete at `delta=0.22`. Two rational
+stationary cuts, directed exponential and logarithm intervals, and a rational
+LP dual certify a radius-`1/2000` composition box with upper
+`-0.00000872850168`. The independent verifier checks 65 variables and 306
+constraints, the exact `eta=1/500`, `delta=11/50` domain, and a rational
+in-box composition witness. This validates the certificate machinery but not the full
+frontier: a 300-split floating cover of the surrounding broad box still has
+upper `+0.00489876` from the McCormick rank relaxation. See
+`results/f5-stationary-box-certificate-0.22.json` and
+`F5_BOUND_OBSTRUCTION.md`.
+
+A second exact result closes the normalized bulk tube at `delta=0.22` and
+message support at least `1/100000`. A scalar cancellation reduction uses the
+mass-scaled radii `w=(A-x)z` together with a coupled message
+entropy--cancellation payment. A 22,471-split rational certificate checks
+22,414 terminal boxes and has exact negative worst upper (approximately
+`-1.92e-9`). This endpoint meets the exact sparse-spacing theorem. The result
+does not yet prove the `0.22` distance theorem: the orientation-sensitive
+complement of the tube remains open. See `SYMMETRY_REDUCTION.md` and
+`results/f5-scalar-tube-cover-0.22-eta-1e-5.json`.
+
+The primary global route now certifies the projected KL relaxation directly,
+which would avoid a separate tube-complement theorem. The active floating
+checkpoint has 11,414 splits, 10,948 leaves, and upper `+0.00772705`; it is not a
+certificate. Five enrichment epochs increased each stage bank from 124 to 380
+cuts. At the current worst LP composition the saved bank gives `-0.00641496`,
+so the remaining positive value is a lifted relaxation gap.
+Exhaustive split probes remain useful diagnostics, but mature campaign tests
+found that they did not improve global progress per unit time; the production
+run therefore uses the ordinary rank-gap split. Exact lifted replay is now
+implemented: on a radius-`0.01` box around the current worst composition, the
+independent verifier proves upper `-0.0185485` from 1,105 reconstructed
+constraints and a rational LP dual. The global partition also has an exact
+replay chain through split 11,414. The verifier reconstructs a frozen
+250,553-node cover through split 10,100, then checks 1,314 recorded splits and
+their 10,948 active cells. This result closes the topology audit, but not the
+analytic bound on every active cell. See `F5_BOUND_OBSTRUCTION.md`.
+
+An explicit vertex-product LP now shows that a generic convex strengthening
+is unlikely to close the gap. On the worst leaf, its optimum mixes seven
+vertex triples, although every triple has a negative exact bank value. The
+leading experiment therefore preserves the disjunction between competing cut
+regimes instead of adding more undirected moment inequalities.
+
+One local disjunction is now complete in floating arithmetic. Sixteen midpoint
+splits replace frontier cell 18053 by 17 negative leaves; a 20-round refresh
+has worst upper `-0.0000689819`. The exact split-log verifier replays the added
+topology. A second cell remains positive after 98 targeted splits, so the next
+analytic target is a perspective or chamber inequality for the cut switch.
+The second tree's 98 verified splits are also part of the global checkpoint;
+its refreshed local upper is `+0.000961979`.
+
+Split thresholds are chosen at the worst LP coordinate, clipped to the middle
+half of its interval. From the same 8,000-split checkpoint, 500 such splits
+reached `+0.0101227`, while midpoint splitting reached `+0.0101736`; the
+clipped rule gave about 9% more bound reduction at comparable cost.
+
+An exact stationary-dual split-tree fallback was also implemented and tested.
+It certifies a radius-`0.01` neighborhood of the current worst composition
+with exact upper about `-0.0200`, but a global 500-split pilot closed no
+feasible leaves. The projected lifted cover therefore remains the primary
+global route; the stationary tree is retained as local exact replay machinery.
+
 For `F_5`, canonicalizing the largest nonzero message mass and applying the
 entropy conjugate removes the remaining conditional compositions. The middle
-and output laws reduce to sixteen symbol branches, each of which may use its
-own valid KL cut. This leaves only the five support variables
-`(A,B,C,x_1,x_2)`. Rational branch certificates give the exact upper bound
-`-0.00138189` at the numerical maximizer, close to the reduced value
-`-0.00146130`. The global five-variable cover, rather than the original
-14-variable cover, is now the main bulk obligation.
+and output laws reduce to sixteen symbol branches. A complete Fenchel
+certificate must be fixed before maximizing over those branches. This leaves
+only the five support variables `(A,B,C,x_1,x_2)`.
 
-The exact checker proposes fresh cuts on off-curve support boxes and verifies
-their rationalized potentials independently. It bounds the complete convex
-surrogate on vertices of the joint five-dimensional support polytope, so the
-support and conditional penalties cannot be maximized at incompatible
-points. Combining this surrogate with the proved support-only bound and a
-bounded inherited cut bank gives the current 100-box exact upper bound
-`0.00846858`. The cover is improving but is not yet a theorem at `0.1323`.
+An audit found that the first checker selected cuts after fixing each branch,
+which reversed the required minimax order. The branch-wise diagnostics are
+withdrawn. The corrected checker uses one common rational cut mixture. Its
+20-box upper bound at `delta=0.1323` is `0.140051`, so the current common dual
+is too loose to prove the binary benchmark. `AUDIT.md` gives the counterexample
+and records the scope of the correction.
 
 For repetition three over `F_3`, the project now proves
 
@@ -303,6 +469,24 @@ set and reports the worst-support rank profile and exact minimum distance. This
 is exponential in the global length and is intended for small, certified
 instances. A work-budget guard prevents accidental large runs.
 
+The all-prime scanner has a specialized dimension-two mode. At length six it
+enumerates every ordered interleaver pair and derives every bad odd
+characteristic from the projective column determinants:
+
+```text
+python scripts/scan_bad_primes.py --blocks 2 --schedule PAPA \
+  --exhaustive-interleavers
+python scripts/scan_bad_primes.py --blocks 2 --schedule APAP \
+  --exhaustive-interleavers
+```
+
+The certified counts are recorded in
+[`results/exhaustive-n6-primes.json`](results/exhaustive-n6-primes.json).
+Sampled all-prime scans at lengths nine and twelve are recorded in
+[`results/bad-prime-growth.json`](results/bad-prime-growth.json).
+Exact selected-prime scans at lengths fifteen and eighteen are recorded in
+[`results/selected-prime-ladder.json`](results/selected-prime-ladder.json).
+
 The schedule is explicit. For example, `APAP` denotes
 
 ```text
@@ -465,6 +649,9 @@ python scripts/search_internal_information_gap.py \
   --prime 5 --delta 0.1323 --eta 0.002 --mode lagrangian \
   --gap-multiplier 1.5 --restarts 32
 
+python scripts/optimize_character_surrogate.py \
+  --prime 5 --delta 0.1323 --eta 0.002 --restarts 12 --seed 17
+
 python scripts/verify_one_orbit_toll.py \
   --eta 1/500 --support-upper-bound 1/10000
 
@@ -487,6 +674,20 @@ python scripts/verify_eliminated_composition_bulk.py \
 python scripts/verify_sign_orbit_bulk.py \
   --prime 5 --delta 1323/10000 --eta 1/500 \
   --sign-symmetric --automorphism-cuts --maximum-cut-pairs 64
+
+python scripts/explore_perron_bound.py \
+  --delta 0.1323 --eta 0.002 --restarts 8 \
+  --skip-box --search-splits 60 --search-cuts 8
+
+python scripts/generate_perron_point_certificate.py
+
+python scripts/verify_perron_point_certificate.py \
+  results/f5-perron-point-certificate.json --precision 100
+
+python scripts/generate_perron_box_certificate.py
+
+python scripts/verify_perron_box_certificate.py \
+  results/f5-perron-box-certificate.json --precision 100
 ```
 
 The first command searches the full vector-composition problem. The second
@@ -523,7 +724,71 @@ described in `CLEAN_THEORY.md`.
 The lifted-orbit and full-symbol commands diagnose the remaining quinary gap.
 They are numerical design tools. Their output cannot certify a theorem.
 
+The Perron command tests a spectral upper bound for the exact accumulator
+enumerator. It contracts the second accumulator over the low-output event and
+fixes every cut mixture before the transition LP is maximized. Its floating
+search closes the previously worst retained-composition box, but not the full
+bulk domain. `F5_BOUND_OBSTRUCTION.md` gives the results and proof obligations.
+
+The Perron generator uses floating optimization only to propose rational
+fugacities and Collatz vectors. The independent checker verifies one stored
+point certificate with rational matrix inequalities and directed logarithm
+intervals. That point certificate validates the replay mechanism; it is not a
+global distance certificate.
+
+The box generator and checker extend the stored cut pair to one nonempty
+rational neighborhood. The checker reconstructs the 65-variable transition
+LP, verifies rational entropy secants, and checks a sparse exact dual. The
+certified local upper is about `-0.00177103`. This is still a local certificate,
+not a cover of the bulk domain.
+
 The support-indicator command is an exact checker for the small-message slab.
 The final sign-symmetric command invokes the exact full-symbol quotient under
 global sign symmetry. Its current box search is incomplete and does not
 justify restricting the unrestricted quinary problem to that quotient.
+
+The projection-surrogate command applies data processing to the exact
+internal-information KL identity and retains `(U,V,D+S)`. Independent
+floating-point searches currently find a negative maximum at the binary
+benchmark. This is the leading certificate-design route, but the global
+optimization has not yet been replayed with exact boxes and directed
+logarithm bounds.
+
+The current local strengthening uses affine cut gates. A gate is a
+composition-dependent partition of unity over valid cut pairs. Its weighted
+sum of exponentiated cut bounds is therefore a pointwise upper bound. Eighteen
+rational splits reduce the worst projected cell to 19 chambers. Multistart
+continuous searches place every chamber below `-0.0001`; the smallest located
+margin is `-0.0001110275`.
+
+The split topology now has an exact rational manifest. An independent checker
+replays all 19 chambers. The affine weights also have rational coefficients,
+sum identically to one, and are exactly nonnegative on each product box.
+Numerical optimization of the rational gates retains every margin. These
+checks do not prove the distance bound. The analytic mixtures still require
+directed global maximization, and the remaining frontier cells require
+adaptive gates.
+
+The saved gates do not transfer unchanged. Only the source cell passes the
+necessary vertex test among the 50 worst frontier cells. For the next cell,
+one transferred chamber reopened in the interior. Splitting that chamber at
+coordinate 14 equal to `0.0825` and refitting both children closed them at
+`-0.000389849` and `-0.000291670`. This experiment supports adaptive local
+refinement, not a universal gate. See `F5_BOUND_OBSTRUCTION.md` for the
+certificate data and remaining proof obligations.
+
+The projected-KL dual eliminates the retained tables and leaves 15
+composition variables. Run its fixed-bank global relaxation with
+
+```text
+python scripts/explore_projected_kl_box_cover.py \
+  --bank-iterations 18 --bank-restarts 12 --max-boxes 5000 --seed 11 \
+  --outer-iterations 12 --target-upper -0.0001
+```
+
+The bank and best-bound queue are cached in `results/`. The first global
+floating zero crossing occurred after 3799 splits. After 3854 splits, every
+box had upper at most `-0.0001036133`. See
+`results/f5-projected-kl-box-cover.json`. This closes the floating
+relaxation, but it is not yet a distance proof. The next step is directed or
+exact replay of the cut constants and LP certificates.

@@ -1,0 +1,22 @@
+{
+  "arithmetic": "floating-point constrained optimization",
+  "delta": 0.1323,
+  "eta": 0.002,
+  "prime": 5,
+  "repetition": 3,
+  "runs": [
+    {
+      "restarts": 12,
+      "seed": 17,
+      "surrogate_maximum_found": -0.0018144965280919513
+    },
+    {
+      "restarts": 12,
+      "seed": 31,
+      "surrogate_maximum_found": -0.00182104612304257
+    }
+  ],
+  "status": "numerical projection-surrogate evidence only",
+  "surrogate": "support mutual information plus the maximum of three KL data-processing lower bounds, including the (U,V,T) projection",
+  "theorem_status": "not globally certified"
+}

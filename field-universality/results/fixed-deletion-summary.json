@@ -1,0 +1,73 @@
+{
+  "status": "exact finite experiments; deletion sets are fixed before the interleavers; not a probability bound",
+  "ensemble": {
+    "local_map": "repetition3",
+    "schedule": "PAPA",
+    "p128": "340282366920938463463374607431768211297"
+  },
+  "fixed_random_n3000": {
+    "deletion_seed": 7640891576956012809,
+    "samples_per_size": 1000,
+    "sizes": [397, 600, 900, 1050, 1200],
+    "fractions": [0.13233333333333333, 0.2, 0.3, 0.35, 0.4],
+    "complete_unit_peels": [1000, 1000, 1000, 1000, 1000],
+    "interpretation": "Every sampled H_D has certified full column rank over every field."
+  },
+  "fixed_random_core_transition_n3000": {
+    "samples_per_size": 1000,
+    "rows": [
+      {"size": 1200, "fraction": 0.4, "complete_peels": 1000},
+      {"size": 1275, "fraction": 0.425, "complete_peels": 1000},
+      {"size": 1350, "fraction": 0.45, "complete_peels": 356, "mean_core_columns": 665.9, "mean_core_cycle_rank": 1809.8},
+      {"size": 1425, "fraction": 0.475, "complete_peels": 0, "mean_core_columns": 1255.4, "mean_core_cycle_rank": 3607.1},
+      {"size": 1500, "fraction": 0.5, "complete_peels": 0, "mean_core_columns": 1391.4, "mean_core_cycle_rank": 4130.9}
+    ]
+  },
+  "rare_small_cores_at_binary_benchmark": [
+    {"length": 30, "deletion_size": 4, "samples": 100000, "nonzero_cores": 14},
+    {"length": 60, "deletion_size": 8, "samples": 100000, "nonzero_cores": 27},
+    {"length": 120, "deletion_size": 16, "samples": 100000, "nonzero_cores": 6},
+    {"length": 300, "deletion_size": 40, "samples": 100000, "nonzero_cores": 1}
+  ],
+  "ranked_small_cores_n60": {
+    "deletion_size": 8,
+    "samples": 100000,
+    "nonzero_cores": 27,
+    "binary_rank_failures": 24,
+    "ternary_rank_failures": 18,
+    "ternary_torsion_events_conditioned_on_binary_full_rank": 18,
+    "rank_failures_f5": 0,
+    "rank_failures_f7": 0,
+    "rank_failures_f11": 0,
+    "rank_failures_p128": 0
+  },
+  "shape_comparison_n3000": {
+    "deletion_size": 397,
+    "samples": 10000,
+    "evenly_spaced_complete_peels": 10000,
+    "prefix_complete_peels": 2,
+    "prefix_mean_core_columns": 372.8092,
+    "prefix_mean_core_rows": 821.9277,
+    "prefix_mean_core_cycle_rank": 792.4912,
+    "prefix_rank_subexperiment": {
+      "samples": 1000,
+      "full_rank_f2_f3_f5_f7_f11_f101_f65537": 1000
+    }
+  },
+  "intended_scale": {
+    "length": 1048575,
+    "deletion_size": 138726,
+    "fraction": 0.13229954938845576,
+    "samples_per_pattern": 10,
+    "random_complete_peels": 10,
+    "random_first_round_unit_peels_minimum": 120466,
+    "random_first_round_unit_peels_mean": 120625.4,
+    "random_deletion_runs": 120088,
+    "random_deletion_terminal": false,
+    "prefix_complete_peels": 0,
+    "prefix_mean_core_columns": 138706.5,
+    "prefix_mean_core_rows": 302613.8,
+    "prefix_mean_row_surplus": 163907.3,
+    "prefix_mean_core_cycle_rank": 298252.2
+  }
+}

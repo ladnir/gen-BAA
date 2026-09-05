@@ -118,6 +118,36 @@ def constraints(layout: Layout, eta: float, delta: float) -> tuple[np.ndarray, .
     return equality, equality_target, upper, upper_target
 
 
+def append_support_box_constraints(
+    layout: Layout,
+    rows: np.ndarray,
+    targets: np.ndarray,
+    lower: tuple[float, float, float, float, float],
+    upper: tuple[float, float, float, float, float],
+) -> tuple[np.ndarray, np.ndarray]:
+    coordinates = []
+    for component in (layout.mu, layout.beta, layout.zeta):
+        row = np.zeros(layout.size)
+        row[component.start + 1 : component.stop] = 1.0
+        coordinates.append(row)
+    for layer in (1, 2):
+        row = np.zeros(layout.size)
+        for target in range(1, layout.prime):
+            row[layout.edge(layer, 0, target)] = 1.0
+        coordinates.append(row)
+    additional_rows = []
+    additional_targets = []
+    for row, lower_value, upper_value in zip(
+        coordinates, lower, upper, strict=True
+    ):
+        additional_rows.extend((row, -row))
+        additional_targets.extend((upper_value, -lower_value))
+    return (
+        np.concatenate((rows, np.stack(additional_rows))),
+        np.concatenate((targets, np.array(additional_targets))),
+    )
+
+
 def add_sign_symmetry(
     layout: Layout, equality: np.ndarray, target: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -212,6 +242,16 @@ def feasible_vertices(
 def optimize(args: argparse.Namespace) -> dict[str, object]:
     layout = Layout(args.prime)
     equality, equality_target, upper, upper_target = constraints(layout, args.eta, args.delta)
+    support_lower = getattr(args, "support_lower", None)
+    support_upper = getattr(args, "support_upper", None)
+    if support_lower is not None:
+        upper, upper_target = append_support_box_constraints(
+            layout,
+            upper,
+            upper_target,
+            support_lower,
+            support_upper,
+        )
     if args.sign_symmetric:
         equality, equality_target = add_sign_symmetry(
             layout, equality, equality_target
@@ -266,6 +306,15 @@ def optimize(args: argparse.Namespace) -> dict[str, object]:
         "exponent": exponent(point, layout, args.repetition),
         "message_nonzero_fraction": 1.0 - point[layout.mu.start],
         "output_nonzero_fraction": 1.0 - point[layout.zeta.start],
+        "middle_nonzero_fraction": 1.0 - point[layout.beta.start],
+        "first_crossing_fraction": float(
+            sum(point[layout.edge(1, 0, target)] for target in range(1, layout.prime))
+        ),
+        "second_crossing_fraction": float(
+            sum(point[layout.edge(2, 0, target)] for target in range(1, layout.prime))
+        ),
+        "support_lower": support_lower,
+        "support_upper": support_upper,
         "mu": point[layout.mu].tolist(),
         "beta": point[layout.beta].tolist(),
         "zeta": point[layout.zeta].tolist(),
@@ -290,6 +339,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-iterations", type=int, default=2000)
     parser.add_argument("--tolerance", type=float, default=1e-11)
     parser.add_argument("--sign-symmetric", action="store_true")
+    parser.add_argument(
+        "--support-lower",
+        type=lambda value: tuple(float(entry) for entry in value.split(",")),
+    )
+    parser.add_argument(
+        "--support-upper",
+        type=lambda value: tuple(float(entry) for entry in value.split(",")),
+    )
     args = parser.parse_args()
     if not is_prime(args.prime):
         parser.error("prime must be a prime integer")
@@ -301,6 +358,18 @@ def parse_args() -> argparse.Namespace:
         parser.error("eta must lie in (0,1)")
     if args.restarts < 1:
         parser.error("restarts must be positive")
+    if (args.support_lower is None) != (args.support_upper is None):
+        parser.error("support-lower and support-upper must be supplied together")
+    if args.support_lower is not None:
+        if len(args.support_lower) != 5 or len(args.support_upper) != 5:
+            parser.error("support bounds must contain A,B,C,x1,x2")
+        if any(
+            lower > upper
+            for lower, upper in zip(
+                args.support_lower, args.support_upper, strict=True
+            )
+        ):
+            parser.error("every support lower bound must not exceed its upper bound")
     return args
 
 
