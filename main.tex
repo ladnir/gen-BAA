@@ -68,40 +68,42 @@
 \maketitle
 
 \begin{abstract}
-Block--Accumulate--Accumulate (BAA) codes (CRYPTO 2026) apply a small linear map to each block,
-followed by two random permutation--prefix-sum rounds.  They provide state-of-the-art encoding for pseudorandom correlation generators and code-based zero-knowledge, where high minimum distance and fast encoding are both important.
+Block--Accumulate--Accumulate (BAA) codes (CRYPTO 2026) combine short linear
+block maps with two random permutation--prefix-sum rounds.  They provide fast
+encoding for pseudorandom correlation generators and code-based zero-knowledge.
 
 \qquad We study chosen-block BAA, which repeats a certified short code instead
 of sampling a new local map in every block.  Over $\F_2$, we propagate its
 complete weight distribution exactly through both random rounds, obtaining
 finite-length expected low-weight counts and explicit sampling-failure bounds.
-The original asymptotic proof also applies because it fixes the outer block map
-and requires only that each activated block contribute output weight greater
- than four.  At rate $1/2$, the extended quadratic-residue block reaches
- $99.99\%$ of the binary Gilbert--Varshamov (GV) distance.  At
- $k\approx2^{20}$, our Golay and extended BCH (equivalently Reed--Muller)
- encoders take $23$--$24$~ms on one thread, $1.22\times$--$1.30\times$ faster
- than a corrected original-BAA-style control on the same machine; multithreaded latency is below
- $6$~ms.  At relative distance $0.10$, complete finite-length first moments
- certify $46.38$ and $47.09$ bits, respectively, with unchanged runtimes.  The
- speedups are matched only at the original evaluation's documented $20$-bit
- target, not against a $40$-bit original-BAA baseline.
+Numerical estimates of the asymptotic relative-distance transitions
+reach $99.99\%$ of the binary Gilbert--Varshamov (GV) distance at rate $1/2$
+with an extended quadratic-residue block, and $99.4\%$ at rate $1/4$ with a BCH
+subcode.  At $k\approx2^{20}$, our Golay and extended BCH (equivalently
+Reed--Muller) encoders take $23$--$24$~ms on one thread,
+$1.22\times$--$1.30\times$ faster than a corrected original-BAA-style
+control at its documented $20$-bit target.  At relative distance $0.10$,
+their complete finite-length first moments certify $46.38$ and $47.09$ bits;
+multithreaded latency is below $6$~ms.
 
 \qquad Over larger fields $\F_q$, symbols can cancel in prefix sums and many
 codewords share a support.  We give a probability bound accounting for both
 effects and prove a structural limitation: some permutation patterns force a
-low-weight codeword regardless of the nonzero coordinate scalings.  For the
-rate-$1/2$ and rate-$1/4$ instances studied, the estimated relative-distance
-transitions are $62.7\%$ and $81.9\%$ of the corresponding $q$-ary GV
-distances.  These values are expectation diagnostics, not typical-code upper
-bounds.  We implement both chosen-block constructions over $\F_{2^{128}}$ at
-$k=2^{20}$.  On one CPU thread, the rate-$1/2$ encoder takes $33.633$~ms and
-has a complete finite-length failure bound of $2^{-136.5}$ at relative distance
-$0.30$; the rate-$1/4$ encoder takes $73.739$~ms and has bound $2^{-208.6}$ at
-relative distance $0.60$.  A representative BAA and weighted
-repeat--accumulate$^t$ table reports each construction's own distance, complete
-failure bound, and runtime.  Lean~4 verifies the finite counting, structural
-results, and constituent codes.
+low-weight codeword regardless of the nonzero coordinate scalings.  For
+$q=2^{128}$, our support-bound transition estimates reach $62.0\%$ of $q$-ary
+GV at rate $1/2$ and $81.3\%$ at rate $1/4$.  The corresponding structural
+diagnostics are $62.7\%$ and $81.9\%$: they describe transitions in the expected
+count of rank-deficient supports, not typical-code upper bounds.  We implement
+both chosen-block constructions over $\F_{2^{128}}$ at $k=2^{20}$.
+On one CPU thread, the rate-$1/2$ and rate-$1/4$ encoders take $33.633$~ms
+and $73.739$~ms.  For their uniform ensembles, complete rational and interval
+certificates give failure bounds $2^{-137.56}$ at relative distance $0.30$
+and $2^{-209.60}$ at distance $0.60$.  These bounds hold over every field
+of size $q\ge2^{127}$, including $128$-bit prime fields.  Weighted
+repeat--accumulate$^t$ measurements provide runtime context; their finite
+failure bounds remain uncertified.  Lean~4 verifies the finite counting,
+structural results, and constituent codes; the analytic and numerical
+certificates are separate.
 \keywords{linear codes \and block--accumulate--accumulate codes \and pseudorandom correlation generators \and zero-knowledge
 proofs \and Lean}
 \end{abstract}
@@ -109,7 +111,7 @@ proofs \and Lean}
 \ifnum\submission=0
   \begingroup
     \makeatletter
-    \setcounter{tocdepth}{2}
+    \setcounter{tocdepth}{1}
     \let\l@title\@gobbletwo
     \let\l@author\@gobbletwo
     \tableofcontents
@@ -230,10 +232,12 @@ throughout.  Our main contributions are as follows.
     scalar multiples as distinct bad events.  With $[16,8,9]$ and $[16,4,13]$
     Reed--Solomon (RS) constituents, its estimated relative-distance transitions are
     $0.305$ and $0.604$, respectively, or $62.0\%$ and $81.3\%$ of the
-    corresponding $q$-ary GV distances for $q=2^{128}$.  At $k=2^{20}$, complete
-    numerical evaluations give failure bounds $2^{-136.5}$ at distance $0.30$
-    for the rate-$1/2$ instance and $2^{-208.6}$ at distance $0.60$ for the
-    rate-$1/4$ instance.
+    corresponding $q$-ary GV distances for $q=2^{128}$.  At $k=2^{20}$,
+    complete rational and interval certificates give failure bounds
+    $2^{-137.56}$ at distance $0.30$ for the rate-$1/2$ uniform ensemble and
+    $2^{-209.60}$ at distance $0.60$ for the rate-$1/4$ uniform ensemble.
+    Theorem~\ref{thm:rs-finite} establishes these bounds for every
+    $q\ge2^{127}$.
 
     \item We identify a rank obstruction, independent of the coefficients, in
     the two-accumulator architecture.  It exposes low-weight supports that remain
@@ -260,12 +264,11 @@ throughout.  Our main contributions are as follows.
 
     \item Over $\F_{2^{128}}$, we implement and optimize chosen-block BAA and
     weighted repeat--accumulate$^t$ at $k=2^{20}$.  The RS $[16,8,9]$
-    rate-$1/2$ BAA encoder takes $33.633$~ms on one CPU thread and has complete
-    failure bound $2^{-136.5}$ at relative distance $0.30$.  The RS
-    $[16,4,13]$ rate-$1/4$ encoder takes $73.739$~ms and has bound $2^{-208.6}$
-    at distance $0.60$.  A representative configuration table reports distance,
-    complete failure probability, and runtime for BAA and RA$^t$, rather than
-    declaring a match along one coordinate while the other two vary.
+    rate-$1/2$ and RS $[16,4,13]$ rate-$1/4$ BAA encoders take $33.633$~ms
+    and $73.739$~ms on one CPU thread.  Their uniform ensembles have the
+    complete failure bounds above.  A configuration table reports target
+    distance, runtime, and certified failure bounds where available; RA$^t$
+    probabilities remain uncertified.
 
     \item In Lean~4, we machine-check the exact finite-length identities behind
     the binary and large-field bounds, the generic-rank characterization, and
@@ -289,8 +292,7 @@ whether one carefully chosen short code can instead be reused in every block,
  single-thread encoders, but uncover an architectural obstruction that leaves a
  substantial gap to the corresponding $q$-ary GV benchmark.  We present BAA
  and weighted repeat--accumulate$^t$ measurements as a configuration menu so
- that rate, target distance, complete failure bound, and runtime remain
- visible rather than being compressed into a single ranking.
+ that rate, target distance, certification status, and runtime remain visible.
 
 \paragraph{Construction.}
 Let $C_0$ be a fixed $[m,\sigma,d]_q$ code.  Chosen-block BAA first encodes
@@ -390,10 +392,10 @@ At $n=2{,}097{,}024$, the chosen Golay and Reed--Muller implementations take
  same-host original-BAA-style control; their multithreaded latencies are below
  $6$~ms.  Over $\F_{2^{128}}$ at $k=2^{20}$, RS $[16,8,9]$ BAA takes
  $33.633$~ms on one thread at rate $1/2$, and RS $[16,4,13]$ BAA takes
- $73.739$~ms at rate $1/4$.  Their complete finite-length failure bounds are
- $2^{-136.5}$ at distance $0.30$ and $2^{-208.6}$ at distance $0.60$.  We
- additionally report representative weighted RA$^t$ configurations along the
- same independent axes.  Finally, our Lean~4 development checks the finite combinatorial
+ $73.739$~ms at rate $1/4$.  The corresponding uniform ensembles have
+ complete finite-length failure bounds $2^{-137.56}$ at distance $0.30$
+ and $2^{-209.60}$ at distance $0.60$.  We additionally report representative
+ weighted RA$^t$ runtimes, whose failure bounds remain uncertified.  Finally, our Lean~4 development checks the finite combinatorial
 identities, probability bounds, constituent-code facts, and generic-rank
 results on which the analysis rests.
 
@@ -1127,12 +1129,16 @@ The binary BAA first-moment exponent is therefore
     }
     \eqnumlabel{eq:B11}
 \]
-A sufficient condition for the linear-weight contribution to vanish is
+For a fixed $\varepsilon>0$, a sufficient condition for the contribution
+from outer weights $w\ge\varepsilon n$ to vanish is
 \[
-    \sup_{\alpha,\eta}\Phi^{\rm bin}_{C_0,\delta}(\alpha,\eta)<0
+    \sup_{\substack{\alpha\ge\varepsilon,\,\eta\\\text{feasible}}}
+       \Phi^{\rm bin}_{C_0,\delta}(\alpha,\eta)<0
     \eqnumlabel{eq:B12}
 \]
-over the feasible domain.  For a fixed block $C_0$, \eqref{eq:B4} gives the exact
+on this restricted domain.  The unrestricted supremum is at least zero
+because the exponent tends to zero at the sparse boundary.
+For a fixed block $C_0$, \eqref{eq:B4} gives the exact
 finite-length first moment, \eqref{eq:B7} controls fixed-block supports, and \eqref{eq:B12}
 controls linear weights.
 
@@ -1293,6 +1299,8 @@ satisfies
 \eqnumlabel{eq:3}
 \]
 where $r_S:=\dim C_{\rm out}[S]$.
+We set $\chi_q(0,c)=0$.  The outer sum may be restricted to exact
+supports of nonzero outer codewords, since every other support event is empty.
 \end{theorem}
 
 \begin{proof}
@@ -1582,8 +1590,15 @@ For finite $q$, the corresponding exponent includes
       \beta\log q-(x+y)\log(q-1)
     \right\}.
 \]
-The numerical transition for this support/trace bound is the largest $\delta$
-for which the supremum of~\eqref{eq:L7} over the feasible domain is negative.
+The exponent tends to zero as the active-block fraction tends to zero, so
+its unrestricted supremum cannot be negative.  The numerical transition
+estimates below track the zero crossing of a nonzero stationary branch of
+\eqref{eq:L7}.  We write $\Phi^{\mathrm{int}}_{m,\sigma,\delta}$ for the
+reported value on that branch.  A negative branch value alone does not
+certify a uniform bound.  The finite calculation in
+Appendix~\ref{app:rs-certificate} instead bounds an explicitly specified
+domain away from the sparse boundary and covers the complementary supports
+separately.
 
 \section{Generic rank and the structural obstruction}
 \label{sec:rank-containers}
@@ -2090,17 +2105,18 @@ by the zero-return constraints:
 \[
     \boxed{x+y\approx\beta.}
 \]
-At $\delta=0.30$, the optimized exponent is approximately
+At $\delta=0.30$, the reported interior-branch exponent is approximately
 \[
-    \Phi_{16,8,0.30}^{\max}/\log 2\approx-0.017
+    \Phi_{16,8,0.30}^{\mathrm{int}}/\log 2\approx-0.017
 \]
 bits per output coordinate.
 
 The local distance is $d=9$, so the sparse one-block scale is $n^{-8}$.  At the
 primary dimension $k=2^{20}$ and output length $n=2^{21}$, with $\delta=0.30$,
-the marked one-block term is approximately $2^{-137.57}$.  The sparse term and the negative linear-weight
-exponent are consistent with $d_{\min}>0.30n$, but do not prove that inequality
-at finite length.
+the marked one-block term is approximately $2^{-137.57}$.  That term and
+the negative linear-weight exponent alone do not control every support
+size.  Theorem~\ref{thm:rs-finite} supplies the complete finite-length bound
+at this operating point.
 
 \paragraph{Rate $1/4$.}
 
@@ -2215,12 +2231,12 @@ are
 0.604 & 209.26
 \end{array}
 \]
-The estimated linear-weight margins at this length are
+The estimated interior-branch margins at this length are
 \[
 \begin{array}{c|c|c}
 \delta
-& \max\Phi_{16,4,\delta}/\log 2
-& -n\max\Phi_{16,4,\delta}\text{ (bits)}\\
+& \Phi^{\mathrm{int}}_{16,4,\delta}/\log 2
+& -n\Phi^{\mathrm{int}}_{16,4,\delta}/\log 2\text{ (bits)}\\
 \hline
 0.600 & -0.017 & 70828\\
 \text{near }0.604 &
@@ -2239,6 +2255,50 @@ first-moment calculation rounds to
 \]
 gives a numerical margin of roughly $160$ bits.  This does not certify that
 $d_{\min}>0.604n$.  At $\delta=0.60$, the estimated margin is much larger.
+
+\subsection{Certified finite-length RS bounds}
+\label{sec:rs-finite}
+
+The sparse estimates above identify the likely dominant terms, but do not
+bound every support size at finite length.  The following calculation supplies
+that missing uniform bound, including all surplus cancellations.
+
+\begin{theorem}[Certified finite-length RS bounds]
+\label{thm:rs-finite}
+Let $q\ge2^{127}$ be a prime power and $k=2^{20}$.  Fix an RS constituent
+$C_0=\operatorname{RS}[16,\sigma,17-\sigma]$ over $\F_q$, and construct
+chosen-block BAA with two independent uniform permutations and independent
+uniform nonzero diagonal entries.  Then
+\[
+\begin{array}{c@{\quad}r@{\quad}c@{\quad}c}
+\sigma & n & \delta &
+ \Prb[d_{\min}(\cC_{\rm BAA})\le\lfloor\delta n\rfloor]\\
+\hline
+4 & 2^{22} & 0.60 & <2^{-209.60}\\
+8 & 2^{21} & 0.30 & <2^{-137.56}.
+\end{array}
+\]
+\end{theorem}
+
+\begin{proof}
+Restrict the master union bound to possible exact outer supports.
+For a support of size $s$ meeting $t$ local blocks, the MDS shortening
+dimension is $r=s-(16-\sigma)t$.  Put $T=\lfloor n/1000\rfloor$.
+Appendix~\ref{app:rs-certificate} evaluates the one-block terms by finite
+binomial sums and bounds the omitted intermediate weights by a convergent
+positive series.  Geometric envelopes cover every $2\le t\le T$ and all
+remaining cancellation layers.  For $t>T$, finite entropy inequalities and
+an interval-verified covering bound the full support/trace sum, with explicit
+counting prefactors.  Exact rational arithmetic and $192$-bit Arb intervals
+verify the two displayed comparisons.  The complete executable and
+certificate data are in \path{rs-certification/}.
+\end{proof}
+
+The theorem applies to every $128$-bit prime field as well as $\F_{2^{128}}$.
+It concerns the uniform ensemble; the timings below use a Feistel-based
+permutation implementation, whose distribution is not certified by this theorem.
+The new analytic reductions and numerical certificates are outside the Lean
+formalization.  They do not certify the estimated asymptotic transitions.
 
 \subsection{Structural transitions}
 
@@ -2304,9 +2364,8 @@ no-return weight-one event by another polynomial factor.  Numerical optimization
 of the support/trace exponent gives transition estimates $0.169$ for
 repetition-$2$ RAA and $0.447$ for repetition-$3$ RAA; a third accumulator
 raises the repetition-$2$ estimate to $0.415$.  The sharp growing-field theorem
-currently assumes $r\ge4$~\cite{khabbazian26}; the representative repetition-$2$ configurations
- are evaluated directly with the finite support/trace sum below rather than that
- theorem.
+ currently assumes $r\ge4$~\cite{khabbazian26}.  The representative repetition-$2$
+ configurations therefore require a separate finite-length calculation.
 
 For a full finite-length comparison, put $h_0=rw$.  Applying
 Lemma~\ref{lem:nonbinary-placement} stage by stage and
@@ -2333,13 +2392,12 @@ the weight-one no-return contribution.  That leading contribution still
 explains the sparse orders $N^{1-r}$ for RA$^2$ and
 $N^{1-r(t-1)}$ for fixed $r,t$.
 
-We evaluate \eqref{eq:3} and \eqref{eq:rat-complete-bound} in the log domain.
-Low-support types are summed directly; the remaining types are covered by a
-coefficient/trace envelope, and surplus-return layers retain their explicit
-$1/(q-1)$ factors.  A full bit of outward rounding is then applied to the
-combined sum.  The calculation is stable when the direct cutoffs are increased
-and is reproduced by
-\path{scripts/large_field_first_moment_certificate.py}.
+Theorem~\ref{thm:rs-finite} certifies the two chosen-block RS configurations.
+We have not established a complete numerical upper bound for
+\eqref{eq:rat-complete-bound} at the RA$^t$ configurations below.  Direct sparse
+contributions and asymptotic margins do not control the omitted message
+weights and cancellation layers.  We retain these rows as runtime and
+parameter-search diagnostics, and leave their failure bounds uncertified.
 
 At $k_0=2^{20}$, Section~\ref{sec:implementation} tabulates representative
 RA$^t$ and chosen-block BAA configurations.  We do not designate pairs as
@@ -2640,9 +2698,8 @@ ours, so hardware labels alone do not make the absolute timings directly
 comparable.
 
 \paragraph{Representative $\F_{2^{128}}$ configurations.}
-Table~\ref{tab:cpu-large-field} reports a configuration menu along three
-independent axes: target distance, complete finite-length failure bound, and
-measured runtime.
+Table~\ref{tab:cpu-large-field} reports target distances, measured runtimes,
+and complete finite-length failure bounds where certified.
 
 \begin{table}[h]
 \centering
@@ -2652,35 +2709,31 @@ measured runtime.
 \toprule
 Construction & Outer map & $t$ & Rate & $\delta$ & $\Prb[d_{\min}\le\delta n]$ & Time (ms) \\
 \midrule
-$\mathrm{RA}^2$ & repetition $2$ & $2$ & $1/2$ & $0.10$ & $\le2^{-24.7}$ & $22.832$ \\
-chosen-block BAA & RS $[16,8,9]$ & $2$ & $1/2$ & $0.30$ & $\le2^{-136.5}$ & $33.633$ \\
-$\mathrm{RA}^3$ & repetition $2$ & $3$ & $1/2$ & $0.40$ & $\le2^{-62.1}$ & $32.872$ \\
-$\mathrm{RA}^2$ & repetition $3$ & $2$ & $1/3$ & $0.40$ & $\le2^{-42.9}$ & $48.222$ \\
-chosen-block BAA & RS $[16,4,13]$ & $2$ & $1/4$ & $0.60$ & $\le2^{-208.6}$ & $73.739$ \\
+$\mathrm{RA}^2$ & repetition $2$ & $2$ & $1/2$ & $0.10$ & uncertified & $22.832$ \\
+chosen-block BAA & RS $[16,8,9]$ & $2$ & $1/2$ & $0.30$ & $\le2^{-137.56}$ & $33.633$ \\
+$\mathrm{RA}^3$ & repetition $2$ & $3$ & $1/2$ & $0.40$ & uncertified & $32.872$ \\
+$\mathrm{RA}^2$ & repetition $3$ & $2$ & $1/3$ & $0.40$ & uncertified & $48.222$ \\
+chosen-block BAA & RS $[16,4,13]$ & $2$ & $1/4$ & $0.60$ & $\le2^{-209.60}$ & $73.739$ \\
 \bottomrule
 \end{tabular}
 }
 \caption{Representative large-field configurations at $k=2^{20}$ over
 $\F_{2^{128}}$; the output length is determined by the displayed rate.  The
-failure column is the complete support/trace union bound from \eqref{eq:3} or
-\eqref{eq:rat-complete-bound}, including all support classes and cancellation
-traces, with one bit of outward rounding.  Time is the median of six process
+RS failure bounds are certified for the uniform ensemble by
+Theorem~\ref{thm:rs-finite}, including all support classes and cancellation
+traces.  RA target distances are parameter choices without certified failure
+bounds.  Time is the median of six process
 medians, each with $31$ calls after warm-up, on one CPU thread; setup and
 allocation are excluded.  The rows are representative configurations, not
 matched pairs or a ranking.}
 \label{tab:cpu-large-field}
 \end{table}
 
-The table is a menu rather than a direct comparison: repetition, accumulator
-count, local code, rate, target distance, and length change different
-coordinates at once.  At rate $1/2$, repetition-$2$ RA$^2$ supplies a
-$24.7$-bit bound at distance $0.10$ in $22.832$~ms, while the third accumulator
-supports distance $0.40$ with a $62.1$-bit bound in $32.872$~ms.  The
-RS $[16,8,9]$ BAA row supports distance $0.30$ with a $136.5$-bit bound in
-$33.633$~ms.  At lower rates, repetition-$3$ RA$^2$ gives a $42.9$-bit bound at
-distance $0.40$, and RS $[16,4,13]$ BAA gives a $208.6$-bit bound at distance
-$0.60$.  These are complete failure bounds at the displayed operating points,
-not separate sparse and asymptotic diagnostics.
+The configurations differ in repetition, accumulator count, local code,
+rate, target distance, and length.  The RS $[16,8,9]$ and $[16,4,13]$
+uniform ensembles have complete failure bounds at distances $0.30$ and
+$0.60$, respectively.  The RA rows provide runtime context, but their
+uncertified probabilities do not support a comparison at equal failure targets.
 
 \paragraph{Estimated single-thread PCG throughput.}
 The original BAA evaluation reports about $8$~ms of CPU expansion work per
@@ -2808,7 +2861,7 @@ axiom.  A dedicated module applies \texttt{\#print axioms} to the theorems
 stated in the paper.  Those theorems depend only on the standard Lean/mathlib
 foundations.  The audit reports \texttt{propext},
 \texttt{Classical.choice}, and \texttt{Quot.sound}.  Native decision procedures
-are used only for labeled small-instance regression tests.  No theorem stated
+are used only for labeled small-instance regression tests.  No Lean-formalized theorem stated
 in the paper depends on a generated native-decision axiom.  The fixed-code
 spectra and distances have kernel-checkable proofs.
 
@@ -2827,9 +2880,10 @@ limit, \eqref{eq:B6}--\eqref{eq:B12}, \eqref{eq:6}--\eqref{eq:7},
  external coding-theory results, analytic estimates, certified optimization, a
  computational cost model, or new probabilistic arguments.  The RA$^t$
  parameter selection and configuration measurements are likewise outside the Lean development.
- Separating them from
-the machine-checked fixed-length statements makes the remaining proof
-obligations explicit.
+ Theorem~\ref{thm:rs-finite} additionally uses the analytic reductions in
+ Appendix~\ref{app:rs-certificate} and the rational/Arb verifier in
+ \path{rs-certification/}; those components are not Lean-formalized.
+ The RA$^t$ finite sums have not received a complete numerical certificate.
 
 \bibliographystyle{splncs04}
 \bibliography{references}
@@ -2889,5 +2943,7 @@ Equivalently,
        A_w\bigl(z^w+z^{168-w}\bigr).
 \]
 The coefficients sum to $2^{84}$, as required by the dimension.
+
+\input{rs-certification/finite-rs}
 
 \end{document}

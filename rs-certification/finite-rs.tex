@@ -1,0 +1,361 @@
+\section{Complete finite-length RS certificate}
+\label{app:rs-certificate}
+
+This appendix proves the finite reductions used in
+Theorem~\ref{thm:rs-finite} and specifies their executable verification.
+Fix $m=16$, $\sigma\in\{4,8\}$, $h_0=m-\sigma$, $d=h_0+1$, and
+$n=mB=mk/\sigma$, where $k=2^{20}$.  Set $\delta=3/5$ for $\sigma=4$
+and $\delta=3/10$ for $\sigma=8$, and put $L=\lfloor\delta n\rfloor$.
+All logarithms in the proof are natural.  We use
+$Q=2^{127}-1$ as a lower bound on $q-1$.
+
+An exact nonzero outer support meeting $t$ blocks has size $s$ and shortening
+dimension $r$ satisfying
+\[
+ dt\le s\le mt,\qquad r=s-h_0t,\qquad 1\le r\le\sigma t.
+\]
+Its multiplicity is
+\begin{equation}
+ N_{t,s}=\binom Bt[z^s]
+     \left(\sum_{\ell=d}^m\binom m\ell z^\ell\right)^t.
+ \label{eq:rs-support-count}
+\end{equation}
+Every listed RS support is possible: a polynomial vanishing at its
+complement has degree $m-\ell\le\sigma-1$ and is nonzero on the support.
+Supports containing a nonempty local intersection smaller than $d$ have
+empty exact-support events.  We omit them before applying the union bound.
+Write $\widehat\mu$ for this restriction of the master sum~\eqref{eq:3}.
+It still bounds the failure probability.
+
+\subsection{A uniform projective envelope}
+
+For $q-1\ge2n$ and $r\le n$, writing $Q'=q-1$ gives
+\[
+ \frac{q^r-1}{q-1}
+ \le (Q')^{r-1}(1+1/Q')^r
+ \le \frac{(Q')^{r-1}}{1-r/Q'}
+ \le 2(Q')^{r-1}.
+\]
+The middle inequality follows by bounding each binomial coefficient
+$\binom rj\le r^j$ and extending the resulting geometric series.
+Consequently, for all $q\ge2^{127}$,
+\begin{equation}
+ \chi_q(r,c)\le 2\min\{1,Q^{r-1-c}\}.
+ \label{eq:rs-chi-envelope}
+\end{equation}
+Indeed, $\min\{1,u^e\}$ is constant for $e\ge0$ and decreases with
+$u\ge1$ for $e<0$.  For direct evaluation we use the sharper fact that
+$\chi_q(r,c)=1$ for $c<r$.  For $c\ge r$, its value is
+\[
+ \sum_{j=1}^r\binom rj (q-1)^{j-1-c},
+\]
+which decreases with $q$.  Thus evaluation at $q=2^{127}$ supplies a
+uniform upper bound, even when that integer is only a lower bound on the
+actual field size.
+
+\subsection{An envelope for all sparse supports}
+
+Put $T=\lfloor n/1000\rfloor$ and choose $z=1/10$ for $\sigma=4$ and
+$z=1/5$ for $\sigma=8$.  Define
+\[
+ \rho=\delta(1+z)^2,\quad D=1-\delta-mT/n,\quad
+ V=(\delta D z^2)^{-1},\quad
+ K_s=\frac{s}{n-s+1}\frac{\rho}{1-\rho}.
+\]
+The verifier checks $0<\rho<1$, $D>0$, $K_s<1$, $K_sQ>1$, and $V<Q$
+using the extrema over $d\le s\le mT$.
+
+First suppose $b\le s$.  Summing the last binomial in
+$\cG_n(H,j,b)$ by the hockey-stick identity gives
+\[
+ \sum_{j=1}^L\cG_n(H,j,b)
+ \le\frac{\binom{H-b}b\binom nb\binom L{H-b}}{\binom nH}.
+\]
+A nonzero term requires $H\le L+b\le L+s$.  The inequalities
+\[
+ \frac{\binom L{H-b}}{\binom n{H-b}}\le\delta^{H-b},\qquad
+ \frac{\binom nb\binom n{H-b}}{\binom nH}
+ \le\binom Hb\left(\frac n{n-H+1}\right)^b
+\]
+therefore imply
+\begin{equation}
+ \sum_{j=1}^L\cG_n(H,j,b)
+ \le\binom Hb^2 D^{-b}\delta^{H-b}\le\rho^H V^b.
+ \label{eq:rs-second-envelope}
+\end{equation}
+The last inequality uses $\binom Hb\le(1+z)^H/z^b$.
+For the first stage,
+\[
+ \cG_n(s,H,a)\le
+ 2^s\left(\frac{s}{n-s+1}\right)^{s-a}
+ \binom{H-1}{s-a-1}.
+\]
+This follows from $\binom{s-a}a\le2^s$,
+$\binom{n-H}a\le\binom na$, and
+$\binom na/\binom ns\le[s/(n-s+1)]^{s-a}$.
+Extending the positive series over $H$ and using
+\[
+ \sum_{H\ge u}\binom{H-1}{u-1}\rho^H
+   =\left(\frac\rho{1-\rho}\right)^u
+\]
+now bounds the two-stage placement sum by $2^sK_s^{s-a}V^b$.
+
+To include all cancellations, write $K=K_s$.  For $b<r$ set
+$e=a+b-r+1$.  Then
+\[
+ K^{s-a}V^b=K^{h_0t+1}(KV)^bK^{-e}.
+\]
+Apply~\eqref{eq:rs-chi-envelope} and extend $e$ to all integers.
+The sums for $e\le0$ and $e\ge1$ are $1/(1-K)$ and $1/(KQ-1)$.
+For $r\le b\le s$, every term has surplus cancellations; extending both
+geometric sums in $a$ and $b-r$ gives the following bound for all $b\le s$:
+\begin{equation}
+ 2^{s+1}\left[
+ K^{h_0t+1}\left(\frac1{1-K}+\frac1{KQ-1}\right)
+       \sum_{b=0}^{r-1}(KV)^b
+ +\frac{K^{h_0t}(KV)^r}{Q(1-1/(KQ))(1-V/Q)}
+ \right].
+ \label{eq:rs-low-b}
+\end{equation}
+
+For $b>s$, discard the output-weight restriction.  Vandermonde's identity
+gives
+\[
+ \sum_{j=1}^n\cG_n(H,j,b)=\binom{H-b}b\le\binom nb,
+ \qquad \sum_{H=1}^n\cG_n(s,H,a)=\binom{s-a}a.
+\]
+Since $\sum_a\binom{s-a}a\le2^s$, dropping the additional factor $Q^{-a}$
+and using $\binom nb\le n^b$ yields the complete tail bound
+\begin{equation}
+ \frac{2^{s+1}n^{s+1}Q^{-h_0t-2}}{1-n/Q}.
+ \label{eq:rs-high-b}
+\end{equation}
+
+To aggregate~\eqref{eq:rs-low-b}, set
+\[
+\begin{aligned}
+ U_0&=\sum_{\ell=d}^m\binom m\ell,& M_0&=2^mU_0,\\
+ C&=\frac{mn}{n-mT+1}\frac\rho{1-\rho},&
+ K_{\max}&=CT/n,\\
+ K_{\min}&=\frac d{n-d+1}\frac\rho{1-\rho},&
+ W&=\max\{1,K_{\max}V\},\\
+ J_0&=\frac3m M_0 C^{h_0}W^\sigma,&
+ x(t)&=J_0(t/n)^{h_0-1}.
+\end{aligned}
+\]
+There are at most $\binom BtU_0^t\le(3B/t)^tU_0^t$ supports touching
+$t$ blocks; the last inequality uses $e<3$.  Also $K_s\le Ct/n$ and
+$\sum_{b<r}(K_sV)^b\le\sigma tW^{\sigma t}$.  Hence their combined
+$b\le s$ contribution is at most
+\begin{equation}
+ (c_2t^2+c_0)x(t)^t,
+ \label{eq:rs-t-envelope}
+\end{equation}
+where
+\[
+ c_2=\frac{2C\sigma}{n}
+   \left(\frac1{1-K_{\max}}+\frac1{K_{\min}Q-1}\right),\qquad
+ c_0=\frac2{Q(1-1/(K_{\min}Q))(1-V/Q)}.
+\]
+Use the disjoint intervals $[2,3]$, $[4,7]$, $[8,15]$, $[16,31]$,
+$[32,63]$, and $[64,T]$.  On $[A,E]$, replace $x(t)$ by $x(E)<1$ and
+extend the sum to all $t\ge A$.  The resulting geometric sums are rational:
+\[
+\begin{aligned}
+ \sum_{t\ge A}x^t&=\frac{x^A}{1-x},\\
+ \sum_{t\ge A}t^2x^t
+ &=x^A\left(\frac{A^2}{1-x}
+      +\frac{2Ax}{(1-x)^2}+\frac{x(1+x)}{(1-x)^3}\right).
+\end{aligned}
+\]
+This covers every $2\le t\le T$, including growing sublinear block counts.
+Finally, summing~\eqref{eq:rs-high-b} over all $1\le t\le T$ gives at most
+\begin{equation}
+ \frac{2n}{Q^2(1-n/Q)}\frac Y{1-Y},\qquad
+ Y=\frac{3BM_0n^m}{Q^{h_0}}<1.
+ \label{eq:rs-global-high-b}
+\end{equation}
+Here $s\le mt$ and $1/t\le1$ justify each relaxation.  The verifier checks
+all positivity and convergence conditions by exact rational comparisons.
+
+\subsection{Direct one-block terms and their intermediate tail}
+
+For $t=1$, we retain the exact multiplicities~\eqref{eq:rs-support-count}.
+For $b<r$, the final-weight sum has the finite identity
+\begin{equation}
+ \sum_{j=1}^L\cG_n(H,j,b)
+ =\frac{\binom{H-b}b}{\binom nH}
+   \sum_{v=0}^b\binom L{H-v}\binom{n-L}v.
+ \label{eq:rs-final-cdf}
+\end{equation}
+Indeed, an $H$-subset has its $(H-b)$th order statistic at most $L$
+exactly when it has at most $b$ elements above $L$.  Counting first by the
+order statistic and then by that number of elements proves the identity.
+We evaluate every $H\le512$, $a\le\lfloor s/2\rfloor$, and $b<r$
+using~\eqref{eq:rs-final-cdf} and the exact first kernel.
+
+For the remaining $H$, put $\delta_0=L/n$ and $D_s=1-\delta_0-s/n$.
+Keeping the first binomial coefficient in the preceding envelope gives
+\[
+ \cG_n(s,H,a)\sum_{j\le L}\cG_n(H,j,b)
+ \le A_{s,a,b}\binom{H-1}{s-a-1}\binom H{2b}\delta_0^H,
+\]
+where
+\[
+ A_{s,a,b}=
+ \frac{\binom{s-a}a\binom na}{\binom ns}
+ \frac{\binom{2b}b}{(D_s\delta_0)^b}.
+\]
+We used $\binom{H-b}b\binom Hb=\binom{2b}b\binom H{2b}$.
+For an integer $w\ge1$ and $0<u<1$, define the rational function
+\begin{equation}
+ R_{w,b}(u)=
+ \sum_{i=0}^{\min(w,2b)}
+ \frac{w}{w+2b-i}
+ \frac{(w+2b-i)!}{i!(w-i)!(2b-i)!}
+ \left(\frac u{1-u}\right)^{w+2b-i}.
+ \label{eq:rs-moment}
+\end{equation}
+It equals $\sum_{H\ge1}\binom{H-1}{w-1}\binom H{2b}u^H$.
+To prove this, use $\binom{H-1}{w-1}=w\binom Hw/H$, count a pair of
+subsets by its intersection size $i$, and sum the resulting union size
+$N=w+2b-i$ with $\binom HN/H=\binom{H-1}{N-1}/N$.
+Taking $u=(1+\delta_0)/2$ bounds every omitted $H>512$ by
+\begin{equation}
+ A_{s,a,b}(\delta_0/u)^{513}R_{s-a,b}(u).
+ \label{eq:rs-H-tail}
+\end{equation}
+The script multiplies this expression by the projective factor and sums
+every $a$ and $b<r$.  For $r\le b\le s$, it uses the second term
+of~\eqref{eq:rs-low-b}, with the support's own $D_s$ and $K_s$.
+Equation~\eqref{eq:rs-global-high-b} already covers $b>s$.
+
+\subsection{Every remaining support type}
+
+For $t>T$, let $k_0,k_d,\ldots,k_m$ count blocks of each local support size,
+and set $p_\ell=k_\ell/B$.  The number of supports of that type is at most
+$\exp(n\cS_{m,\sigma}(p))$ by the multinomial entropy inequality.
+Normalize $s,H,a,b,j$ by $n$, writing $\alpha,\eta,x,y,\zeta$, and put
+$\beta=\sum_{\ell=d}^m(\ell-h_0)p_\ell/m$.  Define
+$f(A,B)=AH(B/A)$ on $0\le B\le A$, with $f(0,0)=0$.
+Let $J_1$ be the sum of
+\[
+\begin{gathered}
+ f(\alpha-x,x),\quad f(1-\eta,x),\quad f(\eta,\alpha-x),\\
+ f(\eta-y,y),\quad f(1-\zeta,y),\quad f(\zeta,\eta-y).
+\end{gathered}
+\]
+The finite exponent used by the verifier is
+\[
+ F=\cS_{m,\sigma}(p)+J_1-H(\alpha)-H(\eta)
+       -\log Q\max\{0,x+y-\beta\}.
+\]
+The feasible region requires that $p$ be a probability vector,
+$\alpha=\sum\ell p_\ell/m$, $p_0\le1-m(T+1)/n$, $0\le\zeta\le\delta$,
+and that all six perspective terms have $0\le B\le A$.
+
+Use $\binom vu\le\exp(vH(u/v))$ in the six numerators, after replacing
+$\binom{H-1}{s-a-1}$ by $\binom H{s-a}$ and its second-stage analogue.
+The lower bound $\binom nu\ge\exp(nH(u/n))/(n+1)$ controls both denominators.
+Equation~\eqref{eq:rs-chi-envelope}, with its extra minus one discarded,
+therefore bounds each support-type/trace contribution by
+$2(n+1)^2\exp(nF)$.  There are at most $(B+1)^\sigma$ support types and
+$(n+1)^4$ trace tuples.  Thus any uniform upper bound $F\le U$ gives
+\begin{equation}
+ \widehat\mu_{t>T}\le
+       2(B+1)^\sigma(n+1)^6\exp(nU).
+ \label{eq:rs-bulk-finite}
+\end{equation}
+
+Only $-H(\alpha)$ and $-H(\eta)$ are nonconcave terms of $F$.
+The verifier covers
+\[
+ [d(T+1)/n,1]\times[d(T+1)/(2n),1]
+\]
+by rectangles with rational boundaries, and replaces these two terms by
+their upper secants.  Every other entropy term has a global linear upper
+bound.  For any $0<\theta<1$ and strictly positive probability vector $p^*$,
+\[
+ f(A,B)\le-B\log\theta-(A-B)\log(1-\theta),\qquad
+ H(p)\le-\sum_\ell p_\ell\log p^*_\ell.
+\]
+Introduce $c\ge0$, $c\ge x+y-\beta$, with objective term $-c\log Q$.
+The choice $c=\max\{0,x+y-\beta\}$ lies in $[0,1]$, since $x,y\le1/2$.
+Each rectangle consequently has a linear upper objective $c_*+v_*\cdot v$
+over rational constraints $Av\le b$, $Ev=e$, and $l\le v\le u$.
+For any rational multipliers $\mu\ge0$ and $\nu$, put
+$r_*=v_*-A^T\mu-E^T\nu$.  Then
+\begin{equation}
+ F\le c_*+\mu\cdot b+\nu\cdot e
+       +\sum_i\bigl((r_*)_i l_i+\max\{0,(r_*)_i\}(u_i-l_i)\bigr).
+ \label{eq:rs-dual-check}
+\end{equation}
+Arb intervals enclose the logarithms and residuals in this expression.
+The numerical optimizer only proposes $p^*$, $\theta$, and multipliers;
+their feasibility or optimality is not assumed.  The verifier normalizes
+$p^*$ exactly and checks all required signs.
+
+The covering is encoded as a binary tree of exact midpoint splits.  The
+verifier reconstructs every boundary and rejects missing or extraneous nodes.
+An infeasible leaf is accepted only if an exact necessary condition fails:
+$\alpha_{\rm upper}\ge d(T+1)/n$,
+$\alpha_{\rm lower}\le2\eta_{\rm upper}$, or
+$\eta_{\rm lower}\le2\delta$.  The saved coverings have $21$ and $19$ leaves
+for $\sigma=4$ and $\sigma=8$, respectively.
+
+\subsection{Numerical result and reproduction}
+
+Table~\ref{tab:rs-certificate} lists separate bounds for every region.
+The complete verifier adds their interval enclosures before checking the
+reported failure bound.  It obtains
+\[
+ \log_2\widehat\mu < -209.6008601171\quad(\sigma=4),\qquad
+ \log_2\widehat\mu < -137.5682486336\quad(\sigma=8).
+\]
+These inequalities imply Theorem~\ref{thm:rs-finite}.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}l@{\qquad}r@{\quad}r@{}}
+\toprule
+Region & $\sigma=4$ & $\sigma=8$\\
+\midrule
+$t=1$, $H\le512$, $b<r$ & $209.6008$ & $137.5682$\\
+$t=1$, $H>512$, $b<r$ & $404$ & $690$\\
+$t=1$, $r\le b\le s$ & $296$ & $243$\\
+$2\le t\le T$, $b\le s$ & $250$ & $159$\\
+$1\le t\le T$, $b>s$ & $1357$ & $862$\\
+$t>T$, all traces & $1078$ & $5634$\\
+\midrule
+Complete bound & $209.60$ & $137.56$\\
+\bottomrule
+\end{tabular}
+\caption{Certified lower bounds on $-\log_2$ of each contribution.
+Every region includes all feasible first return counts and final weights.
+The lengths and distances are those of Theorem~\ref{thm:rs-finite}.}
+\label{tab:rs-certificate}
+\end{table}
+
+The exact directly summed terms with $t=1$, $H\le512$, and $a+b<r$ also
+give a lower bound on $\widehat\mu$, because their projective factor is one.
+The ratio of the complete upper bound to this partial sum is less than
+$1+5\cdot10^{-13}$ for $\sigma=4$ and $1+3.3\cdot10^{-7}$ for $\sigma=8$.
+Further numerical tightening of this same sum can gain less than a
+millionth of a bit.  This comparison does not lower-bound the true failure
+probability, since $\widehat\mu$ is itself a union bound.
+
+The artifact uses Python with \texttt{python-flint}~0.9.0.  From the source
+root, the complete verification commands are
+\begin{verbatim}
+python -m pip install -r rs-certification/requirements.txt
+python rs-certification/verify_complete.py
+\end{verbatim}
+The directory \path{rs-certification/} contains the rational certificate
+proposals in \path{bulk-rs16-4.json} and \path{bulk-rs16-8.json}.
+Verification needs neither NumPy nor SciPy.  Optional generation and
+small-instance tests have separate dependencies and commands in that
+directory's README.  Tests check the order-statistic identity, generating
+series, intermediate tail, finite prefactors, and rejection of malformed
+coverings.  These checks support the written reductions; the new analytic
+and numerical certificate is not a Lean proof.
