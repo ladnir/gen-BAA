@@ -20,9 +20,11 @@ def H(x):
     return -a(x)*a(x).log()-a(1-x)*a(1-x).log()
 
 
-def setup(sigma):
+def setup(sigma,delta=None):
     if sigma not in (4,8):raise ValueError('Unsupported constituent dimension')
-    m=16;n=2**20*m//sigma;delta=F(3,5) if sigma==4 else F(3,10)
+    m=16;n=2**20*m//sigma
+    delta=(F(3,5) if sigma==4 else F(3,10)) if delta is None else F(str(delta))
+    if not 0<delta<1:raise ValueError('Relative distance must lie in (0,1)')
     h=m-sigma;ells=[0]+list(range(h+1,m+1));P=len(ells);N=P+6
     ai,ei,xi,yi,zi,ci=range(P,N)
     def row(terms):
@@ -57,9 +59,9 @@ def impossible(model,box):
     return au<model['amin'] or 2*eu<al or el>2*model['delta']
 
 
-def verify_leaf(sigma,box,data,precision=192,q_min=2**127):
+def verify_leaf(sigma,box,data,precision=192,q_min=2**127,delta=None):
     ctx.prec=precision
-    md=setup(sigma)
+    md=setup(sigma,delta=delta)
     box=[v if isinstance(v,F) else F(str(v)) for v in box]
     if data.get('status')=='infeasible':
         if not impossible(md,box):raise ValueError('Unproved infeasible box')
@@ -113,7 +115,7 @@ def threshold(sigma,bits=42):
 def verify_covering(data,q_min=2**127,precision=192):
     """Return the checked model, leaf count, and enclosing bulk log bound."""
     ctx.prec=precision
-    sigma=data['sigma'];md=setup(sigma)
+    sigma=data['sigma'];md=setup(sigma,delta=data.get('delta'))
     leaves=data['leaves'];nodes=data['nodes']
     root=[md['amin'],F(1),md['amin']/2,F(1)]
     visited=set();uppers=[]
@@ -122,7 +124,7 @@ def verify_covering(data,q_min=2**127,precision=192):
         visited.add(path)
         if path in leaves:
             if path in nodes:raise ValueError('Leaf/internal collision')
-            u=verify_leaf(sigma,box,leaves[path],q_min=q_min,precision=precision)
+            u=verify_leaf(sigma,box,leaves[path],q_min=q_min,precision=precision,delta=md['delta'])
             if u is not None:uppers.append(u)
             return
         if path not in nodes:raise ValueError('Missing leaf '+path)
@@ -141,8 +143,8 @@ def verify_covering(data,q_min=2**127,precision=192):
 
 
 def verify_tree(data,q_min=2**127,precision=192):
-    _,leaves,u,logbound=verify_covering(data,q_min=q_min,precision=precision)
-    return {'leaves':leaves,'exponent_upper':str(u),
+    md,leaves,u,logbound=verify_covering(data,q_min=q_min,precision=precision)
+    return {'leaves':leaves,'delta':str(md['delta']),'exponent_upper':str(u),
             'log2_bulk_bound_upper':str((logbound/arb(2).log()).upper()),
             'below_2^-42':bool(logbound < -42*arb(2).log())}
 

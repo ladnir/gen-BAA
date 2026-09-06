@@ -23,6 +23,11 @@ tightening the sparse-support calculation. They now imply the manuscript's
 earlier RS values 2^-208.6 and 2^-136.5 under the stated ensemble assumptions.
 They do not certify RA rows or a particular pseudorandom permutation implementation.
 
+A subsequent [distance search](DISTANCE_SEARCH.md) also certifies
+delta=0.604395 with failure below 2^-44.36 and delta=0.30523 with failure
+below 2^-42.37, respectively, under the same assumptions. Saved certificates
+and reproduction commands are included. The manuscript retains the rows above.
+
 ## Proof and trust boundary
 
 The starting point is the support/trace master bound, whose concrete Lean
@@ -82,12 +87,13 @@ Generation saves a checkpoint. If it reports a nonzero `pending` count,
 repeat that generation command to resume; an incomplete covering will be
 rejected by the verifier. Generation is optional for the saved certificates.
 
-The sixteen tests include complete verification at the minimum field size,
+The twenty tests include complete verification at the minimum field size,
 verification at 256-bit precision over q=2^128, exact small-length trace sums, the order-statistic
 identity for the final weight, generating-function moments, the intermediate
 tail envelope, finite entropy prefactors, both certificate coverings, and
 rejection of missing leaves, unsupported infeasibility declarations, and
-negative dual multipliers.
+negative dual multipliers. They also verify the increased distances at two
+precisions and reject an overstated margin and mismatched distance metadata.
 The checked environment was Python 3.14, python-flint 0.9.0, NumPy 2.4.4,
 and SciPy 1.18.0. SciPy and NumPy are unnecessary for verifying the saved
 certificates.

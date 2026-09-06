@@ -345,14 +345,15 @@ Further numerical tightening of this same sum can gain less than a
 millionth of a bit.  This comparison does not lower-bound the true failure
 probability, since $\widehat\mu$ is itself a union bound.
 
-The artifact uses Python with \texttt{python-flint}~0.9.0.  From the source
-root, the complete verification commands are
+The certificate artifact is provided in the accompanying
+repository~\cite{chosenbaaartifact} and uses Python with
+\texttt{python-flint}~0.9.0.  From the repository root, the complete
+verification commands are
 \begin{verbatim}
 python -m pip install -r rs-certification/requirements.txt
 python rs-certification/verify_complete.py
 \end{verbatim}
-The directory \path{rs-certification/} contains the rational certificate
-proposals in \path{bulk-rs16-4.json} and \path{bulk-rs16-8.json}.
+The certificate directory contains both rational certificate proposals.
 Verification needs neither NumPy nor SciPy.  Optional generation and
 small-instance tests have separate dependencies and commands in that
 directory's README.  Tests check the order-statistic identity, generating

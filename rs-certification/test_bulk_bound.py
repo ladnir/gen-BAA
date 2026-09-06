@@ -10,6 +10,8 @@ from test_sparse_bound import kernel
 from verify_bulk import verify_tree,a,H,verify_leaf,setup
 from bulk_bound import Model
 from verify_complete import complete
+from verify_distance import verify_distance
+from generate_bulk import run
 from scipy.optimize import linprog
 import numpy as np
 
@@ -23,6 +25,33 @@ def perspective(A,B):
 
 
 class BulkBoundTests(unittest.TestCase):
+    def test_increased_distances_at_two_precisions(self):
+        for sigma,delta,L,bits in [(4,'120879/200000',2535016,'44.36'),
+                                   (8,'30523/100000',640113,'42.37')]:
+            for precision in (192,256):
+                result=verify_distance(HERE/f'bulk-distance-rs16-{sigma}.json',
+                                       precision=precision,reported_bits=bits)
+                self.assertEqual(result['delta'],delta)
+                self.assertEqual(result['L'],L)
+                self.assertEqual(result['certified_failure_bound_bits_decimal'],bits)
+                self.assertEqual(result['sparse_max_active_blocks']+1,result['bulk_min_active_blocks'])
+
+    def test_overstated_distance_margin_is_rejected(self):
+        with self.assertRaises(ValueError):
+            verify_distance(HERE/'bulk-distance-rs16-8.json',reported_bits='43')
+
+    def test_distance_metadata_required_and_resume_mismatch_rejected(self):
+        with self.assertRaises(ValueError):
+            verify_distance(HERE/'bulk-rs16-4.json')
+        with self.assertRaises(ValueError):
+            run(4,HERE/'bulk-distance-rs16-4.json',0,delta='0.6')
+
+    def test_infeasibility_changes_with_distance(self):
+        box=[F(1,10),F(1,5),F(7,10),F(4,5)]
+        self.assertIsNone(verify_leaf(8,box,{'status':'infeasible'},delta='0.3'))
+        with self.assertRaises(ValueError):
+            verify_leaf(8,box,{'status':'infeasible'},delta='0.4')
+
     def test_complete_bounds_at_minimum_field(self):
         for sigma,bits in [(4,'209.60'),(8,'137.56')]:
             result=complete(sigma)

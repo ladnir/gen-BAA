@@ -5,6 +5,11 @@ Reviewed September 5, 2026, in the worktree based on Overleaf commit
 The audit was completed before committing and pushing this revision.
 No ePrint submission was made as part of the audit.
 
+The subsequent [distance search](DISTANCE_SEARCH.md) adds two certified
+parameter choices and extends the tests from sixteen to twenty. It leaves
+the manuscript and PDF covered by this audit unchanged. The hash manifest
+has been refreshed to include the added certificates and updated scripts.
+
 The audit retained both complete bounds at message dimension k=2^20:
 
 | Local code | Output length | Relative distance | Verified failure upper bound |

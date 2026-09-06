@@ -14,6 +14,8 @@ def complete(sigma,precision=192,q_min=2**127):
     if data['sigma']!=sigma:raise ValueError('Certificate constituent mismatch')
     # Reconstruct and verify every leaf and the covering from scratch.
     md,leaves,_,logbulk=verify_covering(data,q_min=q_min,precision=precision)
+    if md['delta']!=(F(3,5) if sigma==4 else F(3,10)):
+        raise ValueError('Certificate distance differs from the manuscript configuration')
     n=md['n']
     bulk=logbulk.exp()
     sparse=direct_sparse(n,16,sigma,md['delta'],q_min,precision=precision)

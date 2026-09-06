@@ -16,13 +16,14 @@ def box_at(path,nodes,root):
     return box
 
 
-def run(sigma,path,limit):
-    path=Path(path);md=setup(sigma)
+def run(sigma,path,limit,delta=None):
+    path=Path(path);md=setup(sigma,delta=delta)
     root=[md['amin'],F(1),md['amin']/2,F(1)]
-    model=Model(sigma=sigma,delta=float(md['delta']),n=md['n'])
+    model=Model(sigma=sigma,delta=float(md['delta']),n=md['n'],qbits=127)
     if path.exists():data=json.loads(path.read_text())
-    else:data={'sigma':sigma,'nodes':{},'leaves':{},'pending':[''],'solves':0}
-    assert data['sigma']==sigma
+    else:data={'sigma':sigma,'delta':str(md['delta']),'nodes':{},'leaves':{},'pending':[''],'solves':0}
+    if data['sigma']!=sigma or setup(sigma,delta=data.get('delta'))['delta']!=md['delta']:
+        raise ValueError('Checkpoint parameters do not match requested parameters')
     if not data['nodes'] and not data['leaves'] and not data['pending']:
         data['pending']=['']
     # Recover unfinished leaves after any interrupted proposal. Verification
@@ -51,7 +52,7 @@ def run(sigma,path,limit):
             result=model.solve([float(v) for v in box])
             solves+=1;data['solves']+=1
             if result['status']=='candidate':
-                upper=verify_leaf(sigma,box,result)
+                upper=verify_leaf(sigma,box,result,delta=md['delta'])
                 if upper<target:
                     data['leaves'][node]=result
                     if solves%20==0:
@@ -82,4 +83,5 @@ def run(sigma,path,limit):
 if __name__=='__main__':
     ap=argparse.ArgumentParser();ap.add_argument('--sigma',type=int,default=4)
     ap.add_argument('--output',required=True);ap.add_argument('--seconds',type=float,default=45)
-    args=ap.parse_args();run(args.sigma,args.output,args.seconds)
+    ap.add_argument('--delta',help='Exact rational or decimal target distance')
+    args=ap.parse_args();run(args.sigma,args.output,args.seconds,delta=args.delta)

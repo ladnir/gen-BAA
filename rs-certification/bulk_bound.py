@@ -123,7 +123,7 @@ class Model:
                      bounds=Bounds(lo,hi),
                      constraints=[LinearConstraint(self.A,-np.inf,self.b),
                                   LinearConstraint(self.E,self.e,self.e)],
-                     options={'ftol':1e-11,'maxiter':300})
+                     options={'ftol':1e-14,'maxiter':600})
         v=opt.x
         c,constant,probs,theta=self.tangent(v,box)
         upper=linprog(-c,A_ub=self.A,b_ub=self.b,A_eq=self.E,b_eq=self.e,

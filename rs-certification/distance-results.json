@@ -1,0 +1,54 @@
+[
+  {
+    "constituent": "RS[16,4,13]",
+    "message_dimension": 1048576,
+    "length": 4194304,
+    "delta": "120879/200000",
+    "L": 2535016,
+    "field_size_lower_bound": "170141183460469231731687303715884105728",
+    "bulk_leaves": 57,
+    "sparse_max_active_blocks": 4194,
+    "bulk_min_active_blocks": 4195,
+    "sparse_log2_upper": "[-209.256762360958498644998489295981504328116650268444576120 +/- 3.80e-55]",
+    "sparse_parts_log2_upper": {
+      "no_surplus": "[-209.256762360960284266425895652085109918077528243516031415 +/- 3.52e-55]",
+      "surplus": "[-315.168342909144393029746127269643632859427666848257815650 +/- 4.34e-55]",
+      "H_tail": "[-400.470331111462928865111175453840665470489501388648428778 +/- 1.24e-55]",
+      "b_ge_r": "[-296.270839820130784178554498388961417628696591703120211074 +/- 1.46e-55]",
+      "remaining_sparse": "[-248.812239627869563398972144869152024913853892531450611455 +/- 1.87e-55]",
+      "b_gt_s": "[-1357.97002265341042071712622373771883487123791603561100913 +/- 4.24e-54]"
+    },
+    "bulk_log2_upper": "[-44.3607145311025596882493296637087003212223361891277807368 +/- 4.49e-56]",
+    "total_log2_upper": "[-44.3607145311025596882493296637087003212223361891277475842 +/- 5.53e-58]",
+    "failure_bound_below_2^-40": true,
+    "arithmetic_precision_bits": 192,
+    "certified_failure_bound_bits_decimal": "44.36",
+    "scope": "Independent uniform permutations and independent uniform nonzero diagonal entries; complete support/trace bound. Written analytic reductions, not Lean-formalized."
+  },
+  {
+    "constituent": "RS[16,8,9]",
+    "message_dimension": 1048576,
+    "length": 2097152,
+    "delta": "30523/100000",
+    "L": 640113,
+    "field_size_lower_bound": "170141183460469231731687303715884105728",
+    "bulk_leaves": 47,
+    "sparse_max_active_blocks": 2097,
+    "bulk_min_active_blocks": 2098,
+    "sparse_log2_upper": "[-137.246455352938026995532157387972398243498443745124312855 +/- 1.94e-55]",
+    "sparse_parts_log2_upper": {
+      "no_surplus": "[-137.246456244038615018123539994265821111488301949362143404 +/- 1.56e-55]",
+      "surplus": "[-244.889861314007835211566033184798890179152134012243064203 +/- 3.77e-55]",
+      "H_tail": "[-680.775226830178531591620779163700198054530695151776229899 +/- 2.51e-55]",
+      "b_ge_r": "[-243.261278329806480936054434319094762134836741381713805063 +/- 3.58e-56]",
+      "remaining_sparse": "[-157.873130542336863285987395461540778634267606375703746419 +/- 4.89e-55]",
+      "b_gt_s": "[-862.730453229238935947028620034936568854722026959286449000 +/- 1.10e-55]"
+    },
+    "bulk_log2_upper": "[-42.3721678759967451401546479306996199426066020281678390827 +/- 2.75e-56]",
+    "total_log2_upper": "[-42.3721678759967451401546479306598854024676132218751865111 +/- 8.36e-57]",
+    "failure_bound_below_2^-40": true,
+    "arithmetic_precision_bits": 192,
+    "certified_failure_bound_bits_decimal": "42.37",
+    "scope": "Independent uniform permutations and independent uniform nonzero diagonal entries; complete support/trace bound. Written analytic reductions, not Lean-formalized."
+  }
+]
