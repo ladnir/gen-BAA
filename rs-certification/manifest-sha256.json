@@ -2,12 +2,12 @@
   "algorithm": "SHA-256",
   "text_normalization": "LF line endings; PDF uses original binary bytes",
   "files": {
-    "main.tex": "51af69250ea2463cd0cb6c2d7b5ac0f3a8c00372c4c0178d4a651cd6db667bcb",
+    "main.tex": "7393b8780ec8bab4f564e5e63d1244996a23acf313e77895206e21610bf35701",
     "abstract.tex": "3c0b0092713c447aa833fd9be355f9522c96256303beab82fec295ff12b22909",
     "references.bib": "b12aca851ebe00a2fbb6c1c8efaad8dbd2fcecf08975c9ec5eec8ff119e78fce",
     "llncs.cls": "e9894c92191fcd195eef3120a36d2f75b52030eadcbdc3ce1463179746526e6a",
     "splncs04.bst": "f36c3a17e5304a692706359aafa9de709395a085e579eb47c027095aeaa35174",
-    "output/pdf/chosen-block-baa.pdf": "d00e3086a56e645b685f9310d00aa06328488002fb0e12a8eeaae87c717a7357",
+    "output/pdf/chosen-block-baa.pdf": "5725addc5725f2cabeea32ef1fdc3ee7ec47c7806fedddd82caf2eb27cced38c",
     "lean/BAA/NonbinaryProjectiveBound.lean": "9319ed82ca69d28a15f1d1b01a04a88d70c6ee1ce5ea5918657ac4a6c76cdf36",
     "lean/lean-toolchain": "8e3538e0ab5f81a3ee04927d8838c8c674e0e112838b4b3ce87ec218143276af",
     "lean/lakefile.toml": "fb051d9f2aaea6088e06866abf7f80bb32c39c7a44bfb924ee4344b6f21445cf",
@@ -39,6 +39,7 @@
     "rs-certification/bulk-distance-rs16-4.json": "8087575fffb5d4d8c7a569e098007affec32736c2119651a74a976a8cd4e30dc",
     "rs-certification/bulk-distance-rs16-8.json": "4993e18555696e17cecdb7f2e7dba848a88f8195aeead226ea5341b99dc72118",
     "rs-certification/distance-results.json": "2ca1e54e603d70d3afe793468356cd919fb7d6269fca2b5d7632f8985e95810d",
-    "rs-certification/verify_distance.py": "4621ff0afe665e6c85397bb1cd1ef114712618d937168a91dfc5856358a38448"
+    "rs-certification/verify_distance.py": "4621ff0afe665e6c85397bb1cd1ef114712618d937168a91dfc5856358a38448",
+    "appendices-details.tex": "f5b0432db48c51aba288c9c804b2bed953bda09014b06d5fc2ee7821f96272a5"
   }
 }

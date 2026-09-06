@@ -402,6 +402,8 @@ Section~\ref{sec:numerics} gives the concrete distance evaluation and its design
 implications.
 Section~\ref{sec:implementation} describes the implementation and reports its
 performance, while Section~\ref{sec:lean} describes the machine-checked proof.
+The appendices provide constituent spectra, detailed calculations, numerical
+certificates, and reproduction instructions.
 
 \subsection{Related work}
 
@@ -596,57 +598,10 @@ For $q=2$, this reduces to the usual binary entropy.  The GV value is a
 benchmark for the numerical transitions reported here, not a claim about any
 particular finite code.
 
-\subsection{The binary block codes}
-
-The binary evaluation uses four well-known families with exact parameters and
-weight spectra.  The Golay, Reed--Muller, and BCH constituents are certified in
-the accompanying Lean development.  The longer quadratic-residue spectra are
-standard algebraic or published enumerators and are not part of that formal
-certificate.
-
-\paragraph{Reed--Muller codes.}
-The code $\operatorname{RM}(r,\ell)$ is obtained by evaluating every
-multilinear polynomial in $\ell$ binary variables of total degree at most $r$
-on all points of $\F_2^\ell$.  It has parameters
-\[
-    \left[2^\ell,\ \sum_{i=0}^r\binom{\ell}{i},\ 2^{\ell-r}\right]_2.
-\]
-In particular, $\operatorname{RM}(2,5)$ is a $[32,16,8]_2$ code.  Up to a
-permutation of coordinates, it is also the parity extension of the primitive
-triple-error-correcting BCH code $[31,16,7]_2$, and is therefore often called
-the extended BCH code $[32,16,8]_2$~\cite{macwilliams}.  Here ``equivalent''
-means that the two descriptions differ only by a relabeling of coordinates;
-they have the same weight spectrum and give exactly the same BAA transition.
-Thus the $\operatorname{RM}(2,5)$ calculation below is already a rate-$1/2$
-BCH result.
-
-\paragraph{BCH codes.}
-A primitive binary BCH code is a cyclic code of length $2^\ell-1$ specified by
-requiring its code polynomials to vanish at a consecutive set of powers of a
-primitive element of $\F_{2^\ell}$.  The chosen roots give a designed-distance
-lower bound; extending the code by an overall parity coordinate can increase
-its length and distance.  A subcode is simply a linear subspace of the
-parent code.  The rate-$1/4$ block used here is an explicitly generated
-$[32,8,12]_2$ subcode of an extended primitive $[32,11,12]_2$ BCH code.
-Appendix~\ref{app:binary-generator} gives its generator and its exact exhaustive
-weight enumeration, so the analysis does not rely only on the BCH designed
-distance.
-
-\paragraph{The extended Golay code.}
-The extended binary Golay code is the exceptional self-dual $[24,12,8]_2$
-code.  Along with the extended BCH code (equivalently
-$\operatorname{RM}(2,5)$), it supplies a compact rate-$1/2$ block with a known
-complete weight enumerator.
-
-\paragraph{Extended quadratic-residue codes.}
-Extending the binary quadratic-residue code of prime length $p\equiv-1\pmod 8$
-gives a doubly even self-dual code of length $p+1$ and rate $1/2$.  We evaluate
-the concrete constituents $[48,24,12]$, $[80,40,16]$, $[104,52,20]$, and
-$[168,84,24]$.  For the first three, Type-II extremality and Gleason's theorem
-fix the complete weight enumerator from the displayed parameters.  For length
-$168$, we use the exact weight distribution determined by Su et
-al.~\cite{su08}; Appendix~\ref{app:qr-spectrum} records every nonzero
-coefficient used in our calculation.
+The binary instantiations use Golay, Reed--Muller, BCH, and extended
+quadratic-residue codes.  Appendix~\ref{app:constituents} recalls their
+standard constructions and spectra; Sections~\ref{sec:numerics} and
+\ref{sec:implementation} compare their distance and encoding performance.
 
 \subsection{Machine-checked proofs with Lean}
 \label{sec:lean-prelim}
@@ -868,9 +823,10 @@ spectrum.  A BCH-like block therefore needs neither an asymptotic spectrum
 theorem nor a random local-code failure event.
 
 The following accumulator enumerator is due to Divsalar, Jin, and
-McEliece~\cite{divsalar98}.  We recall its run-counting proof for completeness.
+McEliece~\cite{divsalar98}.  We recall its run-counting proof in Appendix~\ref{app:binary-analysis}.
 
 \begin{lemma}[Binary accumulator transition]
+\label{lem:binary-transition}
 For $1\le w\le n$, put
 \[
     r_w:=\left\lceil\frac w2\right\rceil,
@@ -892,14 +848,8 @@ invertible.  This separate boundary case avoids interpreting
 $\binom{h-1}{r_w-1}$ at $h=0$.
 \end{lemma}
 
-\begin{proof}
-A nonzero input coordinate toggles the accumulator state.  Decomposing the
-output into alternating zero-runs and one-runs gives a bijection with two run
-compositions.  The positive lengths of the $r_w$ one-runs contribute the first
-binomial coefficient.  The $s_w$ required zero gaps contribute the second.
-The inverse difference map proves both injectivity and surjectivity of this
-correspondence.  Invertibility excludes a zero output for nonzero input.
-\end{proof}
+The run-counting proof is recalled in Appendix~\ref{app:binary-analysis}.
+
 
 Let $\mathcal H_{n,w}:=\{u\in\F_2^n:\wt(u)=w\}$.  Consequently, for
 $U\gets\mathcal H_{n,w}$,
@@ -992,112 +942,14 @@ independent uniform interleavers and accumulators.
 \end{proof}
 
 \subsection{Asymptotic consequences}
-
-Fix $w$ and a target $0<\delta<1/2$.  The exact transition~\eqref{eq:B3} gives, for
-fixed $h$,
-\[
-    P_n^{\rm bin}(w,h)
-      =
-    \Theta_{w,h}\!\left(n^{-\lceil w/2\rceil}\right).
-\]
-The second accumulator tail from fixed $h$ converges to a nonzero beta-tail
-constant.  Splitting the intermediate-weight sum into bounded and growing
-ranges therefore gives
-\[
-    \boxed{
-    \sum_h P_n^{\rm bin}(w,h)Q_n^{\rm bin}(h,\lfloor\delta n\rfloor)
-      =
-    \Theta_{w,\delta}\!\left(n^{-\lceil w/2\rceil}\right).
-    }
-    \eqnumlabel{eq:B6}
-\]
-Hence the one-active-block contribution is
-\[
-    \frac{k}{\sigma}
-    \sum_{w=1}^{m}A_w^{(0)}
-    \Theta_{w,\delta}\!\left(n^{-\lceil w/2\rceil}\right).
-    \eqnumlabel{eq:B7}
-\]
-If the local distance is $d$, this is at most
-\[
-    O\!\left(n^{1-\lceil d/2\rceil}\right),
-\]
-with the exact leading term determined by all local weights attaining the
-smallest value of $\lceil w/2\rceil$.
-
-Using only local distance, a fixed family touching $t$ blocks has the coarse
-scale
-\[
-    O\!\left(n^{t-\lceil td/2\rceil}\right).
-    \eqnumlabel{eq:B8}
-\]
-Thus a constant local distance of at least three is consistent with a vanishing
-fixed-$t$ sparse tail.  The earlier binary BA proof assumes $d>4$ because it
-uses coarser inequalities.  For a fixed local block, its exact spectrum and the
-two-accumulator kernel~\eqref{eq:B4} give the sharper bound.
-
-\paragraph{Linear weights.}
-
-We use the entropy analysis of accumulator transitions developed for RAA/RMA
-codes~\cite[Sections~III--IV]{kliewer08}.  For the outer stage, the elementary
-coefficient bound $[z^w]W_0(z)^{n/m}\le W_0(z)^{n/m}z^{-w}$ for $z>0$
-gives the direct-sum spectrum the upper exponent
-\[
-    \boxed{
-    \mathcal A_{C_0}(\alpha)
-      :=
-    \inf_{z>0}
-    \left\{
-      \frac1m\log W_0(z)-\alpha\log z
-    \right\}.
-    }
-    \eqnumlabel{eq:B9}
-\]
-Indeed,
-\[
-    A_{\lfloor\alpha n\rfloor}^{\rm out}
-      \le
-    \exp\!\left(n\mathcal A_{C_0}(\alpha)+O(\log n)\right).
-\]
-For linear input and output weights $u n$ and $v n$, the binary accumulator
-transition exponent is
-\[
-    \boxed{
-    \Gamma_{\rm bin}(u,v)
-      :=
-    vH\!\left(\frac{u}{2v}\right)
-    +(1-v)H\!\left(\frac{u}{2(1-v)}\right)
-    -H(u),
-    }
-    \eqnumlabel{eq:B10}
-\]
-with feasibility $u/2\le v\le1-u/2$.  For $\delta<1/2$, this exponent is
-increasing in the final output fraction up to $1/2$, so the low-weight tail is
-maximized at the boundary $v=\delta$.
-
-The binary BAA first-moment exponent is therefore
-\[
-    \boxed{
-    \Phi^{\rm bin}_{C_0,\delta}(\alpha,\eta)
-      =
-    \mathcal A_{C_0}(\alpha)
-    +\Gamma_{\rm bin}(\alpha,\eta)
-    +\Gamma_{\rm bin}(\eta,\delta).
-    }
-    \eqnumlabel{eq:B11}
-\]
-For a fixed $\varepsilon>0$, a sufficient condition for the contribution
-from outer weights $w\ge\varepsilon n$ to vanish is
-\[
-    \sup_{\substack{\alpha\ge\varepsilon,\,\eta\\\text{feasible}}}
-       \Phi^{\rm bin}_{C_0,\delta}(\alpha,\eta)<0
-    \eqnumlabel{eq:B12}
-\]
-on this restricted domain.  The unrestricted supremum is at least zero
-because the exponent tends to zero at the sparse boundary.
-For a fixed block $C_0$, \eqref{eq:B4} gives the exact
-finite-length first moment, \eqref{eq:B7} controls fixed-block supports, and \eqref{eq:B12}
-controls linear weights.
+The local spectrum controls both sparse failures and the linear-weight
+transition.  A single active block of local distance $d$ contributes at most
+$O(n^{1-\lceil d/2\rceil})$ at a fixed target relative distance.  For linear
+weights, we combine the direct-sum coefficient exponent with the two
+accumulator transition exponents.  Appendix~\ref{app:binary-asymptotics}
+gives these calculations and the restricted negative-exponent criterion.
+The numerical transitions in Section~\ref{sec:numerics} use this criterion;
+finite-length guarantees use the complete sum in~\eqref{eq:B4}.
 
 \section{Large-field support analysis}
 \label{sec:large-field}
@@ -1351,227 +1203,16 @@ they meet.
 This pointwise optimal shortening profile makes a small Reed--Solomon block a
 natural local code over a large field.
 
-\paragraph{Sparse supports.}
-
-Suppose an admissible global support touches $t$ local blocks.
-In the no-surplus regime,
-\[
-    a+b\le r-1.
-\]
-The first accumulator output has at least $s-a$ nonzero-state gaps, and after
-the second stage any final output of weight $j$ satisfies
-\[
-    j\ge s-a-b.
-\]
-Using the full projective cancellation budget gives
-\[
-    s-a-b\ge s-r+1\ge t(d-1)+1.
-\]
-
-A direct fixed-$t$ asymptotic analysis of the exact kernel gives the scale
-\[
-    \boxed{
-    P_t
-      =
-    O\!\left(
-      n^{-t(d-2)-1}
-    \right)
-    }
-    \eqnumlabel{eq:6}
-\]
-when $q$ is sufficiently large that surplus cancellations are negligible.
-
-In particular,
-\[
-    P_1=O(n^{1-d}).
-\]
-The canonical one-block event gives a matching lower bound of the same
-polynomial order, so the natural sparse tail is
-\[
-    \boxed{
-    \Prb[\text{sparse bad event}]
-      =
-    \Theta(n^{1-d}).
-    }
-    \eqnumlabel{eq:7}
-\]
-
-For example:
-\[
-\begin{array}{c|c}
-d & \text{sparse tail scale}\\
-\hline
-2 & n^{-1}\\
-3 & n^{-2}\\
-5 & n^{-4}\\
-7 & n^{-6}\\
-9 & n^{-8}
-\end{array}
-\]
-
-For $q-1\gtrsim n$, a surplus cancellation can recover at most one geometric
-power of $n$ while costing $1/(q-1)$, so surplus layers remain controlled.
-For $q\approx2^{128}$ and the lengths considered here, the resulting surplus
-terms are negligible on the reported scale.
-
-\paragraph{Linear weights.}
-
-Let $C_0$ be an $[m,\sigma,d]$ MDS code, with
-\[
-    d=m-\sigma+1,
-    \qquad R=\sigma/m=k/n.
-\]
-Its local support--dimension polynomial is
-\[
-    \boxed{
-    F_{m,\sigma}(z,u)
-      =
-    1+
-    \sum_{\ell=d}^{m}
-    \binom{m}{\ell}z^\ell u^{\ell-d+1}.
-    }
-    \eqnumlabel{eq:L1}
-\]
-Let $p_0,p_d,\ldots,p_m$ be the fractions of local blocks in each exact
-support class, and put
-\[
-    \lambda:=\sum_{\ell=d}^{m}p_\ell.
-\]
-Define the normalized global support and shortening dimension by
-\[
-    \alpha
-      :=
-    \frac1m\sum_{\ell=d}^{m}\ell p_\ell,
-    \qquad
-    \beta
-      :=
-    \frac1m\sum_{\ell=d}^{m}(\ell-d+1)p_\ell.
-\]
-Since $d-1=m-\sigma=m(1-R)$,
-\[
-    \boxed{
-    \beta=\alpha-(1-R)\lambda.
-    }
-    \eqnumlabel{eq:L2}
-\]
-The support-pattern entropy per output coordinate is
-\[
-    \boxed{
-    \cS_{m,\sigma}(p)
-      :=
-    \frac1m
-    \left[
-      H(p_0,p_d,\ldots,p_m)
-      +
-      \sum_{\ell=d}^{m}p_\ell\log\binom{m}{\ell}
-    \right].
-    }
-    \eqnumlabel{eq:L3}
-\]
-Here $H$ uses natural logarithms unless a quantity is explicitly divided by
-$\log 2$.
-
-Normalize the first- and second-stage zero-return counts and intermediate
-support by
-\[
-    x:=a/n,
-    \qquad
-    y:=b/n,
-    \qquad
-    \eta:=h/n.
-\]
-The first accumulator contributes
-\[
-\boxed{
-\begin{aligned}
-\Gamma_1(\alpha,\eta,x)
-={}&
-(\alpha-x)
-H\!\left(\frac{x}{\alpha-x}\right)
-+
-(1-\eta)
-H\!\left(\frac{x}{1-\eta}\right)
-\\
-&+
-\eta
-H\!\left(\frac{\alpha-x}{\eta}\right)
--H(\alpha),
-\end{aligned}
-}
-\eqnumlabel{eq:L4}
-\]
-and, at final relative weight $\zeta$, the second contributes
-\[
-\boxed{
-\begin{aligned}
-\Gamma_2(\eta,\zeta,y)
-={}&
-(\eta-y)
-H\!\left(\frac{y}{\eta-y}\right)
-+
-(1-\zeta)
-H\!\left(\frac{y}{1-\zeta}\right)
-\\
-&+
-\zeta
-H\!\left(\frac{\eta-y}{\zeta}\right)
--H(\eta).
-\end{aligned}
-}
-\eqnumlabel{eq:L5}
-\]
-A direct derivative calculation gives the unconstrained maximizing final weight
-\[
-    \boxed{
-    \zeta_\star=1-\frac{y}{\eta}.
-    }
-    \eqnumlabel{eq:L6}
-\]
-Therefore define
-\[
-    \widehat\Gamma_2(\eta,\delta,y)
-      :=
-    \Gamma_2\!\left(
-      \eta,
-      \min\left\{\delta,1-\frac{y}{\eta}\right\},
-      y
-    \right).
-\]
-This distinction matters for target distances exceeding $1/2$.
-
-In the large-field no-surplus region,
-\[
-    x+y\le\beta,
-\]
-and the complete support/trace first-moment exponent is
-\[
-    \boxed{
-    \Phi_{m,\sigma,\delta}
-      =
-    \cS_{m,\sigma}(p)
-      +
-    \Gamma_1(\alpha,\eta,x)
-      +
-    \widehat\Gamma_2(\eta,\delta,y).
-    }
-    \eqnumlabel{eq:L7}
-\]
-For finite $q$, the corresponding exponent includes
-\[
-    \min\left\{
-      0,
-      \beta\log q-(x+y)\log(q-1)
-    \right\}.
-\]
-The exponent tends to zero as the active-block fraction tends to zero, so
-its unrestricted supremum cannot be negative.  The numerical transition
-estimates below track the zero crossing of a nonzero stationary branch of
-\eqref{eq:L7}.  We write $\Phi^{\mathrm{int}}_{m,\sigma,\delta}$ for the
-reported value on that branch.  A negative branch value alone does not
-certify a uniform bound.  The finite calculation in
-Appendix~\ref{app:rs-certificate} instead bounds an explicitly specified
-domain away from the sparse boundary and covers the complementary supports
-separately.
+\paragraph{Consequences for distance.}
+The shortening profile supplies the local input to both the sparse-support
+and linear-weight analyses.  In the no-surplus regime, a support meeting $t$
+blocks has at least $t(d-1)+1$ surviving nonzero-state gaps across the two
+stages.  For linear supports, we aggregate blocks by support size and
+shortening dimension and optimize the resulting entropy bound.
+Appendix~\ref{app:field-asymptotics} gives the sparse estimates and the full
+optimization.  The complete finite-length RS guarantees in
+Theorem~\ref{thm:rs-finite} also control the intermediate support sizes and
+surplus cancellations.
 
 \section{Generic rank and the structural obstruction}
 \label{sec:rank-containers}
@@ -1716,98 +1357,14 @@ $T$, and ``direct'' because the block-capacity test \eqref{eq:G5} detects it wit
 solving the full path-packing problem.
 
 \subsection{Counting structural containers}
-
-For fixed permutations, define
-\[
-    Z_t
-      :=
-    \bigl|\{T\subseteq[n]:|T|=t,\ \kappa(U(T))<t\}\bigr|.
-\]
-By \eqref{eq:G5}, every set counted by $Z_t$ supports a nonzero BAA codeword for every
-choice of diagonal coefficients.
-
-Endpoint membership changes the size of a difference neighborhood.  For
-$e\in\{0,1\}$, let $R_n^e(t,r)$ count the $t$-subsets with $r$ runs and with
-$e=1$ exactly when $n$ belongs to the set.  Then
-\[
-\begin{aligned}
-    R_n^0(t,r)
-      &:=\binom{t-1}{r-1}\binom{n-t}{r},\\
-    R_n^1(t,r)
-      &:=\binom{t-1}{r-1}\binom{n-t}{r-1},\\
-    R_n(t,r)
-      &:=R_n^0(t,r)+R_n^1(t,r)
-       =\binom{t-1}{r-1}\binom{n-t+1}{r}.
-\end{aligned}
-\eqnumlabel{eq:G6}
-\]
-For a set of type $(t,r,e)$, the neighborhood has exact size
-\[
-    |\partial T|=t+r-e.
-\]
-
-For the local block-rank count define
-\[
-    B_{m,h}(x,y)
-      :=
-    \sum_{\ell=0}^{m}\binom m\ell x^\ell y^{\min(\ell,h)},
-    \eqnumlabel{eq:G7}
-\]
-and
-\[
-    A_{n,m,h}(u,c)
-      :=
-    \sum_{z\le c}[x^uy^z]B_{m,h}(x,y)^{n/m}.
-    \eqnumlabel{eq:G8}
-\]
-
-\begin{theorem}[Exact structural-container expectation]
-Assume $m\mid n$, fix $1\le t\le n$, and sample independent
-$P_1,P_2\gets\operatorname{Sym}([n])$.  For
-$r_1,r_2\ge1$ and $e_1,e_2\in\{0,1\}$, set
-\[
-    u_1:=t+r_1-e_1,
-    \qquad
-    u_2:=u_1+r_2-e_2.
-\]
-Let $\mathcal I_t$ contain the tuples $(r_1,r_2,e_1,e_2)$ that satisfy
-$r_1\le t$, $r_2\le u_1$, and $u_1,u_2\le n$.
-Then the expected number of direct structural containers $T$ of size $t$ is
-\[
-\boxed{
-\begin{aligned}
-\E Z_t
-=
-\sum_{(r_1,r_2,e_1,e_2)\in\mathcal I_t}
-&R_n^{e_1}(t,r_1)
-\frac{R_n^{e_2}(u_1,r_2)}{\binom n{u_1}}
-\\[-1mm]
-&\cdot
-\frac{A_{n,m,h}(u_2,t-1)}
-     {\binom n{u_2}}.
-\end{aligned}
-}
-\eqnumlabel{eq:G9}
-\]
-\end{theorem}
-
-\begin{proof}
-Partition the $t$-subsets by their first run count and endpoint flag.  Equation
-\eqref{eq:G6} gives $R_n^{e_1}(t,r_1)$ choices, and the first neighborhood has size
-$u_1$.  The permutation $P_2$ maps this neighborhood to a uniform
-$u_1$-subset.  A second application of \eqref{eq:G6} gives the ratio
-$R_n^{e_2}(u_1,r_2)/\binom n{u_1}$ and a neighborhood of size $u_2$.  The
-permutation $P_1$ maps that neighborhood to a uniform $u_2$-subset.  Equation
-\eqref{eq:G8}, divided by $\binom n{u_2}$, is exactly the probability that its local
-block rank is at most $t-1$.  Multiplying the factors and summing the disjoint
-cases proves \eqref{eq:G9}.
-\end{proof}
-
-Impossible parameter choices contribute zero under the usual binomial
-convention.  Equation~\eqref{eq:G9} counts each final support once and contains no field
-values or zero-return choices.  Omitting $e_1,e_2$ changes neighborhood sizes
-by at most two and gives the same entropy exponent, but not the same finite
-expectation.
+Let $Z_t$ count the $t$-subsets satisfying the structural obstruction
+\eqref{eq:G5}.  We obtain an exact expression for $\E Z_t$ by tracking the
+runs in each backward neighborhood and the rank contributed by each local
+block; Appendix~\ref{app:container-count} gives the count and its proof.
+This calculation groups all traces and coefficient assignments leading to
+the same final support.  Its numerical transition helps assess the gap in
+the trace bound, but a growing expectation alone does not establish a
+typical-code distance upper bound: concentration remains open.
 
 \section{Concrete distance evaluation}
 \label{sec:numerics}
@@ -1859,101 +1416,20 @@ the calculation maximizes \eqref{eq:B11} over its feasible domain and finds the 
 $\delta$ where the nontrivial interior maximum crosses zero.  Equations
 \eqref{eq:B6}--\eqref{eq:B8} handle sparse weights separately.
 
-\paragraph{Rate $1/2$: extended Golay.}
-The extended binary Golay code has parameters $[24,12,8]$ and spectrum
+The compact rate-$1/2$ constituents give the following results at
+$n=2{,}097{,}024$ and $L=\lfloor0.10n\rfloor$:
 \[
-    W_{\rm Golay}(z)
-      =
-    1+759z^8+2576z^{12}+759z^{16}+z^{24}.
+\begin{array}{c|cc}
+C_0 & \delta^\star & \mu_{\rm bin}(n,L;C_0)\\\hline
+\text{Golay }[24,12,8] & 0.105 & \le 2^{-46.386}\\
+\operatorname{RM}(2,5)\ [32,16,8] & 0.106 & \le 2^{-47.093}
+\end{array}
 \]
-The numerical BAA transition is
-\[
-    \boxed{\delta^\star_{\rm Golay}\approx0.105.}
-\]
-The contribution from one active block has order $n^{-3}$.
-
-\paragraph{Rate $1/2$: extended BCH / $\operatorname{RM}(2,5)$.}
-The extended BCH code $[32,16,8]$, equivalently the second-order Reed--Muller
-code $\operatorname{RM}(2,5)$, has spectrum
-\[
-\begin{aligned}
-    W_{\operatorname{RM}(2,5)}(z)
-      ={}&
-    1+620z^8+13888z^{12}+36518z^{16}
-    \\
-    &+13888z^{20}+620z^{24}+z^{32}.
-\end{aligned}
-\]
-The numerical BAA transition is
-\[
-    \boxed{\delta^\star_{\mathrm{eBCH}/\operatorname{RM}(2,5)}
-      \approx0.106.}
-\]
-This is our compact rate-$1/2$ BCH baseline.  Among the two compact implemented
-blocks, it gives the larger transition: about $96.5\%$ of the binary GV
- relative distance.  The longer rate-$1/2$ quadratic-residue spectra below
- improve on this value.  The one-block contribution again has order $n^{-3}$.
-
-\paragraph{Finite-length $40$-bit certificate for the implemented blocks.}
-We evaluate the complete sum~\eqref{eq:B4} at the benchmark length
-$n=2{,}097{,}024$ and $L=\lfloor0.10n\rfloor=209{,}702$.  To make the
-calculation both exhaustive and reproducible, first observe that
-$Q_n^{\rm bin}(h,L)$ is the upper tail
-$\Prb[X\ge x_h]$ for
-$X\sim\operatorname{Hypergeom}(n,L,h)$ and $x_h=\lceil h/2\rceil$.  If
-\[
- \rho_h=
- \frac{L-x_h}{x_h+1}
- \frac{h-x_h}{n-L-h+x_h+1},
-\]
-then successive terms of this tail have decreasing ratio, and hence
-\[
- Q_n^{\rm bin}(h,L)
- \le
- \frac{\binom{L}{x_h}\binom{n-L}{h-x_h}}
-      {\binom{n}{h}(1-\rho_h)}.
- \eqnumlabel{eq:binary-hypergeom-tail}
-\]
-We compute the coefficients $A_w^{\rm out}$ exactly through $w=32$ and sum
-the resulting bound over every feasible intermediate weight $h$.  For the
-remaining weights, the coefficient inequality
-\[
- A_w^{\rm out}
- \le
- \exp\!\left(B\log W_0(e^\theta)-w\theta\right),
- \qquad B=n/m,
- \eqnumlabel{eq:binary-coefficient-bound}
-\]
- holds for every real $\theta$.  We minimize this bound numerically.  An
- explicit consecutive-ratio check shows that the bounded transition summand is
- unimodal on each of the even and odd $h$ subsequences; we maximize the two
- subsequences separately and multiply their maximum by the number of feasible
- $h$.  No $w>4L$ term can contribute, because each binary
-accumulator has output weight at least half its nonzero input weight.  A full
-one-bit outward-rounding allowance is applied independently to the $w\le32$
-and $w>32$ subtotals.
-
-The resulting complete first-moment certificates are
-\[
- \boxed{
- \begin{aligned}
-  \mu_{\rm bin}(n,L;C_{\rm Golay})
-    &\le 2^{-46.386},\\
-  \mu_{\rm bin}(n,L;\operatorname{RM}(2,5))
-    &\le 2^{-47.093}.
- \end{aligned}}
- \eqnumlabel{eq:binary-40-certificate}
-\]
-For comparison, the $w>32$ subtotal is at most $2^{-155.759}$ for Golay and
-$2^{-158.897}$ for Reed--Muller; the complete bound is controlled by $w=8$.
- Repeating the calculation with cutoffs $24$ and $32$ gives the same displayed
- complete bounds.  The binary first-moment script in the accompanying
- repository~\cite{chosenbaaartifact} reproduces the calculation.
- By~\eqref{eq:B5}, both implemented chosen-block ensembles
-therefore exceed a $40$-bit one-time sampling-failure target at relative
-distance $0.10$.  This certifies the chosen rows themselves; it does not turn
-the original $\sigma=32$ row, documented at $20$ bits, into a matched $40$-bit
-baseline.
+Both therefore exceed a $40$-bit sampling-failure target at relative distance
+$0.10$.  Appendix~\ref{app:binary-certificate} gives the exact spectra and
+complete calculation, including its one-bit numerical rounding allowance.
+The asymptotic transitions are estimates; the failure bounds evaluate the
+finite-length first moment.
 
 \paragraph{Rate $1/2$: extended quadratic-residue spectra.}
 To improve the central rate-$1/2$ distance result, we next evaluate longer
@@ -1990,30 +1466,11 @@ makes the one-active-block contribution $O(n^{-11})$.  These longer blocks
 strengthen the distance calculation but are not included in the CPU benchmarks
 or the Lean certificate.
 
-\paragraph{Secondary rate $1/4$ point: a concrete $[32,8,12]$ BCH subcode.}
-We retain a lower-rate design point for applications that can trade rate for a
-larger relative-distance margin.  Start from the extended primitive BCH code
-$[32,11,12]$ and select the explicit $8$-dimensional subcode given in
-Appendix~\ref{app:binary-generator}.  Direct enumeration of its $256$ words
-gives
-\[
-    \boxed{
-    W_{32,8,12}(z)
-      =
-    1+48z^{12}+158z^{16}+48z^{20}+z^{32}.
-    }
-\]
-The corresponding numerical BAA transition is
-\[
-    \boxed{\delta^\star_{32,8,12}\approx0.213.}
-\]
-This is about $99.4\%$ of the binary rate-$1/4$ GV distance.  The contribution
-from one active block has order $n^{-5}$.
-
-Fixing the short code makes its complete spectrum available to the
-optimization.  The compact Golay, Reed--Muller, and BCH spectra also admit the
-exhaustive or kernel-checked certificates described below.  Constant local
-block size keeps the global encoding cost linear in $n$.
+At rate $1/4$, the explicit BCH subcode $[32,8,12]$ gives an estimated
+transition $0.213$, about $99.4\%$ of binary GV, and a one-block contribution
+of order $n^{-5}$.  Appendix~\ref{app:binary-generator} gives its generator
+and exact spectrum.  All these constructions retain linear encoding cost
+when the local block size is fixed.
 
 \subsection{Large-field benchmarks and method}
 
@@ -2036,205 +1493,21 @@ block below, the calculation maximizes \eqref{eq:L7} over its feasible domain an
 the distance at which the maximum crosses zero.
 
 \subsection{Large-field instantiations}
-
-\paragraph{Rate $1/2$.}
-
-Take
-\[
-    C_0=\operatorname{RS}[16,8,9].
-\]
-Then
-\[
-    F_{16,8}(z,u)
-      =
-    1+
-    \sum_{\ell=9}^{16}
-    \binom{16}{\ell}z^\ell u^{\ell-8},
-\]
-and
-\[
-    \beta=\alpha-\frac12\lambda.
-\]
-Numerical optimization of the support/trace exponent gives the transition
-\[
-    \boxed{
-    \delta^\star_{16,8}\approx0.305.
-    }
-    \eqnumlabel{eq:R1}
-\]
-At the transition, a representative saddle is approximately
-\[
-\begin{aligned}
-    \lambda &\approx0.500, &
-    \alpha &\approx0.448, &
-    \beta &\approx0.198,\\
-    x &\approx0.108, &
-    y &\approx0.090, &
-    \eta &\approx0.367.
-\end{aligned}
-\]
-At this saddle, the available projective dimension is almost exactly exhausted
-by the zero-return constraints:
-\[
-    \boxed{x+y\approx\beta.}
-\]
-At $\delta=0.30$, the reported interior-branch exponent is approximately
-\[
-    \Phi_{16,8,0.30}^{\mathrm{int}}/\log 2\approx-0.017
-\]
-bits per output coordinate.
-
-The local distance is $d=9$, so the sparse one-block scale is $n^{-8}$.  At the
-primary dimension $k=2^{20}$ and output length $n=2^{21}$, with $\delta=0.30$,
-the marked one-block term is approximately $2^{-137.57}$.  That term and
-the negative linear-weight exponent alone do not control every support
-size.  Theorem~\ref{thm:rs-finite} supplies the complete finite-length bound
-at this operating point.
-
-\paragraph{Rate $1/4$.}
-
-Take
-\[
-    C_0=\operatorname{RS}[16,4,13].
-\]
-The local support--dimension polynomial is
-\[
-    \boxed{
-    F_{16,4}(z,u)
-      =
-    1+560z^{13}u+120z^{14}u^2+16z^{15}u^3+z^{16}u^4.
-    }
-    \eqnumlabel{eq:R3}
-\]
-With
-\[
-    \lambda=p_{13}+p_{14}+p_{15}+p_{16},
-\]
-equation~\eqref{eq:L2} becomes
-\[
-    \boxed{
-    \beta=\alpha-\frac34\lambda.
-    }
-    \eqnumlabel{eq:R4}
-\]
-The larger redundancy sharply reduces the projective cancellation budget.
-
-Numerical optimization of~\eqref{eq:L7} gives the estimated transition
-\[
-    \boxed{
-    \delta^\star_{16,4}\approx0.604.
-    }
-    \eqnumlabel{eq:R5}
-\]
-At the transition, a representative saddle is approximately
-\[
-\begin{aligned}
-    \lambda &\approx0.670, &
-    \alpha &\approx0.660, &
-    \beta &\approx0.158,\\
-    x &\approx0.065, &
-    y &\approx0.093, &
-    \eta &\approx0.666.
-\end{aligned}
-\]
-Here too, the zero-return constraints nearly exhaust the projective dimension:
-\[
-    \boxed{x+y\approx\beta.}
-\]
-At this saddle,
-\[
-    1-\frac{y}{\eta}\approx0.861>\delta^\star_{16,4},
-\]
-so the final-weight constraint is active and the maximizing value is
-$\zeta=\delta$.
-
-Conditional on a block being active, the optimizing local-support distribution
-is approximately
-\[
-\begin{array}{c|c}
-\text{local support} & \text{conditional fraction}\\
-\hline
-13 & 0.002\\
-14 & 0.022\\
-15 & 0.190\\
-16 & 0.787
-\end{array}
-\]
-Thus the transition is dominated by dense local shortenings rather than
-minimum-weight words.
-
-In bits per output coordinate, the exponent decomposes approximately as
-\[
-    \cS_{16,4}\approx+0.132,
-    \qquad
-    \Gamma_1\approx-0.068,
-    \qquad
-    \Gamma_2\approx-0.064,
-\]
-which sum to zero at the transition.  This is about $81.3\%$ of the
-large-field rate-$1/4$ GV relative distance.
-
-\paragraph{Sparse tail and finite-length margins.}
-
-Here $d=13$, so the one-active-block structural tail has scale
-\[
-    \boxed{n^{-12}.}
-\]
-The leading marked term is
-\[
-    \boxed{
-    \mu_1^{\rm mark}
-      \sim
-    \frac{13!}{16}
-    \binom{16}{13}^{\!2}
-    \left(\frac{\delta}{1-\delta}\right)^{13}
-    n^{-12}.
-    }
-    \eqnumlabel{eq:R6}
-\]
-At dimension $k=2^{20}$ and output length $n=2^{22}$, the numerical estimates
-are
-\[
-\begin{array}{c|c}
-\delta & -\log_2\mu_1^{\rm mark}\\
-\hline
-0.550 & 213.44\\
-0.580 & 211.15\\
-0.600 & 209.60\\
-0.604 & 209.26
-\end{array}
-\]
-The estimated interior-branch margins at this length are
-\[
-\begin{array}{c|c|c}
-\delta
-& \Phi^{\mathrm{int}}_{16,4,\delta}/\log 2
-& -n\Phi^{\mathrm{int}}_{16,4,\delta}/\log 2\text{ (bits)}\\
-\hline
-0.600 & -0.017 & 70828\\
-\text{near }0.604 &
-[-0.002,-5.15\mathbin{\times}10^{-5}] & 216\text{--}6708
-\end{array}
-\]
-For $k=2^{20}$ and $n=2^{22}$, the high-precision point used in the
-first-moment calculation rounds to
-\[
-    \boxed{
-    C_0=\operatorname{RS}[16,4,13],
-    \qquad
-    \delta=0.604
-    }
-    \eqnumlabel{eq:R7}
-\]
-gives a numerical margin of roughly $160$ bits.  This does not certify that
-$d_{\min}>0.604n$.  At $\delta=0.60$, the estimated margin is much larger.
+The RS $[16,8,9]$ and $[16,4,13]$ constituents give estimated transitions
+$0.305$ and $0.604$ at rates $1/2$ and $1/4$, respectively.  The latter is
+about $81\%$ of large-field GV.  At the optimizing points, the cancellation
+constraints nearly exhaust the projective dimension; at rate $1/4$, dense
+local shortenings dominate rather than minimum-weight local words.
+Appendix~\ref{app:rs-evaluation} records the substitutions, optimizer
+coordinates, and sparse-term diagnostics.  The following theorem gives the
+complete finite-length guarantees at distances $0.30$ and $0.60$.
 
 \subsection{Certified finite-length RS bounds}
 \label{sec:rs-finite}
 
-The sparse estimates above identify the likely dominant terms, but do not
-bound every support size at finite length.  The following calculation supplies
-that missing uniform bound, including all surplus cancellations.
+The following theorem bounds every support size at finite length, including
+all surplus cancellations.  Its proof combines explicit sparse sums with
+finite envelopes for the remaining supports.
 
 \begin{theorem}[Certified finite-length RS bounds]
 \label{thm:rs-finite}
@@ -2291,28 +1564,8 @@ $-0.011$ and $-0.021$ bits per coordinate, respectively.  Thus trace
 clustering creates real slack, but the recovered relative distance is only
 about $0.003$ and $0.005$.
 
-The rate-$1/2$ structural saddle has normalized statistics
-\[
-\begin{aligned}
-|T|/n&\approx0.308,& r_1/n&\approx0.101,\\
-|\partial T|/n&\approx0.409,& r_2/n&\approx0.120,\\
-|U(T)|/n&\approx0.530,& \kappa(U(T))/n&\approx0.308.
-\end{aligned}
-\eqnumlabel{eq:G11}
-\]
-At rate $1/4$ the corresponding values are
-\[
-\begin{aligned}
-|T|/n&\approx0.609,& r_1/n&\approx0.103,\\
-|\partial T|/n&\approx0.712,& r_2/n&\approx0.070,\\
-|U(T)|/n&\approx0.782,& \kappa(U(T))/n&\approx0.609.
-\end{aligned}
-\eqnumlabel{eq:G12}
-\]
-Moderate-length integer-program experiments on the exact min-cut formulation
-produce block-saturated witnesses consistent with these profiles.  These
-experiments and all numbers in \eqref{eq:G10}--\eqref{eq:G12} are diagnostic rather than theorem
-statements.
+Appendix~\ref{app:structural-optimization} records the optimizing support
+profiles and the associated moderate-length experiments.
 
 A positive exponent in \eqref{eq:G9} is not a typical-code upper bound without a
 concentration argument for structural containers.  Still, the
@@ -2353,30 +1606,8 @@ dimension, over fields of size at least $2^{127}$.  These concrete failure
 figures use different field sizes; the asymptotic RAA theorem alone does
 not supply a concrete failure constant at our parameters.
 
-For a full finite-length comparison, put $h_0=rw$.  Applying
-Lemma~\ref{lem:nonbinary-placement} stage by stage and
-Lemma~\ref{lem:projective-cancellation} to the $w$-dimensional shortening of
-$w$ active repetition blocks gives
-\[
-\boxed{
-\begin{aligned}
- \Prb[d_{\min}(\cC_{\rm RA^t})\le L]
- &\le \mu_{\rm RA^t}(N,L;r)\\
- &:={}
- \sum_{w=1}^{k_0}\binom{k_0}{w}
- \sum_{\substack{a_1,\ldots,a_t\ge0\\
-                   h_1,\ldots,h_t\ge1\\ h_t\le L}}
- \chi_q\!\left(w,\sum_{i=1}^t a_i\right)
- \prod_{i=1}^t \cG_N(h_{i-1},h_i,a_i).
-\end{aligned}}
-\eqnumlabel{eq:rat-complete-bound}
-\]
-Infeasible trace tuples contribute zero through $\cG_N$.  The outer binomial
-coefficient counts the possible active message supports, and their shortening
-dimension is $w$.  Thus this is the complete support/trace union bound, not only
-the weight-one no-return contribution.  That leading contribution still
-explains the sparse orders $N^{1-r}$ for RA$^2$ and
-$N^{1-r(t-1)}$ for fixed $r,t$.
+Appendix~\ref{app:ra-bound} gives the full support/trace sum for weighted
+RA$^t$, obtained by composing the same placement and cancellation bounds.
 
 Theorem~\ref{thm:rs-finite} certifies the two chosen-block RS configurations.
 We have not established a complete numerical upper bound for
@@ -2563,59 +1794,20 @@ for the chosen-block rows.  Their numerical distance transitions,
  $\sigma\approx4\lambda/3$ suggests $\sigma\approx54$ before rounding to a
  convenient block size when $\lambda=40$~\cite{baa26}.
 
-\paragraph{Controlled randomness and timed region.}
-All three implementations use $n=2{,}097{,}024$, the largest multiple of
-$\operatorname{lcm}(24,32,64)=192$ below $2^{21}$, and
-$k=n/2=1{,}048{,}512$.  Divisibility by $24$, $32$, and $64$ lets the Golay,
-Reed--Muller, and original random-block constituents tile one common input
-without truncation.  All rows therefore use the same input, two accumulator
-layers, two independently seeded pseudorandom permutations, one CPU thread, and
-timed $n$-to-$k$ operation.  The input and permutation seeds are generated
-before timing from the same deterministic seeds and in the same order.
+\paragraph{Workload and platform.}
+The binary comparison uses $n=2{,}097{,}024$ and $k=n/2$, so every constituent
+tiles the same input.  All rows use the same input and permutation seeds.
+The timed operation includes both accumulator/permutation layers and the
+local multiplication, including generation of the original control's random
+local matrices; setup and workspace allocation are excluded.
+Large-field rows fix $k=2^{20}$ and use the same timing boundary.
 
-The original-BAA-style control uses two prefix-sum/permutation layers followed by a
-dense random systematic local map.  The two permutations are sampled
-independently, and the timed computation evaluates the $n$-to-$k$
-multiplication $x\leftarrow x+Ry$.  Chosen-block BAA replaces the random local
-matrices with the chosen constituent and hence needs no local-matrix stream.
-
-Input generation, permutation-seed derivation, and workspace allocation occur before
-timing.  Both accumulator/permutation layers and the local outer multiplication
-remain inside it.  The original baseline generates its random local matrices
-during that operation, whereas the chosen constructions evaluate their
-constituent-code circuits.  The benchmark supports the common non-power-of-two
-length without a stored $n$-entry permutation table.  The mathematical ensemble
-analysis continues to sample uniform permutations.
-
-For the large-field configuration menu, every row fixes $k=2^{20}$,
-$\F_{2^{128}}$, one CPU thread, and the same encode-only boundary, while rate,
-length, local map or repetition, and accumulator count vary intentionally.  The
-rate-$1/2$ rows have $n=2^{21}$; repetition-$3$ RA$^2$ has
-$n=3\cdot2^{20}$; and RS $[16,4,13]$ BAA has rate $1/4$ and $n=2^{22}$.
-The reported target distances are $0.10$ for repetition-$2$ RA$^2$, $0.30$
-for rate-$1/2$ BAA, $0.40$ for repetition-$2$ RA$^3$ and repetition-$3$
-RA$^2$, and $0.60$ for rate-$1/4$ BAA.  Each lies below that configuration's
-estimated trace transition; lower-rate configurations are evaluated at larger
-distances rather than at the rate-$1/2$ reference $0.10$.
-Each stage has independent diagonal weighters and interleavers.  In every case,
-permutation and diagonal generation, input generation, and workspace allocation
-are outside the timed region; every full scan--multiply--scatter layer and the
-outer transpose multiplication or repetition reduction are inside it.
-
-\paragraph{Platform and procedure.}
-On an Intel Core i9-14900HX with $32$ logical processors, we compiled libOTe in
-Release mode with MSVC~14.44 and C++20 on Windows NT~10.0.26200, with SSE and
- PCLMUL enabled.  We exclude setup, input generation, permutation construction,
- and workspace allocation; all scan/permutation layers and the outer
- multiplication are timed.  The headline binary construction campaign uses
-exactly one CPU thread and binds each process to logical processor~2 (Windows
-affinity mask \texttt{0x4}).  We report the median of six process medians, each
-over $31$ calls after warm-up.  Across the six processes, each of the three
-implementations occupies each benchmark-order position twice.  The separate,
-unpinned two-mode scaling campaigns reverse order halfway.  Turbo and thermal
-state are not controlled; results are host-specific.
-Each large-field row likewise uses six $31$-call process medians after warm-up;
-paired BAA and RA$^t$ campaigns alternate which implementation runs first.
+Measurements use an Intel Core i9-14900HX, MSVC~14.44 in Release mode, and
+one CPU thread unless stated otherwise.  We report medians over repeated
+processes and calls.  The implementation uses pseudorandom permutations;
+the mathematical guarantees concern uniform permutations.
+Appendix~\ref{app:benchmarks} specifies seeds, affinity, scheduling, and the
+complete measurement procedure.
 
 \subsection{Performance results}
 
@@ -2640,9 +1832,7 @@ independently seeded pseudorandom permutations, and the same timed operation.
 The failure column
  reports the original construction's documented code-sampling target and the complete
 chosen-constituent first-moment bounds in
-\eqref{eq:binary-40-certificate}.  This table does not claim a matched
- $40$-bit speedup because the control row is not a $40$-bit baseline.  Their
- local dimensions are not matched to the baseline.  A constituent labeled
+\eqref{eq:binary-40-certificate}.  A constituent labeled
 $[m,\sigma,d]$ has block length $m$, dimension $\sigma$, and minimum Hamming
 distance $d$; $[m,\sigma]$ omits the distance.}
 \label{tab:cpu-chosen}
@@ -2655,34 +1845,14 @@ latency by $22.9\%$ ($1.30\times$), and Reed--Muller reduces it by $18.0\%$
 whereas chosen-block BAA uses a $56$-XOR Golay circuit or a five-variable
 Reed--Muller zeta transform.  The common accumulator and permutation work is
  present in all rows and is therefore not counted as a chosen-block speedup.
- Separate multithreaded measurements show CPU scalability but do not alter the
- construction comparison.  Equation~\eqref{eq:binary-40-certificate} shows that
- the Golay and Reed--Muller rows need no parameter change at a $40$-bit target,
- so their encoding times remain $22.810$ and $24.278$~ms.  These are certified
- $40$-bit chosen-code measurements, but not speedups against a security-matched
- original BAA: that comparison still requires the stronger original-BAA
- baseline described above.
+ The chosen rows exceed the $40$-bit target at these same parameters; the
+control carries its documented $20$-bit target.  The speedup therefore
+compares the displayed constructions rather than equal failure targets.
 
-For context, the original BAA paper reports $21.4$~ms for its aggressive
-$\sigma=8$ row and $30.2$~ms for its conservative $\sigma=32$ row at
-$n=2^{21}$ on an Intel Core i7-13700H~\cite{baa26}.  Table~\ref{tab:cpu-chosen}
-instead uses $n=2{,}097{,}024$, the largest multiple of
-$\operatorname{lcm}(24,32,64)$ below $2^{21}$, so that the Golay,
-Reed--Muller, and random-block constituents all tile the same input without a
-shortened final block.  This common-workload choice is $128$ symbols below the
-original length.  In a separate affinity-controlled path ablation, the
-corrected $\sigma=32$ control took $31.895$~ms at the common length and
-$31.992$~ms at $n=2^{21}$ under the same on-the-fly permutation implementation;
-their six-process ranges, $29.147$--$32.997$ and $28.999$--$33.039$~ms, overlap.
-A precomputed-permutation variant at the common length took $33.688$~ms in the
-same ablation.  Thus the $128$-symbol length reduction has no measurable
-penalty once the permutation implementation is held fixed.
-Table~\ref{tab:cpu-chosen}'s $29.596$~ms
-control comes from the separate balanced three-way campaign and is used only
-for its within-campaign ratios.  The original paper's executable, compiler
-environment, and processor (i7-13700H rather than i9-14900HX) also differ from
-ours, so hardware labels alone do not make the absolute timings directly
-comparable.
+Appendix~\ref{app:ablations} compares the common-workload control with the
+original paper's timing setup and checks the effect of the small length
+adjustment.  Absolute times from different hosts and campaigns are not
+directly comparable.
 
 \paragraph{Representative $\F_{2^{128}}$ configurations.}
 Table~\ref{tab:cpu-large-field} reports target distances, measured runtimes,
@@ -2722,20 +1892,7 @@ uniform ensembles have complete failure bounds at distances $0.30$ and
 $0.60$, respectively.  The RA rows provide runtime context, but their
 uncertified probabilities do not support a comparison at equal failure targets.
 
-\paragraph{Estimated single-thread PCG throughput.}
-The original BAA evaluation reports about $8$~ms of CPU expansion work per
-batch, in addition to the linear-code encoding, and excludes an approximately
-$10$~ms one-time seed-tree cost from its throughput figure because that cost is
-amortized across later invocations~\cite{baa26}.  Following the same convention,
-we combine its recurring $8$~ms estimate with our one-thread Golay encoding time:
-\[
-  \frac{1{,}048{,}512}{(22.810+8)\ \mathrm{ms}}
-  \approx 34.0\ \text{million OTs/s}.
-\]
-This projected rate excludes the one-time $10$~ms cost, as does the original
-paper; it is not an integrated measurement.  We do not extrapolate an
-end-to-end multithreaded rate because the corresponding parallel expansion cost
-was not measured; the encoding-only scaling results remain below.
+
 
 \paragraph{Multithreaded scaling.}
 The headline construction comparison uses one CPU thread.  The implementation
@@ -2758,67 +1915,15 @@ informal notation can hide a boundary case: sample spaces, index ranges,
 endpoint conventions, and shortening hypotheses.  The Lean development is
 provided in the accompanying repository~\cite{chosenbaaartifact}.
 
-\subsection{Representation and proof architecture}
-
-A length-$n$ word over $F$ is represented as a function
-$\operatorname{Fin}(n)\to F$, and a linear code is a submodule of that vector
-space.  Hamming weight uses mathlib's \texttt{hammingNorm}.  The accumulator,
-difference, permutation, diagonal, and monomial transformations are linear
-equivalences.  The repeated outer code uses an explicit equivalence between
-$\operatorname{Fin}(n)$ and
-$\operatorname{Fin}(n/m)\times\operatorname{Fin}(m)$, which removes hidden
-divisibility and coordinate-order assumptions.
-
-Ensemble probabilities are represented as ratios of finite cardinalities in
-$\mathbb Q$.  Both first-moment arguments are therefore exact finite counts;
-no measure-theoretic layer is needed.  Generic rank is defined over the fraction
-field of a multivariate polynomial ring.  The two diagonal layers use disjoint
-variable families, so different Cauchy--Binet selections yield different
-monomials.
-
-The concrete binary codes also have a computation-oriented representation based
-on fixed-width bit vectors.  Conversion lemmas connect these evaluators to the
-abstract submodules.  Consequently, a computed spectrum certifies the code in
-the corresponding mathematical theorem.
-
-\subsection{Verified statements}
-
-The development contains complete proofs of the following finite claims.
-
-\begin{itemize}
-    \item The BAA transformations are invertible and preserve dimension.  The
-          block-direct-sum enumerator and the binary identities
-          \eqref{eq:B1}--\eqref{eq:B5} are
-          exact finite theorems.
-    \item The extended Golay and $\operatorname{RM}(2,5)$ constructions have
-          the dimensions, minimum distances, and spectra stated above.  The
-          eight-row $[32,8,12]$ code has the stated spectrum and lies in a
-          concretely defined extended primitive BCH code.
-    \item Reed--Solomon evaluation codes have the claimed dimension and
-          minimum distance.  Their MDS shortening dimensions give
-          \eqref{eq:5}, \eqref{eq:L1}, \eqref{eq:L2}, \eqref{eq:R3}, and
-          \eqref{eq:R4}.
-    \item The zero-return placement count \eqref{eq:1}, projective bound
-          \eqref{eq:2}, master bound \eqref{eq:3}, and corrected support-excess
-          bound \eqref{eq:4} are formal
-          consequences of finite counting and linear algebra.
-    \item The backward parity-check identities \eqref{eq:G1}--\eqref{eq:G5}, run and block-rank
-          counts \eqref{eq:G6}--\eqref{eq:G8}, and exact structural-container
-          expectation \eqref{eq:G9},
-          including the endpoint cases, are proved.  The generic rank equals
-          the maximum size of a two-layer
-          vertex-disjoint path packing with the local MDS capacities.
-\end{itemize}
-
-The quadratic-residue rows in Table~\ref{tab:binary-qr} use exact external
-spectra and are deliberately outside this list of Lean-verified statements.
-
-The path-packing result is stronger than the neighborhood upper bound used in
-\eqref{eq:G5}.  Its proof first establishes a rectangular Cauchy--Binet identity.  It
-then identifies nonzero minors of the difference matrix with unique
-self-or-successor linkages.  Finally, the MDS parity-check theorem converts
-selected columns in each local block into the capacity
-$\min\{|U\cap J|,m-\sigma\}$.
+\subsection{Verified scope}
+The Lean development verifies the exact binary first moment, the nonbinary
+placement and projective bounds, and the finite large-field master bound.
+It also verifies the chosen Golay, Reed--Muller, and BCH constituents, the
+RS parameters and shortening profile, and the generic-rank and
+structural-container identities.
+Appendix~\ref{app:formalization} gives the representation choices and a
+statement-by-statement inventory.  The analytic reductions, numerical
+certificates, asymptotic transitions, and QR spectra remain outside Lean.
 
 \subsection{Audit findings and trust boundary}
 
@@ -2841,35 +1946,11 @@ formalized finite scope.  The analytic and numerical claims lie outside that
 scope.
 
 \paragraph{Trust boundary.}
-
-The formalization uses no \texttt{sorry}, \texttt{admit}, or project-local
-axiom.  A dedicated module applies \texttt{\#print axioms} to the theorems
-stated in the paper.  Those theorems depend only on the standard Lean/mathlib
-foundations.  The audit reports \texttt{propext},
-\texttt{Classical.choice}, and \texttt{Quot.sound}.  Native decision procedures
-are used only for labeled small-instance regression tests.  No Lean-formalized theorem stated
-in the paper depends on a generated native-decision axiom.  The fixed-code
+The formalized theorems use only the standard Lean/mathlib foundations,
+with no admitted proofs or project-local axioms.  Concrete constituent
 spectra and distances have kernel-checkable proofs.
-
-The command \texttt{lake build BAA.AxiomAudit} checks
-the complete development and prints the dependency audit.  Exhaustive
-regressions cover the binary accumulator and difference-linkage conventions
-through length eight and the nonbinary placement formula through length seven.
-These tests supplement the symbolic all-length theorems; they do not replace
-them.
-
-The Lean development does not formalize the quadratic-residue constituents or
-their published spectra.  It also does not claim the one-accumulator asymptotic
-limit, \eqref{eq:B6}--\eqref{eq:B12}, \eqref{eq:6}--\eqref{eq:7},
-\eqref{eq:L3}--\eqref{eq:L7}, any numerical transition, the $O(n)$
- cost model, or concentration of structural containers.  These claims require
- external coding-theory results, analytic estimates, certified optimization, a
- computational cost model, or new probabilistic arguments.  The RA$^t$
- parameter selection and configuration measurements are likewise outside the Lean development.
- Theorem~\ref{thm:rs-finite} additionally uses the analytic reductions in
- Appendix~\ref{app:rs-certificate} and the accompanying rational/Arb
- verifier~\cite{chosenbaaartifact}; those components are not Lean-formalized.
- The RA$^t$ finite sums have not received a complete numerical certificate.
+Appendix~\ref{app:lean-audit} records dependencies, commands, regression
+checks, and the detailed boundary of the formalization.
 
 \bibliographystyle{splncs04}
 \bibliography{references}
@@ -2929,6 +2010,8 @@ Equivalently,
        A_w\bigl(z^w+z^{168-w}\bigr).
 \]
 The coefficients sum to $2^{84}$, as required by the dimension.
+
+\input{appendices-details}
 
 \input{rs-certification/finite-rs}
 
