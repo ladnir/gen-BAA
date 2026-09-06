@@ -79,17 +79,21 @@ selected for distance and efficient implementation.
 distance guarantees.  Suitable constituents yield numerical asymptotic
 distance estimates reaching $99.99\%$ of the Gilbert--Varshamov (GV) distance
 at rate $1/2$.  Our practical binary instantiations encode about a million
-message symbols in $23$--$24$~ms on one CPU thread.
+message symbols in $23$--$24$~ms on one CPU thread and under $6$~ms on
+$24$--$32$ threads.
 
 \qquad Over larger fields, we add random nonzero coordinate scalings and
 account for cancellations.
 For every field of size $q\ge2^{127}$, including $128$-bit prime fields,
 Reed--Solomon constituents certify relative distances $0.30$ and $0.60$ at
 rates $1/2$ and $1/4$, respectively.  At message dimension $k=2^{20}$,
-both uniform ensembles have sampling-failure probability below $2^{-137}$.
+each distance bound fails with probability below $2^{-137}$ under independent
+uniform sampling of the permutations and nonzero scalings.
 The rate-$1/4$ asymptotic distance estimate reaches $81\%$ of large-field GV.
-To understand the remaining gap, we identify permutation patterns that
-force low-weight codewords regardless of the nonzero coordinate scalings.\footnote{This paper made extensive use of GPT 5.6.}
+To investigate the gap between this estimate and GV, we identify permutation
+patterns that force low-weight codewords regardless of the nonzero coordinate
+scalings.\footnote{This paper made use of GPT 5.6.
+}
 \keywords{linear codes \and block--accumulate--accumulate codes \and pseudorandom correlation generators \and zero-knowledge
 proofs \and Lean}
 \end{abstract}
@@ -331,8 +335,8 @@ $1.33\times10^{-5}$ of the binary rate-$1/2$ GV distance.
 The binary argument does not extend by simply replacing the alphabet.  Over a
 larger field, different nonzero values on the same support can cancel in an
 accumulator, and all scalar multiples of a codeword describe the same bad
-direction.  We therefore summarize the local code by its \emph{shortening
-dimension}: for a support $S$, let $r$ be the dimension of the outer subcode
+direction.  We therefore summarize the local code by its shortening
+dimension: for a support $S$, let $r$ be the dimension of the outer subcode
 whose nonzero coordinates are confined to $S$.  That shortening contains
 $(q^r-1)/(q-1)$ projective codeword directions.
 
