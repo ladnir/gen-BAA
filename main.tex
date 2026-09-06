@@ -72,38 +72,39 @@ Block--Accumulate--Accumulate (BAA) codes (CRYPTO 2026) combine short linear
 block maps with two random permutation--prefix-sum rounds.  They provide fast
 encoding for pseudorandom correlation generators and code-based zero-knowledge.
 
-\qquad We study chosen-block BAA, which repeats a certified short code instead
-of sampling a new local map in every block.  Over $\F_2$, we propagate its
-complete weight distribution exactly through both random rounds, obtaining
-finite-length expected low-weight counts and explicit sampling-failure bounds.
+\qquad We develop chosen-block BAA, which replaces independently sampled local
+maps with repeated copies of one certified short code.  Over $\F_2$, we
+propagate its complete weight distribution exactly through both random rounds,
+obtaining finite-length expected low-weight counts and sampling-failure bounds.
 Numerical estimates of the asymptotic relative-distance transitions
 reach $99.99\%$ of the binary Gilbert--Varshamov (GV) distance at rate $1/2$
 with an extended quadratic-residue block, and $99.4\%$ at rate $1/4$ with a BCH
 subcode.  At $k\approx2^{20}$, our Golay and extended BCH (equivalently
-Reed--Muller) encoders take $23$--$24$~ms on one thread,
-$1.22\times$--$1.30\times$ faster than a corrected original-BAA-style
-control at its documented $20$-bit target.  At relative distance $0.10$,
-their complete finite-length first moments certify $46.38$ and $47.09$ bits;
-multithreaded latency is below $6$~ms.
+Reed--Muller) encoders take $23$--$24$~ms on one thread.  They are
+$1.30\times$ and $1.22\times$ faster, respectively, than our same-host BAA
+control at the construction's documented $20$-bit target.  At relative distance
+$0.10$, the two chosen-block configurations have failure bounds below
+$2^{-46.38}$ and $2^{-47.09}$.  Their multithreaded latencies are below $6$~ms.
 
-\qquad Over larger fields $\F_q$, symbols can cancel in prefix sums and many
-codewords share a support.  We give a probability bound accounting for both
-effects and prove a structural limitation: some permutation patterns force a
-low-weight codeword regardless of the nonzero coordinate scalings.  For
-$q=2^{128}$, our support-bound transition estimates reach $62.0\%$ of $q$-ary
-GV at rate $1/2$ and $81.3\%$ at rate $1/4$.  The corresponding structural
-diagnostics are $62.7\%$ and $81.9\%$: they describe transitions in the expected
-count of rank-deficient supports, not typical-code upper bounds.  We implement
-both chosen-block constructions over $\F_{2^{128}}$ at $k=2^{20}$.
+\qquad Over larger fields $\F_q$, each random permutation is followed by
+independent nonzero coordinate scalings.  Symbols can cancel in prefix sums,
+and distinct codewords can have the same support.  We give a probability bound
+that accounts for both effects and prove a structural limitation: some
+permutation patterns force a low-weight codeword for every choice of scalings.
+For $q=2^{128}$, our resulting relative-distance transition estimates reach
+$62.0\%$ of $q$-ary GV at rate $1/2$ and $81.3\%$ at rate $1/4$.  The
+corresponding expected counts of scaling-independent rank-deficient supports
+have transitions at $62.7\%$ and $81.9\%$ of GV.  These values are diagnostics,
+not typical-code upper bounds.  We implement both chosen-block constructions
+over $\F_{2^{128}}$ at $k=2^{20}$.
 On one CPU thread, the rate-$1/2$ and rate-$1/4$ encoders take $33.633$~ms
 and $73.739$~ms.  For their uniform ensembles, complete rational and interval
 certificates give failure bounds $2^{-137.56}$ at relative distance $0.30$
 and $2^{-209.60}$ at distance $0.60$.  These bounds hold over every field
-of size $q\ge2^{127}$, including $128$-bit prime fields.  Weighted
-repeat--accumulate$^t$ measurements provide runtime context; their finite
-failure bounds remain uncertified.  Lean~4 verifies the finite counting,
-structural results, and constituent codes; the analytic and numerical
-certificates are separate.
+of size $q\ge2^{127}$, including $128$-bit prime fields.  Lean~4 verifies the
+finite counting identities, constituent codes, and rank arguments; the
+asymptotic estimates and numerical certificates remain outside the
+formalization.
 \keywords{linear codes \and block--accumulate--accumulate codes \and pseudorandom correlation generators \and zero-knowledge
 proofs \and Lean}
 \end{abstract}
