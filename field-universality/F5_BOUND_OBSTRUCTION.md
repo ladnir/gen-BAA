@@ -5,7 +5,9 @@
 The proved relative-distance bound over `F_5` remains `0.05`. The normalized
 bulk tube at output fraction `0.22` is now certified exactly, but the
 orientation-sensitive complement remains open. The tube starts at the exact
-sparse cutoff, so the sparse-to-bulk bridge is complete. Fixed-dual envelope
+sparse cutoff, so its message-weight range meets the sparse theorem. This
+does not cover the orientation-sensitive complement at those weights.
+Fixed-dual envelope
 scans support the stronger output fractions `0.22`
 and `0.24`, but neither scan is a proof: both use floating duals and local
 nonlinear optimization.
@@ -16,7 +18,11 @@ function of the two adjacent composition laws. Keeping a bank of these
 functions active at the same middle law produces a pointwise envelope. This
 envelope is negative on the saved global frontiers for `0.22` and `0.24`.
 
-The remaining obstruction is certification. We need directed constants and
+For the current investigation of a threshold near `0.2606`, see
+`F5_DISTANCE_EVIDENCE.md`. The tube certificate is restricted to `0.22`;
+it does not bridge the message cutoffs near `0.26`.
+
+The remaining obstruction in this stopped `0.22` campaign is certification. We need directed constants and
 a globally valid upper bound for each composition box. An SLSQP maximum,
 even when reproduced from several starts, cannot supply that theorem.
 
@@ -54,7 +60,8 @@ The exact point certificate proves an inequality at one composition. It does
 not bound all compositions.
 
 The sparse-spacing argument is already strong enough at `0.22`. It controls
-message supports below `10^-5` and works for every `delta<=13/50`.
+message supports up to `10^-5 K`. The original specialization used
+`delta<=13/50`; the 2026-09-05 audit extends it to `delta<=131/500`.
 
 The older numerical hybrid search used the larger cutoff `A>=0.002`. The
 strengthened exact tube certificate now covers the interval
@@ -63,8 +70,9 @@ strengthened exact tube certificate now covers the interval
 10^-5 <= A < 0.002
 ```
 
-directly. Together with the spacing theorem below `10^-5`, it removes the
-cutoff gap. The complement certificate must use the same matched cutoff.
+within the normalized tube. Together with the spacing theorem below
+`10^-5`, it removes the cutoff gap only for this restricted family.
+The unproved complement certificate must use the same matched cutoff.
 
 ## Reduced bulk objective
 

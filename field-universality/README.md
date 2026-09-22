@@ -40,6 +40,23 @@ The binary code uses the same sampled permutations and defines `Delta_{2,N}`.
 
 ## Research notes
 
+[`expander-lift/README.md`](expander-lift/README.md) begins a separate study of
+addition-only Expand--Accumulate encoders. It gives a fixed-message binary
+tail comparison, a fixed-prime asymptotic distance argument, and an exact
+large-prime transfer of the regular ensemble's two-coordinate failure event.
+Its continuation transfers binary witnesses through support 58 at degree 64
+for every 128-bit prime, and classifies three- and four-coordinate cancellations.
+The subsequent spacing bound and shared opposite-pair constraints cover all
+messages through support 50,000 at the reference profile with failure below
+`2^-20`, for every prime above 127. A collision-exact transfer and one common
+coloring across regions give the latest extension beyond support 4,000.
+The original rate-one-half all-support bound remains open. The EA-only
+continuation now gives complete joint binary/large-prime guarantees at
+rates 8.345% and 3.242%, with respective degrees 32 and 64 and distances
+about 6.10% and 12.10%; see
+[`COLLISION_PROJECTION.md`](expander-lift/COLLISION_PROJECTION.md). These match
+the two preceding certified binary reference tuples, not an optimal frontier.
+
 [`STATUS.md`](STATUS.md) gives the one-page research state: the surviving
 conjecture, disproved stronger claims, proved results, evidence, and the two
 remaining proof obligations.

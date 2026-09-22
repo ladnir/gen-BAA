@@ -17,6 +17,11 @@
 !/results/f5-projection-surrogate-0.1323.json
 !/results/f5-projected-kl-box-cover.json
 !/results/f5-joint-projection-sweep.json
+!/results/f5-threshold-gap-audit.json
+!/results/f5-threshold-pair-audit.json
+!/results/f5-correlated-pairs-search.json
+!/results/f5-correlated-pairs-separated.json
+!/results/f5-correlated-pairs-continuation.json
 !/results/f5-projected-kl-dual-bank-0.22.json
 !/results/f5-projected-kl-box-cover-0.22.checkpoint.json
 !/results/f5-fixed-stationary-shared-bank.json

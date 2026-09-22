@@ -1,0 +1,101 @@
+\section{A subset-sum precode above the binary GV benchmark}
+\label{app:subset-sum-gv}
+
+The source support catalog is another design parameter. A local MDS code
+maximizes local distance, but permits many distinct supports. The following
+smaller circuit trades local distance for fewer supports and gives a
+stronger complete distance bound with a smaller failure margin.
+
+Index eight inputs by $j\in\F_2^3$ and define
+\[
+ y_i=\sum_{j:\langle i,j\rangle=0}x_j,\qquad
+ B_{\rm sub}(x)=(x_0,\ldots,x_7,y_0,\ldots,y_7).
+\]
+The binary dot product selects the subsets; the sums are evaluated over
+$\F_p$. Thus $y_0$ sums all eight inputs and each other $y_i$ sums four.
+Every entry of the local matrix is zero or one. Apply this map blockwise,
+then two independently permuted plain accumulators:
+$G=A P_2 A P_1 B_{\rm sub}$.
+
+\begin{theorem}\label{thm:subset-sum-gv}
+For $p=2^{128}-159$, $k=2^{20}$, and $n=2k$, the encoder $G$ has rate
+$1/2$ for every setup. Except with probability less than $2^{-24.26}$
+over the two independent uniform permutations, its minimum distance is
+at least $239076$, which exceeds $11.4\%$ of $n$. Encoding uses exactly
+$3.3125n-2=6946814$ field additions, with no subtractions or field
+multiplications.
+\end{theorem}
+
+This relative distance exceeds the binary rate-$1/2$ GV benchmark
+$H_2^{-1}(1/2)\approx0.1100278644$. The theorem concerns the specified
+finite prime-field code. It does not compare its actual distance with
+that of the same circuit over $\F_2$, or give an asymptotic family theorem.
+
+\paragraph{Circuit.}
+The systematic copy gives injectivity. To compute the remaining outputs,
+first form $x_0+x_j$ for $j\in\{1,2,3\}$, using the usual three-bit
+representation of the indices. These three nonzero indices form a
+two-dimensional subspace. Every nonzero $i$ is orthogonal to at least
+one of them. The corresponding shared pair and two further inputs
+compute $y_i$ in two additions. Finally,
+$y_0=y_1+((x_1+x_3)+(x_5+x_7))$ costs four additions. The block therefore
+uses $3+14+4=21$ additions, and the two scans use $2(n-1)$.
+
+\paragraph{Source catalog.}
+Let $Z$ be a set of local output coordinates constrained to zero, and let
+$V_Z$ be the kernel of those rows of $B_{\rm sub}$. An exact zero set
+must be closed under row span: every local row in the span of $Z$ also
+vanishes. Conversely, if $Z$ is closed and has rank $j<8$, its kernel
+has dimension $8-j$ and each remaining coordinate is a nonzero linear
+functional on that kernel. Since $p>16$, their proper hyperplanes cannot
+cover the kernel. Hence every proper closed set is realized as an exact
+zero set.
+
+Enumerating the $2^{16}$ subsets by exact elimination over $\F_p$ gives
+the polynomial $S(z,\tau)$ in Table~\ref{tab:subset-source}. Its coefficient
+of $z^s\tau^d$ counts supports of size $s$ whose shortened source space
+has dimension $d$. The constant term represents the zero message.
+
+\begin{table}[t]
+\centering
+\caption{Exact shortening catalog of the eight-input subset-sum block.}
+\label{tab:subset-source}
+\begin{tabular}{rl@{\qquad}rl}
+\toprule
+$s$ & $[z^s]S(z,\tau)$ & $s$ & $[z^s]S(z,\tau)$\\
+\midrule
+0 & $1$ & 10 & $3045\tau^2+154\tau^3$\\
+5 & $7\tau$ & 11 & $3514\tau^3+7\tau^4$\\
+6 & $77\tau$ & 12 & $1785\tau^4$\\
+7 & $28\tau$ & 13 & $560\tau^5$\\
+8 & $154\tau+84\tau^2$ & 14 & $120\tau^6$\\
+9 & $772\tau+511\tau^2$ & 15 & $16\tau^7$\\
+ & & 16 & $\tau^8$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Finite distance proof.}
+For $n/16$ independent blocks, the dimension-weighted source moment at
+support $s$ is $[z^s]S(z,\tau)^{n/16}$. The projective-pair and renewal
+bounds of Appendices~\ref{app:fresh-pairs} and~\ref{app:joint-renewal}
+are uniform in the source forms and their successive quotients. They
+therefore apply with this source polynomial; their scan inequalities
+and finite sampling corrections are unchanged.
+
+For $e=239075$, the sparse support bound with $S(z,1)^{n/16}$ covers
+$1\le s\le31$. The remaining domain is
+$32\le s\le4e$ and $\lceil s/2\rceil\le h\le2e$.
+The complete rational cover has 62 projective-pair leaves and 61 renewal
+leaves. The verifier recomputes the local catalog, checks every partition
+and vertex bound, and checks each renewal inequality over the entire
+pool simplex. Adding all sparse and dense terms gives an upward-rounded
+failure logarithm of $-24.265906406170$. The certificate is
+\path{all-one-binary-hadamard-e239075.json}, replayed by
+\path{all_one_hadamard_certificate.py} in the companion artifacts.
+
+The sparse contribution dominates this bound; source weight six alone
+has logarithm at most $-24.4506$. The Newton block retains the stronger
+$46.39$-bit margin at $10.7\%$. Thus the subset-sum construction adds a
+distance--cost point; it does not establish the same 40-bit margin.
+Neither point currently has a matched implementation timing.

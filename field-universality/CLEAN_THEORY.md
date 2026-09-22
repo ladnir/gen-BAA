@@ -1863,13 +1863,16 @@ The other conditions hold because `R_0=30000>6` and
 3/((R_0-3)L_delta) <= 12/29997 < 1.
 ```
 
-For `p=5` and `r=3`, take `eta=1/100000` and `delta<=13/50`. We have
+For `p=5` and `r=3`, take `eta=1/100000` and `0<delta<=131/500`. We have
 
 ```text
-4 delta(1-delta) <= 481/625,
-sqrt(481) < 22,
+4 delta(1-delta) <= 48339/62500 < 48400/62500 = (22/25)^2,
 L_delta > 3/22.
 ```
+
+This extends the earlier endpoint `13/50` without changing the argument.
+The exact checks and the scope of this extension are recorded in
+`F5_DISTANCE_EVIDENCE.md` and the 2026-09-05 entry of `AUDIT.md`.
 
 Using `e<3` gives, for `R>=300000`,
 

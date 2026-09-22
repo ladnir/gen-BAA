@@ -1,0 +1,304 @@
+\section{Width and coefficient size}\label{sec:width-coefficient}
+
+The preceding encoder has two independent design parameters: the number
+of preceding states used by a scan, and the coefficient alphabet.
+Increasing either parameter preserves the vector lengths and the rate.
+Their costs differ. A wider scan performs more arithmetic and reads more
+coefficients. A larger alphabet can retain the same machine instruction
+sequence until a coefficient or metadata representation changes.
+
+\subsection{A common family}
+
+Fix $p=2^{128}-159$, $k=2^{20}$, and $n=2k$. Unless stated otherwise,
+the local source map in this section is the extended Newton code
+\begin{equation}\label{eq:extended-newton-eight}
+ f_x(t)=\sum_{j=0}^{7}\binom tj x_j,\qquad
+ B_8(x)=(f_x(0),\ldots,f_x(14),x_7).
+\end{equation}
+Apply $B_8$ independently to every eight input symbols. This gives a
+length-$n$ vector. The local code is $[16,8,9]$ MDS: if $x_7\ne0$,
+at most seven finite evaluations vanish; if $x_7=0$, the polynomial
+has degree at most six. In either case a nonzero block has weight at
+least nine. Its first eight evaluations also establish injectivity.
+Finite differences evaluate the map with 77 additions per block,
+including only updates that can reach a remaining output.
+
+For $1\le w<n$, a width-$w$ scan $A_{w,a}$ maps $v$ to $y$ by
+\begin{equation}\label{eq:width-scan}
+ y_i=v_i+\sum_{j=1}^{\min(w,i)}a_{i,j}y_{i-j},
+ \qquad 0\le i<n.
+\end{equation}
+Here $1\le q<p$, and every coefficient $a_{i,j}$ is sampled independently
+from $\{1,\ldots,q\}$. For $L$ rounds, sample independent uniform
+permutation matrices $P_1,\ldots,P_L$, independently of all coefficients.
+With column-vector notation, the encoder is
+\begin{equation}\label{eq:width-family}
+ E=A_{w,a_L}P_L\cdots A_{w,a_1}P_1 B_8.
+\end{equation}
+Every scan is invertible. The encoder therefore has dimension $k$ for
+every setup, and every vector after the source has length $n$.
+The output is the complete final vector.
+
+We also consider an additional scan $A_{t,b}E$, without another
+permutation. We call $t$ the final unpermuted width; $t=0$ denotes its
+absence. This parameter is stated separately from $L$ and $w$.
+Each distance guarantee below bounds
+\[
+ \Pr_{P,a,b}\bigl[\exists x\in\F_p^k\setminus\{0\}:
+                         \wt(E x)<d_0\bigr],
+\]
+with $E$ replaced by $A_{t,b}E$ when applicable. Setup precedes the
+choice of message. The prime is fixed before setup.
+
+\subsection{Two width-one scans with small coefficients}
+
+The all-one case already has a complete baseline with the smaller local
+$[8,4,5]$ source from Section~\ref{sec:small-scans}. Set every scan
+coefficient to one and sample only the two independent uniform
+permutations. At the same $k$ and $n$, the code has minimum distance at
+least 75498 ($>3.6\%$), except with probability less than $2^{-31.61}$.
+This bound holds for each fixed prime $p>6$, including the target prime.
+It covers every nonzero message after setup. Encoding uses exactly
+$3.875n-2=8126462$ field additions. A support-only count proves this
+baseline; it uses neither random multipliers nor a union over field values.
+The complete rational certificate is included with the companion results.
+This historical bound does not reach our comparison target of 40 bits
+of failure margin. With the larger local block and refined analysis,
+the $q=1$ row below now gives distance above $10.7\%$ and failure below
+$2^{-46.39}$. This supplies a matched all-one baseline for the other
+coefficient alphabets.
+
+A different local block gives a complementary point. The eight-input
+subset-sum construction of Appendix~\ref{app:subset-sum-gv} reaches
+distance above $11.4\%$ with failure below $2^{-24.26}$ and only
+$3.3125n-2$ additions. Both scans still have coefficient one. This
+point uses a different source catalog and a smaller failure margin
+than the MDS-source comparison below.
+
+The larger local block and a sharper treatment of dependent equations
+give the following finite guarantees. No final unpermuted scan is used.
+
+\begin{theorem}\label{thm:width-one-small}
+For each row of Table~\ref{tab:width-one-small}, the encoder
+in~\eqref{eq:width-family} with $L=2$ and $w=1$ has minimum distance
+at least the listed integer, except with probability less than the
+listed setup failure bound.
+\end{theorem}
+
+\begin{table}[t]
+\centering
+\caption{Complete width-one guarantees for the local $[16,8,9]$ source,
+two permutations, and no final unpermuted scan. Failure exponents are
+rounded down. These are achieved points, not optimal frontiers.}
+\label{tab:width-one-small}
+\input{width-one-results-table}
+\end{table}
+
+We describe the improved bound underlying the finite evaluation.
+Fix a source support and let $D$ be the dimension of its shortened
+message space. As in Section~\ref{sec:small-scans}, expose tap
+coefficients while retaining a single space $W$ of imposed zero
+equations across both scans. For $\tau\ge1$, attach the potential
+$\tau^{-\rank W}$ to a surviving branch.
+
+There are two feedback states: zero and nonzero. Let $x$ mark nonzero
+inputs, $y$ mark nonzero outputs, and $v_0,v_1>0$ be continuation bounds.
+The following positive homogeneous operator bounds the two states:
+\begin{align}
+ T_0(v)&=v_0+xyv_1,\nonumber\\
+ T_1(v)&=yv_1+x\max\left\{
+        yv_1+\frac{v_0}{\tau},\;
+        \left(1-\frac1q\right)yv_1+\frac{v_0}{q}
+                         \right\}.\label{eq:width-one-quotient}
+\end{align}
+To justify the maximum, consider a nonzero input form and a nonzero
+feedback form in the quotient by $W$, before exposing the fresh tap.
+If these forms are independent, requiring a zero output adds one
+independent equation. This gives the first alternative. If the forms
+are dependent, at most one coefficient produces the zero form.
+The zero and nonzero outcomes are then mutually exclusive, giving the
+second alternative when this coefficient belongs to the alphabet.
+If it does not, the first alternative bounds the nonzero outcome.
+The earlier bound charged a return without retaining this exclusivity.
+For $q=1$, the second alternative is simply $v_0$: a dependent zero
+output is deterministic. The argument still applies because that zero
+output and a nonzero output cannot occur in the same realization.
+Only the two permutations are random in this case.
+
+Normalize $v_0=1$, set $\lambda=\max_i T_i(v)/v_i$, and
+$C=\max_i1/v_i$. Monotonicity and homogeneity imply
+$[T^n(\mathbf1)]_0\le C\lambda^n$. For sparse supports we instead use
+\[
+ [T^n(\mathbf1)]_0\le
+ \lambda^{n-16}\max_i\frac{[T^{16}(\mathbf1)]_i}{v_i}.
+\]
+The terminal iterations are evaluated exactly over the rationals.
+
+For this source, put
+\[
+ Q_8(z,\tau)=1+\sum_{d=9}^{16}\binom{16}{d}z^d\tau^{d-8},
+ \qquad F_s(\tau)=[z^s]Q_8(z,\tau)^{n/16}.
+\]
+Fix source weight $s$, middle weight $h$, and forbidden final weight
+$e$. Choose a positive witness for each scan, with $0<y_2\le1$ and
+the same $\tau$ for both scans. Permutation averaging gives the bound
+\begin{equation}\label{eq:width-one-profile}
+ \frac{F_s(\tau)}{\tau}
+ \frac{C_1\lambda_1^n C_2\lambda_2^n}
+ {\binom ns\binom nh\,x_1^s(y_1x_2)^h y_2^e}.
+\end{equation}
+The divisor $\tau$ accounts for the one remaining dimension of a
+nonzero message. Each permutation contributes the reciprocal number
+of supports of its incoming weight. No union over field-valued messages
+is used.
+
+The finite calculation sums over all $h\le\min(n,2e)$ and
+$s\le\min(n,2h)$. It treats the possible source weights below 32
+using exact source coefficients and the terminal bound for $q\ge2$.
+For $q=1$, an exact support-moment bound is stronger in this range;
+Appendix~\ref{app:all-one} gives its finite evaluation. The remaining
+weights use $F_s\le Q_8(z,\tau)^{n/16}/z^s$ and convex bounds on
+regions of the $(s,h)$ domain. Every region includes its full number
+of integer profiles. Positive witnesses are proposed numerically and
+replayed with rational arithmetic and directed logarithm bounds.
+The replay checks coverage and sums upward-rounded contributions.
+Table~\ref{tab:width-one-small} records the resulting complete sums.
+The detailed evaluation and its saved witnesses accompany the paper;
+the two-state recurrence above supplies the rows with $q\ge2$.
+For $q=1$, it proves above $6.6\%$. Jointly exposing the first two
+active inputs of each run, and counting proportional pairs that cannot
+cancel, improves this to $10\%$:
+Appendix~\ref{app:fresh-pairs} gives the three-state macro bound and
+its finite sampling correction. Counting a return together with the next
+complete pair improves this to the displayed $10.7\%$;
+Appendix~\ref{app:joint-renewal} gives the joint continuation bound and
+its uniform rational verification.
+
+All rows have $2n-2$ tap contributions and $6.8125n-2$ field additions,
+including the source, before coefficient multiplication. For $q=1$,
+the latter is the complete cost: exactly 14286846 field additions.
+For $q\ge2$, a native implementation may use $2n-2$ word products.
+With coefficients in $\{1,2\}$, each product requires
+at most one doubling. The entire encoder then uses at most
+$8.8125n-4$ additions, with expectation $7.8125n-3$ over setup.
+For general $q$, the binary-method expectation is
+\[
+ 4.8125n+2(n-1)\left(1+\frac1q\sum_{a=1}^q
+ [\lfloor\log_2a\rfloor+\operatorname{popcount}(a)-1]\right).
+\]
+Two length-$n$ field buffers occupy 64 MiB. A 32-bit word stores a
+21-bit permutation index and each listed coefficient-minus-one, giving
+16 MiB for the two metadata arrays. This 80 MiB model excludes separately
+retained input and validation storage. The timings in
+Table~\ref{tab:small-timing} use a smaller local source and do not
+measure the constructions in Table~\ref{tab:width-one-small}.
+
+\subsection{Wider scans and a third permutation}
+
+Larger widths also admit complete finite-coefficient bounds. The current
+high-distance points use an additional unpermuted scan:
+\begin{center}
+\begin{tabular}{rrrrrr}
+\toprule
+$L$ & $w$ & $q$ & $t$ & Minimum distance & Failure below\\
+\midrule
+2 & 10 & $2^{63}$ & 1 & 964690 ($>46\%$) & $2^{-40.2205}$\\
+3 & 10 & $2^{63}$ & 2 & 985662 ($>47\%$) & $2^{-40.0476}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The underlying argument permits any fixed local $[16,8,9]$ MDS map,
+including~\eqref{eq:extended-newton-eight}. The original arithmetic
+artifacts used sixteen finite evaluations; substituting the extended
+map changes the source cost from 105 to 77 additions per block.
+These points use $21n-111$ and $32n-168$ weighted tap contributions,
+respectively. They have not been benchmarked in these configurations.
+
+The proof first treats each tap before the final scan as an independent
+indeterminate. Outside a bad event over permutations, a combinatorial
+rank argument proves that every sufficiently small set of parity-check
+columns is independent. Specializing a group of taps from one column
+of an inverse scan is an affine rank-one update. It loses at most one
+rank, with conditional probability at most $1/q$.
+The final scan contributes zero equations on the shortened entering
+space. An active zero either reduces this space's dimension or costs
+another conditional factor $1/q$. Counting the earlier rank losses and
+these redundant zero equations together gives a finite-field bound.
+A run count for the final support covers the remaining sparse regime.
+This argument applies to all messages after setup; it is stronger than
+a generic-rank assertion alone.
+
+There is also a complete two-permutation, width-two result with
+$q=2048$ and the smaller local $[8,4,5]$ source: minimum distance
+at least 734004 ($>35\%$), with failure below $2^{-40.22}$.
+It supplies a useful intermediate point, but changing the local source
+prevents a direct comparison that isolates width.
+The remaining grid will hold the source fixed and compare $L=2$ and
+$L=3$ separately. An extra final scan will always be identified.
+Historical dense-support searches alone do not supply complete grid
+entries or upper bounds on the encoders' distances.
+
+\subsection{A coefficient-independent obstruction}\label{sec:group-ceiling}
+
+Coefficient size cannot overcome every limitation of a narrow scan.
+The following count gives an upper bound for each fixed encoder.
+
+\begin{lemma}\label{lem:check-group-ceiling}
+Let $n=2rm$, and let $H$ be a parity-check matrix with $m$ groups of
+$r$ rows each. Suppose each column touches at most $D$ groups, where
+$2\le D\le m$. If $D\le b\le m$ and
+\begin{equation}\label{eq:group-ceiling-condition}
+ 2\binom{b-1}{D-1}>\binom{m-1}{D-1},
+\end{equation}
+then $d(\ker H)\le rb+1$.
+\end{lemma}
+
+\begin{proof}
+Fix $H$ and sample a uniform set of $b$ row groups. A column touching
+$d\le D$ groups is supported entirely in the selected rows with
+probability $\binom bd/\binom md\ge\binom bD/\binom mD$.
+The expected number of such columns is at least
+$n\binom bD/\binom mD$. Condition~\eqref{eq:group-ceiling-condition}
+makes this number exceed $rb$. Some selection therefore contains
+$rb+1$ columns supported on at most $rb$ rows. These columns are
+dependent, and their dependence gives a nonzero word of weight at most
+$rb+1$ in $\ker H$.
+\end{proof}
+
+The local source has a block diagonal parity check $H_0$, with eight
+rows per block. Write $D_j=A_{w,a_j}^{-1}$. With the convention
+in~\eqref{eq:width-family}, an output parity check is
+\[
+ H=H_0P_1^{-1}D_1\cdots P_L^{-1}D_L.
+\]
+Each $D_j$ has bandwidth $w$ and at most $w+1$ nonzeros per column.
+Thus every column of $H$ touches at most $(w+1)^L$ source groups.
+Consecutive inverse scans without a permutation have additive
+bandwidth: a sequence of widths $u_1,\ldots,u_j$ has at most
+$1+\sum_i u_i$ nonzeros per column. This yields tighter counts than
+multiplying their individual column weights.
+
+For width one, let $(t_1,\ldots,t_L)$ give the number of consecutive
+accumulators after each permutation. We may take
+$D=\prod_j(t_j+1)$. Applying the exact integer condition with
+$m=131072$ gives
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+Consecutive scan counts & $D$ & Distance at most & Relative ceiling\\
+\midrule
+$(1,1)$ & 4 & 832265 & $39.6855\%$\\
+$(1,2)$ & 6 & 912849 & $43.5281\%$\\
+$(1,1,1)$ & 8 & 949729 & $45.2867\%$\\
+$(2,2)$ & 9 & 961553 & $45.8505\%$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The percentages are rounded upward. These bounds hold for every
+permutation and every coefficient choice, including full-field
+coefficients. In particular, two width-one scans cannot reach $44\%$,
+even after one additional accumulator without another permutation.
+For fixed $D$ and growing $m$, the relative ceiling tends to
+$\tfrac12 2^{-1/(D-1)}$. The bound does not determine typical distance:
+the best achieved width-one lower bound and its ceiling still leave
+a gap between $30.5\%$ and $39.6855\%$.

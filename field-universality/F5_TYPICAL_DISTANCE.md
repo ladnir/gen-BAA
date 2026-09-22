@@ -1,10 +1,15 @@
 # Program for the Typical Quinary Distance
 
+For the current coverage audit and reproducible local checks, see
+`F5_DISTANCE_EVIDENCE.md` (2026-09-05). The lower-bound work below is a
+research program, not a completed certificate.
+
 ## Target statements
 
 Let `E_N` be the repetition-three BAA encoder over `F_5`, with independent
 uniform interleavers and block length `N=3K`. The numerical first-moment
-transition is in
+transition found by the saved local optimization, restricted to message
+fraction at least `0.002`, is in
 
 ```text
 [0.260600, 0.260612].

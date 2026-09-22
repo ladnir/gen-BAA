@@ -1,5 +1,48 @@
 # Formalization and certificate audit
 
+## 2026-09-05: investigation-paper editorial pass
+
+The paper now treats the specified encoder factorization as part of the
+lifting model; lifting a collapsed binary generator is a separate operation.
+The fixed-prime baseline theorems are retained in an appendix rather than
+advertised as the main contribution. The quinary `0.2606` value remains a
+numerical prediction, with the cutoff and global-optimization gaps stated
+in the main text. The stopped `0.22` campaign is condensed to its methodological
+limitation; its detailed history remains in the research notes.
+
+The Walsh--Hadamard fixed-alphabet probability statement is scoped to
+independent identically distributed projective types and fixed block count.
+It does not assert failure for every deterministic assignment from a finite
+alphabet. Product tensorization alone does not settle finite-length second
+moments; the prose now separates that identity from the numerical pair tests
+and the remaining concentration problem.
+
+## 2026-09-05: cutoff coverage and pair-diagnostic scope
+
+The sign sweep near `0.2606` uses message fraction `A>=0.002`. The sparse
+specialization previously stated in `CLEAN_THEORY.md`, Proposition 14, uses
+`A<=10^-5` and output fraction `delta<=0.26`. These sources do not cover
+`10^-5<A<0.002`. The exact normalized-tube certificate concerns only a
+restricted set of compositions at `delta=0.22`; it does not close that gap
+near the proposed transition. References to a completed sparse-to-bulk bridge
+must be restricted to the tube, with its complement still open.
+
+There is a small exact improvement to the sparse specialization. Its proof
+uses only `4 delta(1-delta)<(22/25)^2`, which still holds at `delta=131/500`.
+The new margin is `61/62500`; the remaining sufficient inequalities are
+unchanged. The specialization can therefore extend through `0.262` at the
+same message cutoff. This does not establish a global distance bound.
+
+Product-pair tensorization and the numerical 48-dimensional Hessian concern
+fixed one-replica marginals. Neither searches all pair compositions. Agreement
+between the full and projected single-replica optimizers also uses a shared
+initialization and utilities; it is not independent global optimization.
+
+`F5_DISTANCE_EVIDENCE.md` records the coverage ledger, new bounded searches,
+and a covariance-based check of the local pair Hessian. Unsuccessful or
+insufficiently feasible optimizer outputs are retained but excluded from
+the accepted search evidence. Floating curvature checks are not certificates.
+
 ## 2026-08-25: branch-dependent Fenchel cuts
 
 The first eliminated-composition checker optimized its Fenchel cut after
