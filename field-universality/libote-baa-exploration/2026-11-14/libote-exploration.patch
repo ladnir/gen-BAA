@@ -1,0 +1,321 @@
+diff --git a/libOTe/Tools/BlkAccCode/ReedMullerBaaCode.h b/libOTe/Tools/BlkAccCode/ReedMullerBaaCode.h
+index ee7cbd0d..f5538650 100644
+--- a/libOTe/Tools/BlkAccCode/ReedMullerBaaCode.h
++++ b/libOTe/Tools/BlkAccCode/ReedMullerBaaCode.h
+@@ -8,6 +8,7 @@
+ 
+ namespace osuCrypto
+ {
++    namespace chosen_baa_detail { struct BaaStageAccess; }
+     // RM(2,5)[32,16,8], followed by two independently permuted plain
+     // accumulators. Valid over characteristic-two fields. Extension of the
+     // binary generator preserves its minimum Hamming distance exactly.
+@@ -15,6 +16,7 @@ namespace osuCrypto
+     template<typename F = block, typename Field = ChosenBaaField<F>>
+     class ReedMullerBaaCode
+     {
++        friend struct chosen_baa_detail::BaaStageAccess;
+         u64 mN = 0;
+         std::array<AlignedUnVector<u32>, 2> mPerm;
+         AlignedUnVector<u32> mInverseFirst;
+diff --git a/libOTe/Tools/BlkAccCode/SmallAlphabetBaaCode.h b/libOTe/Tools/BlkAccCode/SmallAlphabetBaaCode.h
+index f02aab8b..24ba7e29 100644
+--- a/libOTe/Tools/BlkAccCode/SmallAlphabetBaaCode.h
++++ b/libOTe/Tools/BlkAccCode/SmallAlphabetBaaCode.h
+@@ -6,6 +6,7 @@
+ 
+ namespace osuCrypto
+ {
++    namespace chosen_baa_detail { struct BaaStageAccess; }
+     template<typename F, typename Field = ChosenBaaField<F>>
+     struct SmallBaaArithmetic
+     {
+@@ -34,16 +35,22 @@ namespace osuCrypto
+     };
+ 
+     // [16,8,9] RS followed by two permuted recursive scans. Independent
+-    // coefficients use 256 distinct nonzero field elements. This is a
++    // coefficients use AlphabetSize distinct nonzero field elements. This is a
+     // different map from ChosenBaaCode's full-field weighted accumulators.
+     // Packed metadata supports n <= 2^24, with eight coefficient bits.
++    // The default alphabet and seed schedule preserve the q=256 profile.
+     template<typename F = block, typename Field = ChosenBaaField<F>,
+-             typename Arithmetic = SmallBaaArithmetic<F, Field>>
++             typename Arithmetic = SmallBaaArithmetic<F, Field>, unsigned AlphabetSize = 256,
++             bool FusedTranspose = false>
+     class SmallAlphabetBaaCode
+     {
++        friend struct chosen_baa_detail::BaaStageAccess;
++        static_assert(AlphabetSize >= 1 && AlphabetSize <= 256 &&
++            (AlphabetSize & (AlphabetSize - 1)) == 0);
+         static constexpr u32 indexMask = (1u << 24) - 1;
+         u64 mN = 0;
+         std::array<AlignedUnVector<u32>, 2> mMeta;
++        AlignedUnVector<u32> mInverseFirst;
+         std::array<F, 64> mMatrix, mForward;
+         static constexpr bool additiveLocal = std::is_same_v<Field, ChosenBaaField<block>>;
+         chosen_baa_detail::AdditiveRs8 mAdditive;
+@@ -116,13 +123,69 @@ namespace osuCrypto
+                 }
+             }
+         }
++        void localForward(const F* in, F* out) const
++        {
++            for (u64 i = 0; i < mN / 16; ++i)
++            {
++                const auto* src = in + 8 * i; auto* dst = out + 16 * i;
++                std::copy_n(src, 8, dst);
++                if constexpr (additiveLocal) mAdditive.apply(src, dst + 8);
++                else Field::template localForward<8>(src, dst, mForward.data());
++            }
++        }
++        OC_FORCEINLINE void localTransposeBlock(const F* in, F* out) const
++        {
++            if constexpr (additiveLocal)
++            {
++                std::array<block, 8> values;
++                mAdditive.apply(in + 8, values.data());
++                for (u64 j = 0; j < 8; ++j) out[j] = in[j] ^ values[j];
++            }
++            else Field::template local<8>(in, out, mMatrix.data());
++        }
++        void localTranspose(F* inOut) const
++        {
++            for (u64 i = 0; i < mN / 16; ++i)
++                localTransposeBlock(inOut + 16 * i, inOut + 8 * i);
++        }
++        template<unsigned J = 0>
++        static OC_FORCEINLINE void suffixBatch(F* in, const u32* p, F& sum, u32& coefficient)
++        {
++            if constexpr (J < 16)
++            {
++                constexpr unsigned pos = 15 - J;
++                in[pos] = sum = Arithmetic::madd(sum, coefficient, in[pos]);
++                coefficient = (p[pos] >> 24) + 1;
++                suffixBatch<J + 1>(in, p, sum, coefficient);
++            }
++        }
++        void transposeSuffix(F* in) const
++        {
++            F sum = Field::zero();
++            u32 coefficient = 1;
++            for (u64 end = mN; end; end -= 16)
++                suffixBatch(in + end - 16, mMeta[0].data() + end - 16, sum, coefficient);
++        }
++        template<u64 Lead = 256>
++        void gatherLocalTranspose(const F* in, F* out) const
++        {
++            const auto* p = mInverseFirst.data();
++            for (u64 i = 0; i < mN; i += 16)
++            {
++                if constexpr (Lead)
++                    if (i + Lead + 16 <= mN) prefetch<false>(in, out, p + i + Lead);
++                std::array<F, 16> values;
++                gather(in, p + i, values.data());
++                localTransposeBlock(values.data(), out + i / 2);
++            }
++        }
+     public:
+         void config(u64 n, block seed)
+         {
+             if (!n || n % 16 || n > (1u << 24)) throw std::invalid_argument("Small-alphabet BAA length.");
+             // The proof requires distinct nonzero alphabet elements, not
+             // integer scalar multiples of one in positive characteristic.
+-            for (u64 i = 0; i < 256; ++i)
++            for (u64 i = 0; i < AlphabetSize; ++i)
+             {
+                 const F c = Field::point(i);
+                 if (c == Field::zero()) throw std::invalid_argument("BAA coefficient alphabet contains zero.");
+@@ -149,7 +212,13 @@ namespace osuCrypto
+                 for (u64 i = 0; i < n; ++i) p[i] = u32(i);
+                 PRNG random(permutationSeeds[s]), coefficients(coefficientSeeds[s]);
+                 for (u64 i = n; i > 1; --i) std::swap(p[i - 1], p[below(random, u32(i))]);
+-                for (u64 i = 0; i < n; ++i) p[i] |= u32(coefficients.get<u8>()) << 24;
++                for (u64 i = 0; i < n; ++i)
++                    p[i] |= (u32(coefficients.get<u8>()) & (AlphabetSize - 1)) << 24;
++            }
++            if constexpr (FusedTranspose)
++            {
++                mInverseFirst.resize(n);
++                for (u64 i = 0; i < n; ++i) mInverseFirst[mMeta[0][i] & indexMask] = u32(i);
+             }
+             mN = n;
+         }
+@@ -170,13 +239,7 @@ namespace osuCrypto
+         {
+             if (!mN || input.size() != mN / 2 || output.size() != mN || scratch.size() != mN)
+                 throw std::invalid_argument("Small-alphabet BAA forward buffer size.");
+-            for (u64 i = 0; i < mN / 16; ++i)
+-            {
+-                const auto* src = input.data() + 8 * i; auto* dst = output.data() + 16 * i;
+-                std::copy_n(src, 8, dst);
+-                if constexpr (additiveLocal) mAdditive.apply(src, dst + 8);
+-                else Field::template localForward<8>(src, dst, mForward.data());
+-            }
++            localForward(input.data(), output.data());
+             stage<false>(output.data(), scratch.data(), 0);
+             stage<false>(scratch.data(), output.data(), 1);
+         }
+@@ -185,16 +248,20 @@ namespace osuCrypto
+             if (!mN || inOut.size() != mN || scratch.size() != mN)
+                 throw std::invalid_argument("Small-alphabet BAA transpose buffer size.");
+             stage<true>(inOut.data(), scratch.data(), 1);
+-            stage<true>(scratch.data(), inOut.data(), 0);
+-            for (u64 i = 0; i < mN / 16; ++i)
++            if constexpr (FusedTranspose)
+             {
+-                if constexpr (additiveLocal)
+-                {
+-                    std::array<block, 8> values;
+-                    mAdditive.apply(inOut.data() + 16 * i + 8, values.data());
+-                    for (u64 j = 0; j < 8; ++j) inOut[8 * i + j] = inOut[16 * i + j] ^ values[j];
+-                }
+-                else Field::template local<8>(inOut.data() + 16 * i, inOut.data() + 8 * i, mMatrix.data());
++                // Preserve the weighted transpose exactly. First form the
++                // suffix in permutation order, then gather the inverse
++                // permutation directly into each local RS compression.
++                // This replaces the last random scatter with a gather and
++                // costs one extra u32 inverse index per codeword element.
++                transposeSuffix(scratch.data());
++                gatherLocalTranspose(scratch.data(), inOut.data());
++            }
++            else
++            {
++                stage<true>(scratch.data(), inOut.data(), 0);
++                localTranspose(inOut.data());
+             }
+         }
+     };
+diff --git a/libOTe_Tests/CMakeLists.txt b/libOTe_Tests/CMakeLists.txt
+index af1bfcea..53fdb079 100644
+--- a/libOTe_Tests/CMakeLists.txt
++++ b/libOTe_Tests/CMakeLists.txt
+@@ -54,6 +54,14 @@ if(LIBOTE_BAA_BENCHMARK)
+     target_include_directories(chosen_baa_directions PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
+     target_compile_features(chosen_baa_directions PRIVATE cxx_std_20)
+     target_link_libraries(chosen_baa_directions PRIVATE cryptoTools)
++    add_executable(chosen_baa_stages benchmarks/ChosenBaaStages.cpp)
++    target_include_directories(chosen_baa_stages PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
++    target_compile_features(chosen_baa_stages PRIVATE cxx_std_20)
++    target_link_libraries(chosen_baa_stages PRIVATE cryptoTools)
++    add_executable(chosen_baa_transpose benchmarks/ChosenBaaTranspose.cpp)
++    target_include_directories(chosen_baa_transpose PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
++    target_compile_features(chosen_baa_transpose PRIVATE cxx_std_20)
++    target_link_libraries(chosen_baa_transpose PRIVATE cryptoTools)
+ endif()
+ 
+ 
+diff --git a/libOTe_Tests/ChosenBaa_Tests.cpp b/libOTe_Tests/ChosenBaa_Tests.cpp
+index 982dd05e..a9bf9460 100644
+--- a/libOTe_Tests/ChosenBaa_Tests.cpp
++++ b/libOTe_Tests/ChosenBaa_Tests.cpp
+@@ -4,6 +4,8 @@
+ #include "Common.h"
+ #include "libOTe/Tools/Field/Goldilocks.h"
+ #include "libOTe/Tools/BlkAccCode/ReedMullerBaaCode.h"
++#include "libOTe/Tools/BlkAccCode/TwoCoefficientBaaCode.h"
++#include "libOTe/Tools/BlkAccCode/PlainRsBaaCode.h"
+ #include "libOTe/Tools/BlkAccCode/SmallAlphabetBaaCode.h"
+ #include <algorithm>
+ #include <bit>
+@@ -176,11 +178,11 @@ namespace
+             if (separate[i] != y[i]) throw RTE_LOC;
+     }
+ 
+-    template<typename F>
++    template<typename F, typename Code = ChosenBaa30<F>, unsigned AlphabetSize = 256>
+     void checkSmall(u64 n)
+     {
+         using Field = ChosenBaaField<F>;
+-        ChosenBaa30<F> code;
++        Code code;
+         code.config(n, block(210, n));
+         PRNG random(block(211, n));
+         AlignedUnVector<F> message(n / 2), input(n), forward(n), scalar(n), next(n), scratch(n);
+@@ -202,7 +204,7 @@ namespace
+             for (u64 i = 0; i < n; ++i)
+             {
+                 const auto meta = code.metadata(stage, i), p = meta & ((1u << 24) - 1);
+-                if (p >= n || seen[p]) throw RTE_LOC;
++                if (p >= n || seen[p] || (meta >> 24) >= AlphabetSize) throw RTE_LOC;
+                 seen[p] = true;
+                 next[i] = sum = Field::add(scalar[p], Field::mul(sum, Field::point(meta >> 24)));
+             }
+@@ -210,9 +212,17 @@ namespace
+         }
+         code.encode(message, forward, scratch);
+         if (!std::equal(scalar.begin(), scalar.end(), forward.begin())) throw RTE_LOC;
++        // Compare every transpose output with the original scatter path,
++        // not just a single adjoint identity. This also compares the shift
++        // and general multipliers for the two-coefficient candidate.
++        auto referenceTranspose = input;
++        SmallAlphabetBaaCode<F, Field, SmallBaaArithmetic<F, Field>, AlphabetSize> reference;
++        reference.config(n, block(210, n));
++        reference.dualEncode(referenceTranspose, scratch);
+         F lhs = Field::zero(), rhs = Field::zero();
+         for (u64 i = 0; i < n; ++i) lhs = Field::add(lhs, Field::mul(input[i], forward[i]));
+         code.dualEncode(input, scratch);
++        if (!std::equal(input.begin(), input.begin() + n / 2, referenceTranspose.begin())) throw RTE_LOC;
+         for (u64 i = 0; i < n / 2; ++i) rhs = Field::add(rhs, Field::mul(message[i], input[i]));
+         if (lhs != rhs) throw RTE_LOC;
+     }
+@@ -350,11 +360,32 @@ void ChosenBaa_Code_test(const CLP&)
+     {
+         const block x = bit < 64 ? block(0, u64{1} << bit) : block(u64{1} << (bit - 64), 0);
+         if (SmallBaaArithmetic<block>::madd(x, c, ZeroBlock) != x.gf128Mul(block(0, c))) throw RTE_LOC;
++        if (c <= 2 && chosen_baa_detail::TwoCoefficientArithmetic<block>::madd(x, c, OneBlock)
++            != (x.gf128Mul(block(0, c)) ^ OneBlock)) throw RTE_LOC;
+     }
++    // The second feedback choice generates the full field: every proper
++    // subfield of GF(2^128) is contained in GF(2^64). It is not a binary
++    // coefficient or an independent byte/word-lane multiplier.
++    block fieldGenerator(0, 2), conjugate = fieldGenerator;
++    for (unsigned i = 0; i < 64; ++i) conjugate = conjugate.gf128Mul(conjugate);
++    if (conjugate == fieldGenerator) throw RTE_LOC;
+     for (u64 n : {16, 32, 48, 256, 1040, 262144})
+     {
+         checkSmall<block>(n);
++        checkSmall<block, chosen_baa_detail::PlainRsBaaCode<>, 1>(n);
++        checkSmall<block, chosen_baa_detail::PlainRsBaaCode<block, ChosenBaaField<block>, true>, 1>(n);
++        if (n < 262144) checkSmall<Goldilocks, chosen_baa_detail::PlainRsBaaCode<Goldilocks>, 1>(n);
++        checkSmall<block, chosen_baa_detail::TwoCoefficientBaaCode<>, 2>(n);
++        checkSmall<block, chosen_baa_detail::FusedTwoCoefficientBaaCode<>, 2>(n);
++        checkSmall<block, SmallAlphabetBaaCode<block, ChosenBaaField<block>,
++            SmallBaaArithmetic<block>, 2, true>, 2>(n);
++        checkSmall<block, SmallAlphabetBaaCode<block, ChosenBaaField<block>,
++            SmallBaaArithmetic<block>, 256, true>>(n);
+         if (n < 262144) checkSmall<Goldilocks>(n);
++        if (n < 262144) checkSmall<Goldilocks,
++            chosen_baa_detail::TwoCoefficientBaaCode<Goldilocks>, 2>(n);
++        if (n < 262144) checkSmall<Goldilocks,
++            chosen_baa_detail::FusedTwoCoefficientBaaCode<Goldilocks>, 2>(n);
+     }
+     for (u64 n : {32, 64, 96, 256, 1056, 262144}) checkRm(n);
+     // Exhaust the binary constituent: this verifies the exact RM weight
+diff --git a/libOTe_Tests/benchmarks/ChosenBaaDirections.cpp b/libOTe_Tests/benchmarks/ChosenBaaDirections.cpp
+index 6d16dfdb..e87fdd78 100644
+--- a/libOTe_Tests/benchmarks/ChosenBaaDirections.cpp
++++ b/libOTe_Tests/benchmarks/ChosenBaaDirections.cpp
+@@ -1,6 +1,7 @@
+ #include "libOTe/Tools/BlkAccCode/ChosenBaaCode.h"
+ #include "libOTe/Tools/BlkAccCode/ChosenBaa10.h"
+ #include "libOTe/Tools/BlkAccCode/ChosenBaa30.h"
++#include "libOTe/Tools/BlkAccCode/TwoCoefficientBaaCode.h"
+ #include <chrono>
+ #include <iostream>
+ #include <algorithm>
+@@ -53,6 +54,14 @@ int main(int argc, char** argv)
+     if (!iterations || !n || n % 32 || n > std::numeric_limits<u32>::max()) throw std::invalid_argument("benchmark arguments");
+     std::cout << "code,k,n,seed,setup_ms,forward_ms,transpose_ms,checksum\n";
+     run<ChosenBaa10<>>("gf128_chosen_baa10", n, seed, iterations);
++    run<chosen_baa_detail::TwoCoefficientBaaCode<>>("gf128_nonbinary_q2_candidate", n, seed, iterations);
++    run<chosen_baa_detail::FusedTwoCoefficientBaaCode<>>("gf128_nonbinary_q2_shift_fused", n, seed, iterations);
++    run<SmallAlphabetBaaCode<block, ChosenBaaField<block>, SmallBaaArithmetic<block>, 2>>(
++        "gf128_nonbinary_q2_generic_scan", n, seed, iterations);
++    run<SmallAlphabetBaaCode<block, ChosenBaaField<block>, SmallBaaArithmetic<block>, 2, true>>(
++        "gf128_nonbinary_q2_general_fused", n, seed, iterations);
+     run<ChosenBaa30<>>("gf128_chosen_baa30", n, seed, iterations);
++    run<SmallAlphabetBaaCode<block, ChosenBaaField<block>, SmallBaaArithmetic<block>, 256, true>>(
++        "gf128_q256_fused", n, seed, iterations);
+     run<ChosenBaaCode<8>>("gf128_rs", n, seed, iterations);
+ }

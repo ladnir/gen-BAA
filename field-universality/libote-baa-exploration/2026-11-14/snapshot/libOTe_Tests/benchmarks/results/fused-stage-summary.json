@@ -1,0 +1,1460 @@
+{
+  "directions": {
+    "avx2": {
+      "gf128_chosen_baa10": {
+        "setup_ms": {
+          "median": 18.8083,
+          "min": 18.8083,
+          "max": 18.8083,
+          "seeds": 1
+        },
+        "forward_ms": {
+          "median": 10.8314,
+          "min": 10.8314,
+          "max": 10.8314,
+          "seeds": 1
+        },
+        "transpose_ms": {
+          "median": 10.205,
+          "min": 10.205,
+          "max": 10.205,
+          "seeds": 1
+        }
+      },
+      "gf128_nonbinary_q2_candidate": {
+        "setup_ms": {
+          "median": 19.343,
+          "min": 19.343,
+          "max": 19.343,
+          "seeds": 1
+        },
+        "forward_ms": {
+          "median": 20.2305,
+          "min": 20.2305,
+          "max": 20.2305,
+          "seeds": 1
+        },
+        "transpose_ms": {
+          "median": 21.1553,
+          "min": 21.1553,
+          "max": 21.1553,
+          "seeds": 1
+        }
+      },
+      "gf128_nonbinary_q2_shift_fused": {
+        "setup_ms": {
+          "median": 21.2137,
+          "min": 21.2137,
+          "max": 21.2137,
+          "seeds": 1
+        },
+        "forward_ms": {
+          "median": 20.2522,
+          "min": 20.2522,
+          "max": 20.2522,
+          "seeds": 1
+        },
+        "transpose_ms": {
+          "median": 22.1376,
+          "min": 22.1376,
+          "max": 22.1376,
+          "seeds": 1
+        }
+      },
+      "gf128_nonbinary_q2_generic_scan": {
+        "setup_ms": {
+          "median": 16.9454,
+          "min": 16.9454,
+          "max": 16.9454,
+          "seeds": 1
+        },
+        "forward_ms": {
+          "median": 23.5502,
+          "min": 23.5502,
+          "max": 23.5502,
+          "seeds": 1
+        },
+        "transpose_ms": {
+          "median": 23.2586,
+          "min": 23.2586,
+          "max": 23.2586,
+          "seeds": 1
+        }
+      },
+      "gf128_nonbinary_q2_general_fused": {
+        "setup_ms": {
+          "median": 21.2654,
+          "min": 21.2654,
+          "max": 21.2654,
+          "seeds": 1
+        },
+        "forward_ms": {
+          "median": 23.5318,
+          "min": 23.5318,
+          "max": 23.5318,
+          "seeds": 1
+        },
+        "transpose_ms": {
+          "median": 25.1569,
+          "min": 25.1569,
+          "max": 25.1569,
+          "seeds": 1
+        }
+      },
+      "gf128_chosen_baa30": {
+        "setup_ms": {
+          "median": 16.6045,
+          "min": 16.6045,
+          "max": 16.6045,
+          "seeds": 1
+        },
+        "forward_ms": {
+          "median": 23.9405,
+          "min": 23.9405,
+          "max": 23.9405,
+          "seeds": 1
+        },
+        "transpose_ms": {
+          "median": 23.296,
+          "min": 23.296,
+          "max": 23.296,
+          "seeds": 1
+        }
+      },
+      "gf128_q256_fused": {
+        "setup_ms": {
+          "median": 20.9902,
+          "min": 20.9902,
+          "max": 20.9902,
+          "seeds": 1
+        },
+        "forward_ms": {
+          "median": 23.8983,
+          "min": 23.8983,
+          "max": 23.8983,
+          "seeds": 1
+        },
+        "transpose_ms": {
+          "median": 25.3885,
+          "min": 25.3885,
+          "max": 25.3885,
+          "seeds": 1
+        }
+      },
+      "gf128_rs": {
+        "setup_ms": {
+          "median": 13.581,
+          "min": 13.581,
+          "max": 13.581,
+          "seeds": 1
+        },
+        "forward_ms": {
+          "median": 42.0409,
+          "min": 42.0409,
+          "max": 42.0409,
+          "seeds": 1
+        },
+        "transpose_ms": {
+          "median": 41.6903,
+          "min": 41.6903,
+          "max": 41.6903,
+          "seeds": 1
+        }
+      }
+    },
+    "wide4": {
+      "gf128_chosen_baa10": {
+        "setup_ms": {
+          "median": 18.558,
+          "min": 18.1803,
+          "max": 20.4243,
+          "seeds": 3
+        },
+        "forward_ms": {
+          "median": 10.5188,
+          "min": 10.5076,
+          "max": 10.5363,
+          "seeds": 3
+        },
+        "transpose_ms": {
+          "median": 9.37453,
+          "min": 9.32221,
+          "max": 9.37585,
+          "seeds": 3
+        }
+      },
+      "gf128_nonbinary_q2_candidate": {
+        "setup_ms": {
+          "median": 18.7619,
+          "min": 18.6945,
+          "max": 18.8553,
+          "seeds": 3
+        },
+        "forward_ms": {
+          "median": 16.8114,
+          "min": 16.787,
+          "max": 16.8161,
+          "seeds": 3
+        },
+        "transpose_ms": {
+          "median": 17.4917,
+          "min": 17.4658,
+          "max": 17.495,
+          "seeds": 3
+        }
+      },
+      "gf128_nonbinary_q2_shift_fused": {
+        "setup_ms": {
+          "median": 20.9144,
+          "min": 20.8406,
+          "max": 21.0874,
+          "seeds": 3
+        },
+        "forward_ms": {
+          "median": 16.7842,
+          "min": 16.7662,
+          "max": 16.8086,
+          "seeds": 3
+        },
+        "transpose_ms": {
+          "median": 18.1152,
+          "min": 18.1089,
+          "max": 18.1633,
+          "seeds": 3
+        }
+      },
+      "gf128_nonbinary_q2_generic_scan": {
+        "setup_ms": {
+          "median": 16.5363,
+          "min": 16.2307,
+          "max": 16.7223,
+          "seeds": 3
+        },
+        "forward_ms": {
+          "median": 16.8715,
+          "min": 16.859,
+          "max": 16.897,
+          "seeds": 3
+        },
+        "transpose_ms": {
+          "median": 16.735,
+          "min": 16.7132,
+          "max": 16.745,
+          "seeds": 3
+        }
+      },
+      "gf128_nonbinary_q2_general_fused": {
+        "setup_ms": {
+          "median": 21.1767,
+          "min": 20.9916,
+          "max": 21.1953,
+          "seeds": 3
+        },
+        "forward_ms": {
+          "median": 16.955,
+          "min": 16.9234,
+          "max": 16.9555,
+          "seeds": 3
+        },
+        "transpose_ms": {
+          "median": 18.0785,
+          "min": 18.0781,
+          "max": 18.1562,
+          "seeds": 3
+        }
+      },
+      "gf128_chosen_baa30": {
+        "setup_ms": {
+          "median": 16.4738,
+          "min": 16.3029,
+          "max": 16.8629,
+          "seeds": 3
+        },
+        "forward_ms": {
+          "median": 17.2838,
+          "min": 17.2702,
+          "max": 17.2946,
+          "seeds": 3
+        },
+        "transpose_ms": {
+          "median": 16.835,
+          "min": 16.8077,
+          "max": 16.8535,
+          "seeds": 3
+        }
+      },
+      "gf128_q256_fused": {
+        "setup_ms": {
+          "median": 21.0252,
+          "min": 20.9417,
+          "max": 21.1122,
+          "seeds": 3
+        },
+        "forward_ms": {
+          "median": 17.2714,
+          "min": 17.2641,
+          "max": 17.29,
+          "seeds": 3
+        },
+        "transpose_ms": {
+          "median": 18.2052,
+          "min": 18.1349,
+          "max": 18.2726,
+          "seeds": 3
+        }
+      },
+      "gf128_rs": {
+        "setup_ms": {
+          "median": 13.5304,
+          "min": 13.5002,
+          "max": 13.6175,
+          "seeds": 3
+        },
+        "forward_ms": {
+          "median": 30.1903,
+          "min": 30.1874,
+          "max": 30.2017,
+          "seeds": 3
+        },
+        "transpose_ms": {
+          "median": 28.0533,
+          "min": 28.0223,
+          "max": 28.1236,
+          "seeds": 3
+        }
+      }
+    }
+  },
+  "stages": {
+    "avx2": {
+      "binary_rm": {
+        "forward": {
+          "local": {
+            "median": 1.94153,
+            "min": 1.94153,
+            "max": 1.94153,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 4.22689,
+            "min": 4.22689,
+            "max": 4.22689,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 4.40461,
+            "min": 4.40461,
+            "max": 4.40461,
+            "seeds": 1
+          },
+          "total": {
+            "median": 10.5948,
+            "min": 10.5948,
+            "max": 10.5948,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 4.84038,
+            "min": 4.84038,
+            "max": 4.84038,
+            "seeds": 1
+          },
+          "suffix_gather_local": {
+            "median": 5.30055,
+            "min": 5.30055,
+            "max": 5.30055,
+            "seeds": 1
+          },
+          "total": {
+            "median": 10.1395,
+            "min": 10.1395,
+            "max": 10.1395,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_shift": {
+        "forward": {
+          "local": {
+            "median": 7.80071,
+            "min": 7.80071,
+            "max": 7.80071,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 6.2428,
+            "min": 6.2428,
+            "max": 6.2428,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 5.91174,
+            "min": 5.91174,
+            "max": 5.91174,
+            "seeds": 1
+          },
+          "total": {
+            "median": 19.9552,
+            "min": 19.9552,
+            "max": 19.9552,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 6.64584,
+            "min": 6.64584,
+            "max": 6.64584,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 6.94559,
+            "min": 6.94559,
+            "max": 6.94559,
+            "seeds": 1
+          },
+          "local": {
+            "median": 7.65096,
+            "min": 7.65096,
+            "max": 7.65096,
+            "seeds": 1
+          },
+          "total": {
+            "median": 21.2564,
+            "min": 21.2564,
+            "max": 21.2564,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_shift_fused": {
+        "forward": {
+          "local": {
+            "median": 7.79887,
+            "min": 7.79887,
+            "max": 7.79887,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 6.17107,
+            "min": 6.17107,
+            "max": 6.17107,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 5.97907,
+            "min": 5.97907,
+            "max": 5.97907,
+            "seeds": 1
+          },
+          "total": {
+            "median": 19.9569,
+            "min": 19.9569,
+            "max": 19.9569,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 6.5909,
+            "min": 6.5909,
+            "max": 6.5909,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 4.20198,
+            "min": 4.20198,
+            "max": 4.20198,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 11.4093,
+            "min": 11.4093,
+            "max": 11.4093,
+            "seeds": 1
+          },
+          "total": {
+            "median": 22.1874,
+            "min": 22.1874,
+            "max": 22.1874,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_general": {
+        "forward": {
+          "local": {
+            "median": 7.79844,
+            "min": 7.79844,
+            "max": 7.79844,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 7.8231,
+            "min": 7.8231,
+            "max": 7.8231,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 7.64989,
+            "min": 7.64989,
+            "max": 7.64989,
+            "seeds": 1
+          },
+          "total": {
+            "median": 23.2738,
+            "min": 23.2738,
+            "max": 23.2738,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 7.84465,
+            "min": 7.84465,
+            "max": 7.84465,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 7.91344,
+            "min": 7.91344,
+            "max": 7.91344,
+            "seeds": 1
+          },
+          "local": {
+            "median": 7.65373,
+            "min": 7.65373,
+            "max": 7.65373,
+            "seeds": 1
+          },
+          "total": {
+            "median": 23.4173,
+            "min": 23.4173,
+            "max": 23.4173,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_general_fused": {
+        "forward": {
+          "local": {
+            "median": 7.79002,
+            "min": 7.79002,
+            "max": 7.79002,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 7.95012,
+            "min": 7.95012,
+            "max": 7.95012,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 7.77112,
+            "min": 7.77112,
+            "max": 7.77112,
+            "seeds": 1
+          },
+          "total": {
+            "median": 23.4973,
+            "min": 23.4973,
+            "max": 23.4973,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 7.77401,
+            "min": 7.77401,
+            "max": 7.77401,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 6.02606,
+            "min": 6.02606,
+            "max": 6.02606,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 11.3307,
+            "min": 11.3307,
+            "max": 11.3307,
+            "seeds": 1
+          },
+          "total": {
+            "median": 25.1265,
+            "min": 25.1265,
+            "max": 25.1265,
+            "seeds": 1
+          }
+        }
+      },
+      "q256": {
+        "forward": {
+          "local": {
+            "median": 7.78537,
+            "min": 7.78537,
+            "max": 7.78537,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 7.77005,
+            "min": 7.77005,
+            "max": 7.77005,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 7.6748,
+            "min": 7.6748,
+            "max": 7.6748,
+            "seeds": 1
+          },
+          "total": {
+            "median": 23.2263,
+            "min": 23.2263,
+            "max": 23.2263,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 7.84577,
+            "min": 7.84577,
+            "max": 7.84577,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 7.86645,
+            "min": 7.86645,
+            "max": 7.86645,
+            "seeds": 1
+          },
+          "local": {
+            "median": 7.64579,
+            "min": 7.64579,
+            "max": 7.64579,
+            "seeds": 1
+          },
+          "total": {
+            "median": 23.3629,
+            "min": 23.3629,
+            "max": 23.3629,
+            "seeds": 1
+          }
+        }
+      },
+      "q256_fused": {
+        "forward": {
+          "local": {
+            "median": 7.78682,
+            "min": 7.78682,
+            "max": 7.78682,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 7.7401,
+            "min": 7.7401,
+            "max": 7.7401,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 7.71313,
+            "min": 7.71313,
+            "max": 7.71313,
+            "seeds": 1
+          },
+          "total": {
+            "median": 23.2479,
+            "min": 23.2479,
+            "max": 23.2479,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 7.78895,
+            "min": 7.78895,
+            "max": 7.78895,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 6.02865,
+            "min": 6.02865,
+            "max": 6.02865,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 11.4768,
+            "min": 11.4768,
+            "max": 11.4768,
+            "seeds": 1
+          },
+          "total": {
+            "median": 25.2874,
+            "min": 25.2874,
+            "max": 25.2874,
+            "seeds": 1
+          }
+        }
+      }
+    },
+    "wide4": {
+      "binary_rm": {
+        "forward": {
+          "local": {
+            "median": 2.01922,
+            "min": 2.01423,
+            "max": 2.03057,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 4.22194,
+            "min": 4.21927,
+            "max": 4.29267,
+            "seeds": 3
+          },
+          "scan1": {
+            "median": 4.41063,
+            "min": 4.40266,
+            "max": 4.46901,
+            "seeds": 3
+          },
+          "total": {
+            "median": 10.6577,
+            "min": 10.6549,
+            "max": 10.8064,
+            "seeds": 3
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 4.84169,
+            "min": 4.80631,
+            "max": 4.89082,
+            "seeds": 3
+          },
+          "suffix_gather_local": {
+            "median": 4.74795,
+            "min": 4.74095,
+            "max": 4.79348,
+            "seeds": 3
+          },
+          "total": {
+            "median": 9.587,
+            "min": 9.54086,
+            "max": 9.67934,
+            "seeds": 3
+          }
+        }
+      },
+      "q2_shift": {
+        "forward": {
+          "local": {
+            "median": 5.41623,
+            "min": 5.41054,
+            "max": 5.4527,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 5.6981,
+            "min": 5.68747,
+            "max": 5.72937,
+            "seeds": 3
+          },
+          "scan1": {
+            "median": 5.75111,
+            "min": 5.73901,
+            "max": 5.78682,
+            "seeds": 3
+          },
+          "total": {
+            "median": 16.9015,
+            "min": 16.863,
+            "max": 16.9414,
+            "seeds": 3
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 6.41889,
+            "min": 6.39675,
+            "max": 6.43584,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 6.78782,
+            "min": 6.76654,
+            "max": 6.81208,
+            "seeds": 3
+          },
+          "local": {
+            "median": 4.45566,
+            "min": 4.45057,
+            "max": 4.45995,
+            "seeds": 3
+          },
+          "total": {
+            "median": 17.647,
+            "min": 17.6463,
+            "max": 17.7079,
+            "seeds": 3
+          }
+        }
+      },
+      "q2_shift_fused": {
+        "forward": {
+          "local": {
+            "median": 5.41801,
+            "min": 5.41194,
+            "max": 5.45521,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 5.69749,
+            "min": 5.6959,
+            "max": 5.70519,
+            "seeds": 3
+          },
+          "scan1": {
+            "median": 5.77894,
+            "min": 5.72918,
+            "max": 5.82362,
+            "seeds": 3
+          },
+          "total": {
+            "median": 16.9167,
+            "min": 16.8818,
+            "max": 16.9306,
+            "seeds": 3
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 6.22212,
+            "min": 6.21655,
+            "max": 6.24287,
+            "seeds": 3
+          },
+          "suffix0": {
+            "median": 4.01926,
+            "min": 4.01614,
+            "max": 4.02423,
+            "seeds": 3
+          },
+          "gather_local": {
+            "median": 7.96194,
+            "min": 7.89479,
+            "max": 7.96656,
+            "seeds": 3
+          },
+          "total": {
+            "median": 18.204,
+            "min": 18.1394,
+            "max": 18.2262,
+            "seeds": 3
+          }
+        }
+      },
+      "q2_general": {
+        "forward": {
+          "local": {
+            "median": 5.41833,
+            "min": 5.41508,
+            "max": 5.43892,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 5.73389,
+            "min": 5.72961,
+            "max": 5.76423,
+            "seeds": 3
+          },
+          "scan1": {
+            "median": 5.63602,
+            "min": 5.61058,
+            "max": 5.6836,
+            "seeds": 3
+          },
+          "total": {
+            "median": 16.8231,
+            "min": 16.7973,
+            "max": 16.83,
+            "seeds": 3
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 6.01356,
+            "min": 5.99876,
+            "max": 6.01828,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 6.38717,
+            "min": 6.37284,
+            "max": 6.39695,
+            "seeds": 3
+          },
+          "local": {
+            "median": 4.45691,
+            "min": 4.44041,
+            "max": 4.45923,
+            "seeds": 3
+          },
+          "total": {
+            "median": 16.882,
+            "min": 16.8378,
+            "max": 16.887,
+            "seeds": 3
+          }
+        }
+      },
+      "q2_general_fused": {
+        "forward": {
+          "local": {
+            "median": 5.39592,
+            "min": 5.39555,
+            "max": 5.43501,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 5.73724,
+            "min": 5.72384,
+            "max": 5.74435,
+            "seeds": 3
+          },
+          "scan1": {
+            "median": 5.64618,
+            "min": 5.63656,
+            "max": 5.65898,
+            "seeds": 3
+          },
+          "total": {
+            "median": 16.7987,
+            "min": 16.7962,
+            "max": 16.8025,
+            "seeds": 3
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 5.89314,
+            "min": 5.84516,
+            "max": 5.98204,
+            "seeds": 3
+          },
+          "suffix0": {
+            "median": 4.39604,
+            "min": 4.39319,
+            "max": 4.40137,
+            "seeds": 3
+          },
+          "gather_local": {
+            "median": 7.94605,
+            "min": 7.90323,
+            "max": 7.98136,
+            "seeds": 3
+          },
+          "total": {
+            "median": 18.2293,
+            "min": 18.2145,
+            "max": 18.314,
+            "seeds": 3
+          }
+        }
+      },
+      "q256": {
+        "forward": {
+          "local": {
+            "median": 5.42288,
+            "min": 5.41984,
+            "max": 5.45371,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 5.98726,
+            "min": 5.97877,
+            "max": 6.00035,
+            "seeds": 3
+          },
+          "scan1": {
+            "median": 5.8659,
+            "min": 5.8546,
+            "max": 5.90476,
+            "seeds": 3
+          },
+          "total": {
+            "median": 17.306,
+            "min": 17.2526,
+            "max": 17.3228,
+            "seeds": 3
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 6.01603,
+            "min": 5.98778,
+            "max": 6.06901,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 6.43659,
+            "min": 6.43203,
+            "max": 6.45604,
+            "seeds": 3
+          },
+          "local": {
+            "median": 4.45345,
+            "min": 4.44513,
+            "max": 4.46482,
+            "seeds": 3
+          },
+          "total": {
+            "median": 16.9084,
+            "min": 16.8733,
+            "max": 17.0061,
+            "seeds": 3
+          }
+        }
+      },
+      "q256_fused": {
+        "forward": {
+          "local": {
+            "median": 5.41998,
+            "min": 5.41809,
+            "max": 5.44801,
+            "seeds": 3
+          },
+          "scan0": {
+            "median": 5.97783,
+            "min": 5.96379,
+            "max": 6.00158,
+            "seeds": 3
+          },
+          "scan1": {
+            "median": 5.84021,
+            "min": 5.82066,
+            "max": 5.84984,
+            "seeds": 3
+          },
+          "total": {
+            "median": 17.2675,
+            "min": 17.2006,
+            "max": 17.278,
+            "seeds": 3
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 5.92021,
+            "min": 5.85901,
+            "max": 5.94944,
+            "seeds": 3
+          },
+          "suffix0": {
+            "median": 4.52067,
+            "min": 4.51952,
+            "max": 4.52324,
+            "seeds": 3
+          },
+          "gather_local": {
+            "median": 7.95224,
+            "min": 7.89853,
+            "max": 7.9607,
+            "seeds": 3
+          },
+          "total": {
+            "median": 18.3718,
+            "min": 18.3422,
+            "max": 18.4024,
+            "seeds": 3
+          }
+        }
+      }
+    }
+  },
+  "sweep": {
+    "wide4": {
+      "q2_fused_pf0": {
+        "forward": {
+          "local": {
+            "median": 5.44116,
+            "min": 5.44116,
+            "max": 5.44116,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 5.67693,
+            "min": 5.67693,
+            "max": 5.67693,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 5.63395,
+            "min": 5.63395,
+            "max": 5.63395,
+            "seeds": 1
+          },
+          "total": {
+            "median": 16.7734,
+            "min": 16.7734,
+            "max": 16.7734,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 5.89893,
+            "min": 5.89893,
+            "max": 5.89893,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 4.39634,
+            "min": 4.39634,
+            "max": 4.39634,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 20.9516,
+            "min": 20.9516,
+            "max": 20.9516,
+            "seeds": 1
+          },
+          "total": {
+            "median": 31.2629,
+            "min": 31.2629,
+            "max": 31.2629,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_fused_pf32": {
+        "forward": {
+          "local": {
+            "median": 5.4503,
+            "min": 5.4503,
+            "max": 5.4503,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 5.76212,
+            "min": 5.76212,
+            "max": 5.76212,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 5.64442,
+            "min": 5.64442,
+            "max": 5.64442,
+            "seeds": 1
+          },
+          "total": {
+            "median": 16.8596,
+            "min": 16.8596,
+            "max": 16.8596,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 5.92404,
+            "min": 5.92404,
+            "max": 5.92404,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 4.39204,
+            "min": 4.39204,
+            "max": 4.39204,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 9.29439,
+            "min": 9.29439,
+            "max": 9.29439,
+            "seeds": 1
+          },
+          "total": {
+            "median": 19.6345,
+            "min": 19.6345,
+            "max": 19.6345,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_fused_pf64": {
+        "forward": {
+          "local": {
+            "median": 5.45801,
+            "min": 5.45801,
+            "max": 5.45801,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 5.74449,
+            "min": 5.74449,
+            "max": 5.74449,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 5.65958,
+            "min": 5.65958,
+            "max": 5.65958,
+            "seeds": 1
+          },
+          "total": {
+            "median": 16.8737,
+            "min": 16.8737,
+            "max": 16.8737,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 5.92572,
+            "min": 5.92572,
+            "max": 5.92572,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 4.39616,
+            "min": 4.39616,
+            "max": 4.39616,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 8.38262,
+            "min": 8.38262,
+            "max": 8.38262,
+            "seeds": 1
+          },
+          "total": {
+            "median": 18.7156,
+            "min": 18.7156,
+            "max": 18.7156,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_fused_pf128": {
+        "forward": {
+          "local": {
+            "median": 5.44804,
+            "min": 5.44804,
+            "max": 5.44804,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 5.78328,
+            "min": 5.78328,
+            "max": 5.78328,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 5.64755,
+            "min": 5.64755,
+            "max": 5.64755,
+            "seeds": 1
+          },
+          "total": {
+            "median": 16.8756,
+            "min": 16.8756,
+            "max": 16.8756,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 5.94832,
+            "min": 5.94832,
+            "max": 5.94832,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 4.38905,
+            "min": 4.38905,
+            "max": 4.38905,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 7.83594,
+            "min": 7.83594,
+            "max": 7.83594,
+            "seeds": 1
+          },
+          "total": {
+            "median": 18.162,
+            "min": 18.162,
+            "max": 18.162,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_fused_pf256": {
+        "forward": {
+          "local": {
+            "median": 5.45212,
+            "min": 5.45212,
+            "max": 5.45212,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 5.72645,
+            "min": 5.72645,
+            "max": 5.72645,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 5.63508,
+            "min": 5.63508,
+            "max": 5.63508,
+            "seeds": 1
+          },
+          "total": {
+            "median": 16.8129,
+            "min": 16.8129,
+            "max": 16.8129,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 5.94566,
+            "min": 5.94566,
+            "max": 5.94566,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 4.38829,
+            "min": 4.38829,
+            "max": 4.38829,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 7.99624,
+            "min": 7.99624,
+            "max": 7.99624,
+            "seeds": 1
+          },
+          "total": {
+            "median": 18.3459,
+            "min": 18.3459,
+            "max": 18.3459,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_fused_pf512": {
+        "forward": {
+          "local": {
+            "median": 5.46983,
+            "min": 5.46983,
+            "max": 5.46983,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 5.75185,
+            "min": 5.75185,
+            "max": 5.75185,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 5.66285,
+            "min": 5.66285,
+            "max": 5.66285,
+            "seeds": 1
+          },
+          "total": {
+            "median": 16.8819,
+            "min": 16.8819,
+            "max": 16.8819,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 5.94632,
+            "min": 5.94632,
+            "max": 5.94632,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 4.39347,
+            "min": 4.39347,
+            "max": 4.39347,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 8.03979,
+            "min": 8.03979,
+            "max": 8.03979,
+            "seeds": 1
+          },
+          "total": {
+            "median": 18.3749,
+            "min": 18.3749,
+            "max": 18.3749,
+            "seeds": 1
+          }
+        }
+      },
+      "q2_fused_pf1024": {
+        "forward": {
+          "local": {
+            "median": 5.44612,
+            "min": 5.44612,
+            "max": 5.44612,
+            "seeds": 1
+          },
+          "scan0": {
+            "median": 5.74166,
+            "min": 5.74166,
+            "max": 5.74166,
+            "seeds": 1
+          },
+          "scan1": {
+            "median": 5.63813,
+            "min": 5.63813,
+            "max": 5.63813,
+            "seeds": 1
+          },
+          "total": {
+            "median": 16.8277,
+            "min": 16.8277,
+            "max": 16.8277,
+            "seeds": 1
+          }
+        },
+        "transpose": {
+          "scan1": {
+            "median": 5.93602,
+            "min": 5.93602,
+            "max": 5.93602,
+            "seeds": 1
+          },
+          "suffix0": {
+            "median": 4.39955,
+            "min": 4.39955,
+            "max": 4.39955,
+            "seeds": 1
+          },
+          "gather_local": {
+            "median": 8.49869,
+            "min": 8.49869,
+            "max": 8.49869,
+            "seeds": 1
+          },
+          "total": {
+            "median": 18.8274,
+            "min": 18.8274,
+            "max": 18.8274,
+            "seeds": 1
+          }
+        }
+      }
+    }
+  }
+}

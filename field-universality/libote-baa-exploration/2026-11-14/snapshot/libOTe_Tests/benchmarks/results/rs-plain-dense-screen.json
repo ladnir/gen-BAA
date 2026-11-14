@@ -1,0 +1,27 @@
+{
+  "scope": "Floating proof-bound diagnostics, not a 10% certificate or code-distance measurements.",
+  "full_size_general_chain": {
+    "source_weight": 419430,
+    "dimension": 59117,
+    "pairs": 180000,
+    "tau": 2,
+    "log2_moment_approx": -59743.223830508
+  },
+  "approximate_profile_combination": {
+    "source_fraction": 0.2,
+    "intermediate_fraction": 0.12,
+    "closed_run_fraction": 0.095,
+    "pair_run_fraction": 0.08501,
+    "forbidden_fraction": 0.1,
+    "exponent_per_n_approx": 0.07521158552162124,
+    "scope": "Continuous type/run entropy screen; differs slightly from the rounded chain parameters; not a finite upper enclosure."
+  },
+  "full_size_minimum_word_chain": {
+    "source_weight": 419427,
+    "dimension": 46603,
+    "pairs": 180000,
+    "tau": 2,
+    "log2_moment_approx": -94635.6822388153,
+    "scope": "Only weight-nine active blocks; component-energy cap. Floating recurrence, no directed rounding."
+  }
+}

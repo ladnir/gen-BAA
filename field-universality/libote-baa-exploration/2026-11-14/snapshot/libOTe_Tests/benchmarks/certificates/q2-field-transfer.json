@@ -1,0 +1,16 @@
+{
+  "construction": "MDS [16,8,9]; two independent uniform permutations; two weighted scans",
+  "field": "one fixed field admitting the MDS code and two distinct nonzero coefficients",
+  "gf128_coefficients": [
+    "1",
+    "x in the canonical polynomial basis"
+  ],
+  "n": 2097152,
+  "k": 1048576,
+  "minimum_distance_at_least": 209716,
+  "failure_upper": "135807966222723081714348558404059809/1461501637330902918203684832716283019655932542976",
+  "failure_log2_upper": "-21645474285641/500000000000",
+  "sparse_intervals": 167,
+  "dense_leaves": 45,
+  "ledger_sha256": "11d553e0c6f4c7cf136b8d257b6c2cab21ed8dd8423bb29fe25a6c7e761a051e"
+}

@@ -1,0 +1,48 @@
+{
+  "scope": "Verified ingredients only; no complete 10% certificate.",
+  "local_rs": {
+    "supports": 11440,
+    "multiplicity_histogram": {
+      "1": 8848,
+      "2": 2544,
+      "3": 48
+    },
+    "energy_histogram": {
+      "9": 8848,
+      "11": 2544,
+      "15": 48
+    },
+    "digest": "3a2c8d0a23e0fb185e74aba93d35c288c51e7f06b66c304a80e33d1be2094db6",
+    "witness": {
+      "zeros": [
+        0,
+        1,
+        2,
+        6,
+        9,
+        12,
+        13
+      ],
+      "word": [
+        0,
+        0,
+        0,
+        14392,
+        67968,
+        124800,
+        0,
+        53576,
+        124800,
+        0,
+        176512,
+        199192,
+        0,
+        0,
+        124800,
+        113896
+      ],
+      "multiplicity": 3
+    }
+  },
+  "support_count_cases": 1677
+}

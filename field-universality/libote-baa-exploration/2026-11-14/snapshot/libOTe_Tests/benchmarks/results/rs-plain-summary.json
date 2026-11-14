@@ -1,0 +1,123 @@
+{
+  "k": 1048576,
+  "n": 2097152,
+  "iterations_per_seed": 31,
+  "warmups": 2,
+  "timing": "transpose only; setup, input copy and verification excluded",
+  "results": {
+    "avx2": {
+      "rs_plain_fused": {
+        "median_ms": 17.1725,
+        "min_ms": 16.9949,
+        "max_ms": 17.2397,
+        "seed_medians_ms": [
+          16.9949,
+          17.2397,
+          17.1725
+        ]
+      },
+      "rs_q2": {
+        "median_ms": 23.6766,
+        "min_ms": 23.6722,
+        "max_ms": 23.6823,
+        "seed_medians_ms": [
+          23.6823,
+          23.6766,
+          23.6722
+        ]
+      },
+      "rs_q256": {
+        "median_ms": 23.5234,
+        "min_ms": 23.4919,
+        "max_ms": 23.5995,
+        "seed_medians_ms": [
+          23.5995,
+          23.5234,
+          23.4919
+        ]
+      },
+      "binary_rm": {
+        "median_ms": 10.3298,
+        "min_ms": 10.208,
+        "max_ms": 10.357,
+        "seed_medians_ms": [
+          10.3298,
+          10.357,
+          10.208
+        ]
+      },
+      "rs_plain": {
+        "median_ms": 19.1296,
+        "min_ms": 19.1019,
+        "max_ms": 19.1952,
+        "seed_medians_ms": [
+          19.1019,
+          19.1952,
+          19.1296
+        ]
+      }
+    },
+    "wide4": {
+      "rs_q256": {
+        "median_ms": 16.9621,
+        "min_ms": 16.8526,
+        "max_ms": 17.0131,
+        "seed_medians_ms": [
+          16.8526,
+          17.0131,
+          16.9621,
+          16.9742,
+          16.9558
+        ]
+      },
+      "binary_rm": {
+        "median_ms": 9.59441,
+        "min_ms": 9.52265,
+        "max_ms": 9.63331,
+        "seed_medians_ms": [
+          9.55572,
+          9.63331,
+          9.52265,
+          9.59441,
+          9.60645
+        ]
+      },
+      "rs_plain": {
+        "median_ms": 15.9581,
+        "min_ms": 15.9036,
+        "max_ms": 16.2026,
+        "seed_medians_ms": [
+          15.9289,
+          15.9581,
+          15.9036,
+          16.2026,
+          16.0348
+        ]
+      },
+      "rs_plain_fused": {
+        "median_ms": 13.2838,
+        "min_ms": 13.169,
+        "max_ms": 13.4817,
+        "seed_medians_ms": [
+          13.3517,
+          13.2063,
+          13.4817,
+          13.2838,
+          13.169
+        ]
+      },
+      "rs_q2": {
+        "median_ms": 16.961,
+        "min_ms": 16.93,
+        "max_ms": 17.0489,
+        "seed_medians_ms": [
+          17.0489,
+          16.93,
+          16.9375,
+          16.9817,
+          16.961
+        ]
+      }
+    }
+  }
+}
