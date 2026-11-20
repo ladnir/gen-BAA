@@ -1,0 +1,294 @@
+\subsection{From spacing and type counts to distance}
+
+This subsection supplies the analytic bounds used by
+Theorem~\ref{thm:baa-fixed}. All limits keep $p$ fixed and take $N=3K$.
+For $1\le s\le K$, let $Z_s(d)$ count messages $x\in\F_p^K$ with
+$\wt(x)=s$ and $\wt(E_{P_1,P_2}x)\le d$.
+
+\begin{lemma}[Sparse messages]\label{lem:baa-sparse}
+Fix $0<\delta<1/2$ and $0<\eta<1$. Put
+\[
+ c_\delta:=-\tfrac12\log(4\delta(1-\delta)),\quad
+ L_\delta:=e^{c_\delta}-1,\quad R_0:=3/\eta,
+\]
+\[
+ g(R):=\frac{(p-1)eR}{3}
+             \left(\frac{3}{(R-3)L_\delta}\right)^{3/2}.
+\]
+If $R_0>6$, $3/((R_0-3)L_\delta)<1$, and $g(R_0)<1$, then
+\[
+ \sum_{s=1}^{\lfloor\eta K\rfloor}
+       \mathbb E Z_s(\lfloor\delta N\rfloor)\longrightarrow0.
+\]
+\end{lemma}
+\begin{proof}
+First fix the order of $t$ nonzero increments entering one accumulator.
+Their positions under a uniform permutation form a uniform $t$-subset
+of $[N]$. Let $a$ be the number of nonzero partial sums after these
+increments. The first partial sum is nonzero, and two consecutive partial
+sums cannot both vanish. Thus $a\ge\lceil t/2\rceil$.
+
+The gap before the first increment is nonnegative. Each of the $t$ gaps
+following an increment is positive, including the final gap through $N$.
+These gaps sum to $N$ and are uniform over the $\binom Nt$ possibilities.
+If $Y$ is the output weight, counting the gaps at nonzero and zero states gives
+\[
+ \Pr[Y=w\mid\text{increment order}]
+ =\frac{\binom{w-1}{a-1}\binom{N-w}{t-a}}{\binom Nt}.
+\]
+Summing to $d$ is the probability that a hypergeometric variable with
+population $N$, $d$ marked elements, and $t$ draws is at least $a$.
+For $\theta>0$, its moment generating function is at most
+$(1-d/N+(d/N)e^\theta)^t$. This follows by applying the elementary
+symmetric mean inequality to the $N$ weights, each equal to $1$ or
+$e^\theta$. The Chernoff bound at threshold $t/2$ therefore gives
+\begin{equation}\label{eq:baa-spacing-tail}
+ \Pr[Y\le\lfloor\delta N\rfloor]\le e^{-c_\delta t}.
+\end{equation}
+For any $c>0$, the same gap count and the negative-binomial series give
+\begin{equation}\label{eq:baa-spacing-laplace}
+ \mathbb E e^{-cY}
+ \le \frac{(t)_a}{(N)_a}(e^c-1)^{-a},
+ \qquad (v)_a:=v(v-1)\cdots(v-a+1).
+\end{equation}
+Indeed, replace $\binom{N-w}{t-a}$ by $\binom{N-a}{t-a}$ and use
+$\sum_{w\ge a}\binom{w-1}{a-1}e^{-cw}=(e^c-1)^{-a}$.
+Both bounds hold uniformly over the nonzero increment values and their order.
+
+A message of support $s$ has $t=3s$ nonzero coordinates after repetition.
+Condition on its first accumulator output, of weight $Y$.
+Independence of $P_2$ and~\eqref{eq:baa-spacing-tail} bound its final
+low-weight probability by $e^{-c_\delta Y}$. For $s\le\eta K$,
+applying~\eqref{eq:baa-spacing-laplace} with $c=c_\delta$ then bounds the
+probability by
+\[
+ \left(\frac{t}{(N-t)L_\delta}\right)^{t/2}.
+\]
+Here $(t)_a/(N)_a\le(t/(N-t))^a$, and the assumed base is less than one.
+There are $\binom Ks(p-1)^s\le((p-1)eK/s)^s$ such messages, so
+$\mathbb E Z_s(\lfloor\delta N\rfloor)\le g(N/s)^s$.
+The function $g(R)$ decreases for $R>3$ and tends to zero as
+$R\to\infty$. Each fixed-$s$ term tends to zero, while all terms are
+dominated by the summable sequence $g(R_0)^s$. This proves the limit.
+\end{proof}
+
+For the remaining messages, let $\mathcal T_p(\eta,\delta)$ be the
+stationary types from Appendix~\ref{sec:baa} with
+$1-\mu(0)\ge\eta$ and $1-\zeta(0)\le\delta$. Set
+\[
+ \Lambda_p(\eta,\delta):=
+       \max_{\tau\in\mathcal T_p(\eta,\delta)}\Phi_p(\tau).
+\]
+The maximum of an empty set is $-\infty$.
+
+\begin{lemma}[Bulk messages]\label{lem:baa-bulk}
+If $\Lambda_p(\eta,\delta)<0$, then
+$\sum_{s=\lceil\eta K\rceil}^{K}
+\mathbb E Z_s(\lfloor\delta N\rfloor)\to0$.
+\end{lemma}
+\begin{proof}
+Write $\operatorname{Mult}_\ell(\alpha)$ for the number of length-$\ell$
+words of type $\alpha$, and $T_N(\alpha,\beta)$ for the number of
+increment words of type $\alpha$ whose accumulator output has type $\beta$.
+A permutation is uniform on the words of a fixed type. Thus the expected
+number for message, middle, and output types $(\mu,\beta,\zeta)$ is
+\[
+ \operatorname{Mult}_K(\mu)
+ \frac{T_N(\mu,\beta)T_N(\beta,\zeta)}
+      {\operatorname{Mult}_N(\mu)\operatorname{Mult}_N(\beta)}.
+\]
+The first increment type is $\mu$ because repetition preserves its
+normalized composition. The zero message is excluded by $\eta>0$.
+
+For each accumulator, record the $p^2$ transition counts $(S,S+D)$.
+Given the initial state zero and the ordered successor lists at each
+state, the path is determined. The number of paths with a transition
+type $Q$ is therefore at most
+$\exp(N(H(Q)-H(Q_S)))$, where $Q_S$ is the law of the state $S$
+under $Q$.
+Use
+\[
+ (\ell+1)^{-p}e^{\ell H(\alpha)}
+ \le\operatorname{Mult}_\ell(\alpha)\le e^{\ell H(\alpha)}.
+\]
+There are at most $(N+1)^{2p^2+3p}$ choices of the three compositions
+and two transition types. Together with the two denominators, the
+polynomial prefactor is at most $(N+1)^{2p^2+5p}$.
+
+The source and target state marginals of a path differ only at its
+endpoints, by at most $1/N$ in each coordinate. Entropy continuity on
+the fixed-dimensional probability simplex and compactness imply
+\[
+ \limsup_{N\to\infty}\frac1N\log
+ \sum_{s=\lceil\eta K\rceil}^{K}
+       \mathbb E Z_s(\lfloor\delta N\rfloor)
+ \le\Lambda_p(\eta,\delta).
+\]
+To see uniformity, any sequence of maximizing finite path types has a
+convergent subsequence; its limit satisfies the stationary constraints,
+and its objective converges to $\Phi_p$ at that limit.
+A strictly negative upper bound absorbs the polynomial prefactor.
+\end{proof}
+
+\subsection{The certified bulk objectives}
+
+For $p=5,7$, a sign-orbit relaxation bounds the full stationary objective.
+Let $[a]:=\{a,-a\}$, let $\mathcal O_p$ be the set of these orbits,
+and put
+\[
+ \mathcal C_p:=\{([d],[s],[t]):d,s,t\in\F_p,\ t=s+d\}.
+\]
+Optimize over laws $\gamma_1,\gamma_2$ supported on $\mathcal C_p$.
+Their increment, source, and target marginals must respectively be
+$(\bar\mu,\bar\beta,\bar\beta)$ and
+$(\bar\beta,\bar\zeta,\bar\zeta)$.
+Let $\pi_i$ be the increment--source marginal of $\gamma_i$. The objective is
+\begin{equation}\label{eq:baa-orbit-objective}
+ \widehat\Phi_p:=H(\pi_1)+H(\pi_2)-\tfrac23H(\bar\mu)
+              -2H(\bar\beta)-H(\bar\zeta)
+              +\tfrac13(1-\bar\mu([0]))\log2.
+\end{equation}
+Every full type projects to a feasible orbit type with the same support
+weights. Data processing gives $I(D;S)\ge I([D];[S])$, and
+$H(\mu)\le H(\bar\mu)+(1-\bar\mu([0]))\log2$.
+Since $\Phi_p=H(\mu)/3-I_{Q_1}(D;S)-I_{Q_2}(D;S)$, these inequalities
+prove $\Phi_p\le\widehat\Phi_p$.
+
+Over $\F_3$, a sharper symmetry reduction is exact. For a distribution
+$\rho$, let $\sigma$ negate every symbol and define
+$\operatorname{Asym}(\rho):=H((\rho+\sigma\rho)/2)-H(\rho)$.
+
+\begin{lemma}[Ternary sign reduction]\label{lem:baa-ternary-sign}
+A stationary transition law $T$ on $\F_3^2$, with state marginal
+$\beta$ and increment marginal $\alpha$, satisfies
+\[
+ \operatorname{Asym}(T)\ge
+       \operatorname{Asym}(\alpha)+\operatorname{Asym}(\beta).
+\]
+Consequently, the maximum defining $\Lambda_3(\eta,\delta)$ is attained
+by sign-symmetric compositions and transition laws whenever its domain is nonempty.
+\end{lemma}
+\begin{proof}
+For nonnegative $u,v$, put
+$j(u,v):=u\log(2u/(u+v))+v\log(2v/(u+v))$, with continuous boundary
+values. This function is convex and positively homogeneous.
+The off-diagonal entries of a stationary three-state law form a circulation.
+After exchanging symbols 1 and 2 if necessary, write
+\[
+ T_{01}=c+q,\ T_{10}=c,\ T_{12}=h+q,\ T_{21}=h,
+ \ T_{20}=b+q,\ T_{02}=b,
+\]
+with $b,c,h,q\ge0$, and put $T_{11}=y$, $T_{22}=z$.
+The three asymmetries are
+\begin{align*}
+ \operatorname{Asym}(T)&=j(c+q,b)+j(c,b+q)+j(y,z)+j(h+q,h),\\
+ \operatorname{Asym}(\alpha)&=j(b+c+h+3q,b+c+h),\\
+ \operatorname{Asym}(\beta)&=j(c+y+h+q,b+z+h+q).
+\end{align*}
+Subadditivity of $j$ bounds the last expression by
+$j(y,z)+j(c+h+q,b+h+q)$.
+Set $m=b+c$, $x=c-b$, and $J(s,d):=j((s+d)/2,(s-d)/2)$.
+It suffices to prove that
+\begin{align*}
+ G(x):={}&J(m+q,x+q)+J(m+q,x-q)+J(2h+q,q)\\
+        &-J(2m+2h+3q,3q)-J(m+2h+2q,x)
+ \ \ge0.
+\end{align*}
+This is an even convex function of $x$. Indeed,
+$\partial_d^2J(s,d)=s/(s^2-d^2)$ is convex in $d$ and decreases in $s$;
+hence the first two terms' second derivatives dominate the last one's.
+The feasible interval $[-m,m]$ is symmetric, so the minimum is at zero.
+There, subadditivity of $J$ gives
+\[
+ G(0)=2J(m+q,q)+J(2h+q,q)-J(2m+2h+3q,3q)\ge0.
+\]
+Continuity covers boundary points. Finally average both stationary laws
+and their compositions with their sign images. The change in $\Phi_3$ is
+\[
+ \operatorname{Asym}(T_1)+\operatorname{Asym}(T_2)
+ -\tfrac23\operatorname{Asym}(\mu)-2\operatorname{Asym}(\beta)
+ -\operatorname{Asym}(\zeta)\ge\tfrac13\operatorname{Asym}(\mu)\ge0.
+\]
+The support constraints are preserved.
+\end{proof}
+
+A symmetric transition with nonzero increment fraction $\nu$ and nonzero
+state fraction $\nu'$ has matrix
+\[
+ T(\nu,\nu',b)=
+ \begin{pmatrix}
+ 1-\nu'-2b&b&b\\
+ b&(\nu'-\nu+2b)/2&\nu/2-2b\\
+ b&\nu/2-2b&(\nu'-\nu+2b)/2
+ \end{pmatrix},
+\]
+where
+\[
+ \max(0,(\nu-\nu')/2)\le b\le\min((1-\nu')/2,\nu/4).
+\]
+Let $\nu_1,\nu_2,\nu_3$ be the nonzero fractions of $\mu,\beta,\zeta$.
+Thus the exact ternary bulk objective maximizes
+$\Phi_3$ using $T(\nu_1,\nu_2,b_1)$ and $T(\nu_2,\nu_3,b_2)$ over
+$\eta\le\nu_1\le1$, $\nu_1\le2\nu_2$, $\nu_2\le2\nu_3$, and
+$0\le\nu_3\le\delta$.
+For each $(\nu,\nu')$ the entropy is concave in $b$; an interior maximizer
+solves
+\[
+ (1-\nu'-2b)(\nu/2-2b)^2=b^2(\nu'-\nu+2b)/2.
+\]
+This specifies the objective checked by the ternary verifier, including
+its feasible boundary.
+
+The directed-arithmetic verifiers give the following global upper bounds.
+The displayed values are rounded upward.
+\begin{center}
+\begin{tabular}{@{}cccl@{}}
+\toprule
+$p$ & $\eta$ & $\delta$ & upper bound and objective \\
+\midrule
+3 & $1/10000$ & $49/250$ & $-3.6177\cdot10^{-7}$, exact symmetric \\
+5 & $1/60$ & $1/20$ & $-1.1386\cdot10^{-6}$, sign orbit \\
+7 & $1/16$ & $9/500$ & $-1.1596\cdot10^{-4}$, sign orbit \\
+\bottomrule
+\end{tabular}
+\end{center}
+The orbit verifier covers the feasible composition domain by rational boxes.
+It upper-bounds positive joint entropies by cross-entropy at positive trial
+laws, and negative marginal entropies by secants of $x\log x$.
+The resulting linear program includes the orbit incidence and marginal
+constraints. A rational dual solution bounds its objective on the whole box;
+directed logarithm intervals make each bound outward. Boxes discarded as
+infeasible have exact dual witnesses. Multiplicative automorphisms supply
+additional valid cuts for $p=7$. The ternary verifier instead bounds the
+concave transition entropies by supporting planes and the negative marginal
+entropies by their endpoint secants. Rational boxes and interval arithmetic
+enclose the maximizing values of $b_1,b_2$ and the resulting objective.
+
+The certificates and their verifiers are listed in
+Appendix~\ref{app:reproduction}.
+
+\begin{proof}[Proof of Theorem~\ref{thm:baa-fixed}]
+Apply Lemma~\ref{lem:baa-sparse} with the three $(p,\eta,\delta)$ rows
+above. For $p=3$, $L_\delta\ge1/4$ and $R_0=30000$, giving
+$g(R_0)<1/2$ from
+$16\cdot30000^2\cdot12^3<29997^3$ and $e<3$.
+For $p=5$, $L_\delta>9/7$ and $R_0=180$ give
+$g(R_0)<660(7/531)^{3/2}<1$, using $e<11/4$ and
+$660^2\cdot7^3<531^3$.
+For $p=7$, $L_\delta>367/133$ and $R_0=48$ give
+$g(R_0)<264(133/5505)^{3/2}<1$, using $e<11/4$ and
+$264^2\cdot133^3<5505^3$. The other sparse hypotheses hold in all three rows.
+The certified bulk bounds and Lemma~\ref{lem:baa-bulk} handle every larger
+support. Markov's inequality on the total nonzero-message count proves
+the three distance claims.
+\end{proof}
+
+\begin{proof}[Proof of Proposition~\ref{prop:sparse-quinary}]
+Take $p=5$, $\delta=131/500=0.262$, $\eta=10^{-5}$, and $R_0=300000$ in
+Lemma~\ref{lem:baa-sparse}.
+The comparison displayed after Proposition~\ref{prop:sparse-quinary} gives
+$L_\delta>3/22$.
+Then $g(R_0)<4R_0(22/(R_0-3))^{3/2}<4/5$, using $e<3$ and
+$25\cdot300000^2\cdot22^3<299997^3$.  The other hypotheses of the lemma
+hold, and Lemma~\ref{lem:baa-sparse} proves the stated vanishing expectation.
+\end{proof}

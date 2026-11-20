@@ -1,0 +1,233 @@
+\section{How the distance bounds are proved}\label{sec:distance-proof}
+
+The minimum-distance event quantifies over every message after setup.
+A bound for a fixed message cannot establish this event without an
+additional argument. We instead enumerate supports and track the rank
+of their zero equations. This section gives the common argument for
+Theorems~\ref{thm:width-one-small} and~\ref{thm:wider-guarantees}; its
+last subsection states which appendix completes each row of
+Tables~\ref{tab:width-one-small} and~\ref{tab:wide-measured}.
+
+\subsection{Branches and equation rank}
+
+For a message $x$, call $B_8x$ its source vector; the support and weight
+of $B_8x$ are its \emph{source support} and \emph{source weight}.
+Fix a source support $S\subseteq\{0,\ldots,n-1\}$ and define its
+shortened source space
+\[
+ V_S=\{x\in\F_p^k:(B_8x)_i=0\text{ for }i\notin S\},
+ \qquad D_S=\dim V_S.
+\]
+Require every source coordinate in $S$ to be nonzero on the candidate
+message. Discard $S$ if $D_S=0$. A \emph{branch} specifies which outputs
+are zero in each scan. Fix a forbidden final weight $e$; a branch is
+\emph{bad} if its final output has weight at most $e$.
+
+Each permutation assigns to every position of the following scan an
+\emph{input label}, the index of the coordinate that position reads.
+A label is \emph{active} if its coordinate is required to be nonzero.
+We reveal (\emph{expose}) input labels and tap coefficients in scan
+order. Every exposed coordinate is a linear form on $V_S$.
+Let $W\subseteq V_S^*$ span the zero equations imposed so far, starting
+with $W=0$. The same span is retained across both scans.
+
+A required nonzero coordinate must remain a nonzero form in $V_S^*/W$.
+Discard a branch whenever this necessary condition fails. Keeping other
+infeasible branches only enlarges the count. A zero output whose form
+is outside $W$ increases $\dim W$ by one; a zero output whose form lies
+in $W$ adds no rank. A \emph{run} is a maximal block of consecutive
+nonzero outputs of a scan, and the zero output that ends it is a
+\emph{return}. A return whose form already lies in $W$ is a
+\emph{free return}.
+
+For $\tau\ge1$, weight a branch of rank $r$ by $\tau^{-r}$.
+Any branch realized by a nonzero message has $r\le D_S-1$, because
+that message belongs to $\ker W$. Thus, for each fixed setup,
+\begin{equation}\label{eq:rank-event-domination}
+ \mathbf1_{\{\text{a nonzero message realizes a bad branch from }S\}}
+ \le \tau^{D_S-1}\sum_{\gamma\text{ retained and bad}}
+                                  \tau^{-r(\gamma)}.
+\end{equation}
+Several messages may realize the same branch. The right side counts
+that branch once, so it introduces no factor depending on $p^{D_S}$.
+
+\subsection{A uniform bound for one scan}
+
+First consider width one. At any point of the exposure, the
+\emph{pool} is the multiset of forms at the input labels not yet exposed.
+A \emph{continuation bound} is an upper bound on the weighted count of
+branch completions from a given feedback state. It must hold for every
+quotient $V_S^*/W$, every pool, and every earlier nonzero requirement.
+Fresh coefficients remain independent of this exposure history.
+Nonzero requirements restrict the branches being counted; they do not
+condition the setup distribution.
+
+There are two feedback states: zero (state $0$) and nonzero (state $1$).
+Let $x,y>0$ be formal markers for nonzero inputs and outputs; from here
+on, $x$ and $y$ denote these markers, not a message or a scan output.
+Let $v_0,v_1>0$ be continuation bounds for the two states.
+The following positive homogeneous operator bounds the two states:
+\begin{align}
+ T_0(v)&=v_0+xyv_1,\nonumber\\
+ T_1(v)&=yv_1+x\max\left\{
+        yv_1+\frac{v_0}{\tau},\;
+        \left(1-\frac1q\right)yv_1+\frac{v_0}{q}
+                         \right\}.\label{eq:width-one-quotient}
+\end{align}
+To justify the maximum, consider a nonzero input form and a nonzero
+feedback form in the quotient by $W$, before exposing the fresh tap.
+If these forms are independent, requiring a zero output adds one
+independent equation. This gives the first alternative. If the forms
+are dependent, at most one coefficient produces the zero form.
+The zero and nonzero outcomes are then mutually exclusive, giving the
+second alternative when this coefficient belongs to the alphabet.
+If it does not, the first alternative bounds the nonzero outcome.
+For $q=1$ the only coefficient is one, so a dependent zero output is
+deterministic, the second alternative is $v_0$, and only the two
+permutations are random.
+
+Normalize $v_0=1$, set $\lambda=\max_i T_i(v)/v_i$, and
+$C=\max_i1/v_i$. Monotonicity and homogeneity imply
+$[T^n(\mathbf1)]_0\le C\lambda^n$. For sparse supports we instead use
+\begin{equation}\label{eq:scan-terminal-sixteen}
+ [T^n(\mathbf1)]_0\le
+ \lambda^{n-16}\max_i\frac{[T^{16}(\mathbf1)]_i}{v_i}.
+\end{equation}
+The terminal iterations are evaluated exactly over the rationals.
+
+\subsection{Composing the scans}
+
+For the Newton precode, put
+\begin{equation}\label{eq:newton-source-polynomial}
+ Q_8(z,\tau)=1+\sum_{j=9}^{16}\binom{16}{j}z^j\tau^{j-8},
+ \qquad F_s(\tau)=[z^s]Q_8(z,\tau)^{n/16}.
+\end{equation}
+The coefficient $F_s(\tau)$ sums $\tau^{D_S}$ over source supports of
+size $s$. Indeed, a support of size $j\ge9$ within one block has
+shortening dimension $j-8$ by the MDS property, and there are
+$\binom{16}{j}$ such supports. The constant term represents a zero block.
+
+Fix the incoming forms of a scan, and suppose $\kappa$ of its input
+labels are active. Give a branch with output weight $h'$ and incremental
+rank $r'$ the weight $x^\kappa y^{h'}\tau^{-r'}$. Average this weight
+over the order of the distinct active labels and over all fresh
+coefficients, then sum over placements of the active labels and over
+output-support branches. A \emph{uniform scan bound} is a function
+$K(\kappa)$ that bounds this sum for every incoming quotient and every
+set of earlier nonzero requirements. The two-state bound above gives
+$K(\kappa)=C\lambda^n$. The bounds for plain accumulators also average
+over the active labels and may include a $\kappa$-dependent factor.
+
+\begin{lemma}[Composition of uniform scan bounds]\label{lem:scan-composition}
+Fix source weight $s$, intermediate weight $h$, and forbidden final
+weight $e$. For scan $j$, let $K_j$ be a uniform scan bound, with
+markers $x_j,y_j>0$, $y_2\le1$, and the same $\tau\ge1$ in both scans.
+The probability of a nonzero message with these source and intermediate
+weights and final weight at most $e$ is at most
+\begin{equation}\label{eq:general-profile}
+ \frac{F_s(\tau)}{\tau}
+ \frac{K_1(s)K_2(h)}
+ {\binom ns\binom nh\,x_1^s(y_1x_2)^h y_2^e}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Fix $S$ of size $s$. A uniform permutation sends its active labels to
+a uniform $s$-subset and gives them a uniform order on that subset.
+These choices are independent. The first normalization is therefore
+$1/\binom ns$; the label-order average is already included in $K_1(s)$.
+
+Fix a complete first-scan history with intermediate weight $h$. The
+second permutation and its coefficients remain independent of that
+history. Apply $K_2(h)$ in the quotient left by the first scan.
+The second support-placement normalization is $1/\binom nh$.
+Rank increments add, so the product of the two incremental weights is
+the single weight $\tau^{-r}$ in~\eqref{eq:rank-event-domination}.
+This conditional argument does not assume independent zero equations.
+
+All terms are nonnegative. Extracting source and intermediate weights
+divides by $x_1^s(y_1x_2)^h$. For a final weight $j\le e$,
+$y_2^j\ge y_2^e$, which gives the remaining divisor. Apply
+inequality~\eqref{eq:rank-event-domination}, then sum over $S$; this
+supplies $F_s(\tau)/\tau$.
+\end{proof}
+
+For $K_j=C_j\lambda_j^n$, the lemma gives the width-one profile bound
+\begin{equation}\label{eq:width-one-profile}
+ \frac{F_s(\tau)}{\tau}
+ \frac{C_1\lambda_1^n C_2\lambda_2^n}
+ {\binom ns\binom nh\,x_1^s(y_1x_2)^h y_2^e}.
+\end{equation}
+Uniformity is essential here: a bound proved only for a fresh,
+unconstrained input space would not justify the second application.
+
+\subsection{Finite evaluation and the plain-accumulator refinements}
+
+The inverse width-one scan gives $h\le\min(n,2e)$ and
+$s\le\min(n,2h)$. The \emph{direct bound} evaluates~\eqref{eq:width-one-profile}
+with the operator~\eqref{eq:width-one-quotient} on every such integer
+profile. For source weights below 32, it uses the exact coefficients
+$F_s(\tau)$ and either the terminal bound~\eqref{eq:scan-terminal-sixteen}
+or the hypergeometric support bound of Appendix~\ref{app:hyper-support}.
+The remaining weights use $F_s\le Q_8(z,\tau)^{n/16}/z^s$ and convex
+bounds on rectangles in the $(s,h)$ plane. These rectangles come from a
+recursive subdivision of the profile domain; each final rectangle is a
+\emph{leaf}. Each leaf is charged its bound times its number of integer
+profiles. The parameters for each leaf are chosen numerically, and every
+resulting inequality is checked in rational arithmetic with directed
+logarithm bounds. The check confirms that the leaves cover the domain and
+sums their upward-rounded contributions. The rows of
+Table~\ref{tab:width-one-small} also use the stronger bounds described next.
+
+The main difficulty at $q=1$ is the dependent case of~\eqref{eq:width-one-quotient}.
+For some pools, a single return is free with probability one.
+Maximizing that probability separately at every step ignores the cost
+of forming such pools. The refinements for plain accumulators instead
+charge several exposures jointly.
+
+For example, draw two nonzero forms independently from one pool.
+Let $P_\parallel$ be the probability that they are proportional and
+$P_-$ the probability that they are exact opposites. Then
+$P_-\le P_\parallel/2$: in odd characteristic the nonzero forms on each
+line split into disjoint pairs $\{f,-f\}$, so a line of total mass
+$\sigma_\ell$ yields an opposite pair with probability at most
+$\sigma_\ell^2/2$, while $P_\parallel=\sum_\ell\sigma_\ell^2$.
+A proportional nonopposite pair cannot sum to zero on a surviving
+branch: imposing that equation would kill both required inputs.
+The \emph{projective-pair bound} (Appendix~\ref{app:fresh-pairs}) uses
+this restriction for the first two inputs of each run. The
+\emph{joint-renewal bound} (Appendix~\ref{app:joint-renewal}) retains it
+through neighboring returns. The \emph{complete-run bound}
+(Appendix~\ref{app:complete-runs}) counts a whole run, with its free
+returns and rank-gaining returns, in a fixed quotient, then lets the
+quotient change when a new zero equation is imposed. Each bound is
+uniform over every pool, so Lemma~\ref{lem:scan-composition} applies
+after each scan.
+
+Independent draws are an auxiliary counting device. The actual
+permutation draws labels without replacement. The complete-run bound
+absorbs the resulting correction in an explicit factor $\kappa^{16}$
+for a scan with $\kappa$ active inputs. Thus its two-scan bound uses
+$K_1(s)K_2(h)=(sh)^{16}C_1\lambda_1^nC_2\lambda_2^n$. It also includes
+the correction terms that arise because $p$ is finite and the runs still
+open at the end of a scan.
+
+\subsection{Which appendix proves each row}
+
+The $q=1$ row of Table~\ref{tab:width-one-small} is proved in
+Appendix~\ref{app:complete-runs}. Its cover assigns each leaf the
+projective-pair bound of Appendix~\ref{app:fresh-pairs}, the
+joint-renewal bound of Appendix~\ref{app:joint-renewal}, or the
+complete-run bound, and it bounds source weights below 32 by the
+hypergeometric support bound of Appendix~\ref{app:hyper-support}.
+The rows with $q\ge2$ are proved in Appendix~\ref{app:small-q-pairs},
+which extends projective pairs to small coefficients and chooses, on
+each leaf, either that bound or the direct bound. For source weights
+below 32 it uses the hypergeometric support bound at $q=2$ and the
+direct bound with~\eqref{eq:scan-terminal-sixteen} for $q\ge4$.
+The two rows of Table~\ref{tab:wide-measured} are proved in
+Appendix~\ref{app:wide-mask}, which replaces~\eqref{eq:width-one-quotient}
+by an operator on support masks and ranks of the preceding $w$ outputs
+and treats source weights below 32 with exact source coefficients and
+sixteen terminal iterations. Each certificate covers every sparse weight
+and dense support profile.

@@ -3,11 +3,13 @@
 \let\vec\relax
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{booktabs}
+\usepackage{graphicx}
 \usepackage{microtype}
+\usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \usepackage{cite}
 \hypersetup{
-  pdftitle={Lifting Binary Encoders and Constructing Sparse Prime-Field Codes},
+  pdftitle={Fast Linear Codes over Large Fields: Addition-Only and Small-Coefficient Encoders},
   pdfauthor={Stanislav Peceny and Peter Rindal}
 }
 
@@ -21,8 +23,8 @@
 \newcommand{\cZ}{\mathcal Z}
 \newcommand{\negl}{\operatorname{negl}}
 
-\title{Lifting Binary Encoders and Constructing Sparse Prime-Field Codes}
-\titlerunning{Lifting Encoders and Sparse Prime-Field Codes}
+\title{Fast Linear Codes over Large Fields: Addition-Only and Small-Coefficient Encoders}
+\titlerunning{Fast Linear Codes over Large Fields}
 \author{Stanislav Peceny \and Peter Rindal}
 \authorrunning{S. Peceny and P. Rindal}
 \institute{}
@@ -32,148 +34,152 @@
 \maketitle
 
 \begin{abstract}
-Reusing a binary encoder's addition circuit over a prime field can reduce
-encoding cost, but its binary distance guarantee need not survive.
-We study both this transfer problem and direct sparse constructions.
-Scalar extension preserves distance exactly; explicit counterexamples
-show that changing characteristic can reduce distance even when the
-prime exceeds the code length. Conversely, dense random binary matrices
-give positive simultaneous guarantees over prescribed finite families
-of fields, at quadratic encoding cost.
+We construct fast linear codes over large fields using addition-only
+encoders and variants with small integer coefficients. A local precode
+is followed by rounds of a random permutation and a scan, a linear
+recurrence with a short feedback window. At dimension $2^{20}$,
+rate $1/2$, and $p=2^{128}-159$, two plain accumulators (unweighted
+prefix sums) give relative distance above $11.7\%$, except with
+probability below $2^{-49.64}$ over the sampling of the encoder.
+A binary subset-sum precode instead gives distance above $12.56\%$,
+except with probability below $2^{-22.05}$. These addition-only encoders
+use fewer than $6.8125n$ and $3.3125n$ field additions, respectively,
+for output length $n$. Both exceed the binary rate-$1/2$
+Gilbert--Varshamov benchmark. The proof counts the supports and ranks of
+the zero equations a codeword must satisfy, retaining the dependence
+between cancellations.
 
-Our direct construction combines a local precode with independently
-permuted feedback convolutions. Convolution width and coefficient size
-control the distance and arithmetic cost. At dimension $2^{20}$, rate
-$1/2$, and $p=2^{128}-159$, two plain accumulators give distance above
-$10.7\%$ with setup failure below $2^{-46.39}$, using fewer than $6.813n$
-field additions. A subset-sum precode instead gives distance above
-$11.4\%$, exceeding the binary GV benchmark, with setup failure below
-$2^{-24.26}$ and fewer than $3.313n$ additions. Two width-one scans give distance above $30.5\%$ with
-coefficients in $\{1,\ldots,128\}$, with setup failure below
-$2^{-40}$, where $n$ is the output length. Wider constructions with two or
-three permutations and an additional unpermuted scan give distance
-above $46\%$ or $47\%$, respectively, using alphabets of size $2^{63}$.
-These are fixed-prime guarantees for all messages after setup.
-A deterministic counting bound limits every two-scan width-one encoder
-in the family to at most $39.6855\%$, regardless of coefficient size.
-An earlier configuration with a smaller local block encodes in
-$16.909$ ms on one CPU core; the stronger configurations require matched
-performance measurements.
+Coefficient size and scan width extend the tradeoff. On one core, with
+a common implementation and setup failure below $2^{-40}$, encoding
+time ranges from $12.171$ ms at proved distance above $11.7\%$ to
+$32.342$ ms above $42.987\%$.
+A coefficient-independent upper bound limits every encoder with two
+width-one scans after the Newton precode to $39.6855\%$.
+
+The distance and setup-failure bounds hold over $\F_p$ and every finite
+extension, covering all nonzero messages after setup. Timings are for
+$\F_p$. Extension preserves distance exactly because the encoder
+coefficients lie in the prime subfield. Changing characteristic requires
+a separate argument; we give field-transfer results in both directions,
+including counterexamples.
 \keywords{linear codes \and pseudorandom correlation generators \and
-learning parity with noise \and minimum distance \and prime fields}
+learning parity with noise \and minimum distance \and finite fields}
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
 
-Pseudorandom correlation generators (PCGs) reduce communication by replacing
-a long correlated string with short seeds and local expansion.  The expansion
-often contains a multiplication by a public generator matrix.  This operation
-is inexpensive over $\F_2$, where every nonzero coefficient is one.  Over a
-large prime field, a general matrix requires many field multiplications.
-
-A tempting optimization is to reuse the binary encoder's addition circuit over
-the target field.  Each stage retains its binary coefficients, but every sum
-is evaluated in the new field.  A one-stage encoder simply reinterprets a
-binary generator matrix.  A multistage encoder instead lifts the factors
-before multiplying them; its factorization is part of the construction.
-This optimization raises a basic question:
+Pseudorandom correlation generators (PCGs) expand short seeds into long
+correlated strings, often through a linear encoder. Encoding over a large
+field makes the arithmetic cost of that encoder important. Addition-only
+circuits avoid field multiplications; small integer coefficients offer
+another way to trade arithmetic cost for distance. We ask:
 
 \begin{quote}
-When does a specified binary encoder retain a useful minimum-distance
-guarantee when its stages act on vectors over $\F_p$?
+What distance can addition-only encoders achieve over large fields,
+and what do small coefficients and wider scans buy?
 \end{quote}
 
-The question has no unconditional affirmative answer.  Reduction modulo a new
-prime changes the ranks of integer minors and creates new cancellation
-patterns.  Conversely, large alphabets can remove binary cancellations and
-increase distance.  Neither direction is monotone for a fixed encoder.
+A natural starting point is a binary encoding circuit evaluated over the
+large field, but its distance can change with the characteristic.
+Moreover, lifting a binary generator matrix entrywise can differ from
+lifting its factors and multiplying them over the new field.
+We instead give direct distance guarantees for a family of sparse
+encoding circuits with tunable scan width and coefficient size. These
+guarantees cover messages chosen after the encoder is sampled; a
+cancellation bound for each fixed message does not by itself establish
+minimum distance.
 
-The literature contains several different responses to this problem.
-Unique-neighbor expansion gives field-independent distance for some sparse
-matrices~\cite{silver21}.  Analyses of expand-accumulate and
-expand-convolute codes are instead tied to binary weight processes
-\cite{ea22,ec23}.  Security analyses may compensate for a smaller distance by
-increasing the noise weight, but such compensation does not prove a code
-theorem~\cite{silver21,stationary25}.  Recent Walsh--Hadamard PCGs avoid a
-binary transfer altogether by analyzing a code directly over the deployed
-prime field~\cite{wht26}.
+\paragraph{The construction and its tradeoffs.}
+A local precode expands each block of eight input symbols to sixteen.
+The encoder then applies a number of rounds, two in all our results.
+Each round permutes the coordinates and applies a scan, in which each
+output is the current input plus $w$ weighted preceding outputs. Each
+coefficient is sampled independently from $\{1,\ldots,q\}$. We call the
+scan with $w=q=1$, an ordinary prefix sum, a \emph{plain accumulator}.
+For input length $k$, the precode output and all later vectors have
+length $n=2k$; the final vector is the codeword. This extends the
+block-and-accumulate (BAA) architecture~\cite{baa26}.
 
-This paper first studies the change-of-characteristic problem, then
-constructs sparse encoders directly over the target prime field.
-The constructive family retains a local code followed by permuted
-accumulators, and generalizes each accumulator to a short feedback
-convolution. Its principal design variables are convolution width and
-coefficient alphabet size. We compare two and three permutations,
-accounting separately for additional scans without a permutation.
+Our finite guarantees use $k=2^{20}$ and $p=2^{128}-159$. Setup samples
+the permutations and coefficients; a setup fails if the resulting code
+has smaller distance than claimed. With the $[16,8,9]$ Newton precode
+and two independently permuted plain accumulators, the relative distance
+exceeds $11.7\%$ except with probability below $2^{-49.64}$. We call this
+the \emph{all-one} encoder, after its scan coefficients. Encoding uses
+$6.8125n-2$ field additions, including the precode, which is evaluated
+with finite differences, and takes $12.171$ ms on one core of an AMD
+Ryzen 9 7950X.
 
-\paragraph{Contributions.}
-The investigation has six parts.
+The same precode with width one and coefficients up to 256 gives distance
+above $30.524\%$ in $17.897$ ms. Width four with coefficients up to
+$65536$ gives above $42.987\%$ in $32.342$ ms. Both use two permutations
+and have failure below $2^{-40}$. Tables~\ref{tab:width-one-small}
+and~\ref{tab:wide-measured} report all eleven configurations, timed with
+a common implementation. Products by small integers can be computed with
+additions, but our implementations for $q>1$ use native field
+multiplication.
 
-\begin{enumerate}
-  \item It separates scalar extension from change of characteristic.  Scalar
-  extension preserves minimum distance exactly; change of characteristic does
-  not.
+A binary subset-sum precode with two plain accumulators gives distance
+above $12.56\%$, failure below $2^{-22.05}$, and $3.3125n-2$ additions.
+Both addition-only guarantees exceed the binary rate-$1/2$
+Gilbert--Varshamov benchmark of approximately $11.003\%$, the usual
+reference point for the binary encoders used in PCGs. The
+Gilbert--Varshamov bound over $\F_p$ itself is close to $1/2$ at this
+rate and remains far above these guarantees. All guarantees fix the
+characteristic before setup and cover every nonzero message after a
+successful setup.
 
-  \item It separates existence from transfer.  A random dense binary generator has
-  constant rate and relative distance close to $1/2$ simultaneously over any
-  prescribed finite family of fields.  The failure bound is independent of
-  the field sizes.  In contrast, samplewise distance equality
-  fails for addition-only BAA encoders, including an example with $p>N$.
-  A separate family shows that unrestricted binary matrices can have binary
-  relative distance bounded away from zero and vanishing ternary relative
-  distance, although that family has vanishing rate.
+The same circuits work over every finite extension $\F_{p^m}$ with
+exactly the same symbol distance and setup-failure probability. All scalar
+coefficients lie in $\F_p$, so extension-field encoding splits into
+component encodings over $\F_p$. This applies to both additions and small
+integer coefficients. The numerical guarantees hold for characteristic
+$p=2^{128}-159$ and every extension degree $m$, but do not transfer to
+another characteristic. The reported timings are for $\F_p$.
 
-  \item It studies BAA as a candidate for efficient stagewise lifting.
-  Full-symbol first moments and pair tests support a quinary threshold near
-  $0.2606$, while exposing the gaps in a distance proof.  Positive-distance
-  baseline theorems hold for fixed primes.  For growing primes, determinant
-  and cycle-rank bounds instead restrict the possible failure mechanisms.
+\paragraph{Counting dependence and bounding distance from above.}
+The proof tracks which scan outputs vanish and how much rank the
+resulting zero equations add, avoiding a union bound over field-valued
+messages. For plain accumulators, a zero output that ends a run of
+nonzero outputs may impose no new equation; counting whole runs pairs
+these free returns with the returns that do increase rank. Bounds that
+hold uniformly over the linear forms not yet constrained let the scans
+compose despite these dependencies.
 
-  \item It examines Walsh--Hadamard codes as a direct large-field alternative.
-  An affine-flat obstruction rules out independent identically distributed
-  spectral types from a fixed finite alphabet when the block count is fixed.
-  A growing alphabet remains a possible finite-parameter design.
+A separate upper bound limits every two-scan width-one Newton encoder
+to $39.6855\%$, regardless of coefficient size. Increasing the alphabet
+alone therefore cannot reach the proved width-four point. A gap remains
+between the width-one lower and upper bounds.
 
-  \item It gives a direct prime-field construction with tunable width and
-  coefficient alphabet. An adaptive rank argument avoids a union over
-  field-valued messages. At dimension $2^{20}$ and rate $1/2$, two
-  plain accumulators give distance above $10.7\%$ with setup failure below
-  $2^{-46.39}$. A cheaper subset-sum source gives distance above $11.4\%$
-  with failure below $2^{-24.26}$, exceeding the binary GV benchmark.
-  With the MDS source, coefficients up to 128 give
-  distance above $30.5\%$. Both MDS-source bounds have setup failure below
-  $2^{-40}$. Wider constructions
-  reach above $46\%$ and $47\%$ with two and three permutations,
-  respectively, and a stated additional unpermuted scan. An earlier
-  configuration supplies measured performance; the new points have
-  arithmetic counts but await matched timings.
+\paragraph{What survives a field change.}
+Scalar extension preserves distance. Changing characteristic can reduce
+it, even for an addition-only BAA encoder over a prime exceeding the code
+length. A binary-matrix family has positive binary relative distance and
+vanishing ternary relative distance, though its rate vanishes. Conversely,
+dense random binary generators give distance near $1/2$ at sufficiently
+small constant rate over prescribed finite families of fields. Their
+failure bound depends on the number of fields, not their sizes, but
+direct encoding of these dense codes has quadratic cost.
 
-  \item It bounds distance from above by counting parity-check columns
-  confined to selected source blocks. Every two-scan width-one encoder
-  in the family has distance at most $39.6855\%$ at the target length,
-  even with arbitrary coefficients. This construction limit is distinct
-  from a plateau in an achieved lower bound.
-\end{enumerate}
-
-The results locate the remaining difficulty.  Good binary matrices over prime
-fields exist, and fast addition-only encoders exist. The small-coefficient
-construction combines linear addition cost with a useful fixed-prime
-guarantee. A single sampled circuit with a simultaneous guarantee across
-characteristics remains a separate objective.
+\paragraph{Related work.}
+Unique-neighbor expansion proves
+field-independent distance for some sparse matrices~\cite{silver21}.
+Binary expand-accumulate and expand-convolute analyses track binary weight
+processes~\cite{ea22,ec23}. Security analyses can accommodate a smaller
+distance through noise parameters, but still need a justified distance
+bound~\cite{silver21,stationary25}. Walsh--Hadamard PCGs analyze codes
+directly over a large prime field~\cite{wht26}. The appendices study
+repetition-based BAA and a fixed-alphabet Walsh--Hadamard variant, distinguishing
+their unresolved predictions from proved guarantees.
 
 \paragraph{Organization.}
-Section~\ref{sec:fields} distinguishes field changes and reviews the security
-role of distance.  Section~\ref{sec:baselines} gives the dense positive
-baseline and the negative examples.  Section~\ref{sec:baa} develops the BAA
-case study.  Section~\ref{sec:wht} examines the Walsh--Hadamard alternative.
-Section~\ref{sec:small-scans} gives the initial small-coefficient
-construction and its measured implementation.
-Section~\ref{sec:width-coefficient} develops the width--coefficient
-tradeoff, stronger distance guarantees, and the counting obstruction.
-Section~\ref{sec:discussion} states the resulting design requirements and open
-problems.
-Appendix~\ref{app:fixed-prime} collects the fixed-prime BAA baseline bounds;
-Appendix~\ref{app:small-certificate} gives the new finite certificate.
+Sections~\ref{sec:fields}--\ref{sec:baselines} give transfer baselines;
+Section~\ref{sec:width-coefficient} gives the construction and tradeoffs.
+Section~\ref{sec:distance-proof} develops the counting argument, and
+Section~\ref{sec:discussion} discusses open questions. The appendices
+provide supporting studies, including a four-input precode
+(Appendix~\ref{sec:small-scans}), proof refinements, and finite
+verification.
 
 \section{Field changes and their security role}\label{sec:fields}
 
@@ -183,13 +189,17 @@ Let $F$ be a field and let $G\in F^{k\times n}$.  The code generated by $G$ is
   \cC_F(G):=\{xG:x\in F^k\}.
 \]
 
-Its minimum distance is
+For a code subspace $C\subseteq F^n$, define
 
 \[
-  d_F(G):=\min\{\wt(xG):x\in F^k,\ xG\ne0\}.
+  d(C):=\min\{\wt(c):c\in C\setminus\{0\}\},
+  \qquad d(\{0\}):=+\infty.
 \]
 
-The matrix need not have full row rank for this definition.  The code rate is
+We write $d(\cC_F(G))$ for a row generator and
+$d_F(E):=d(\operatorname{im}_F E)$ for a column encoder $x\mapsto Ex$.
+When the field is fixed, $d(E)$ abbreviates $d_F(E)$.
+The matrix need not have full rank. The rate of $\cC_F(G)$ is
 $\rank_F(G)/n$.
 
 \subsection{Scalar extension is exact}
@@ -200,7 +210,7 @@ matrix defines codes over $F$ and $K$.
 \begin{theorem}[Scalar-extension invariance]\label{thm:extension}
 For every field extension $K/F$ and every matrix $G\in F^{k\times n}$,
 \[
-  d_K(G)=d_F(G).
+  d(\cC_K(G))=d(\cC_F(G)).
 \]
 \end{theorem}
 
@@ -214,7 +224,8 @@ $x=\sum_i\beta_i x_i$ with $x_i\in F^k$.  Then
 A coordinate of $xG$ is zero exactly when the same coordinate is zero in every
 $x_iG$.  Hence the support of $xG$ is the union of the supports of its nonzero
 $F$-components.  Every nonzero $K$-codeword therefore has weight at least
-$d_F(G)$.  The reverse inequality follows from $\cC_F(G)\subseteq\cC_K(G)$.
+$d(\cC_F(G))$. The reverse inequality follows from
+$\cC_F(G)\subseteq\cC_K(G)$. If $G=0$, both distances are $+\infty$.
 \end{proof}
 
 Theorem~\ref{thm:extension} covers, for example, a binary matrix interpreted
@@ -235,9 +246,11 @@ modulo each characteristic.  The dense constructions below have one factor;
 the BAA construction keeps its repetition, permutation, and accumulator stages.
 
 Let $G_{\mathbb Z}\in\mathbb Z^{k\times n}$ be an integer matrix.  Reduction
-modulo a prime $p$ gives a matrix $G_p$.  A selected column set can be
-independent over $\F_2$ and dependent over $\F_p$ when its nonzero integer
-minors are divisible by $p$.  Thus the obstruction is torsion in an integer
+modulo a prime $p$ gives a matrix $G_p$. Select $r$ columns, where
+$1\le r\le\min(k,n)$. These columns are independent over $\F_2$ and
+dependent over $\F_p$ exactly when some $r$-by-$r$ minor of the selected
+columns is odd and every such minor is divisible by $p$. Thus the
+obstruction is torsion in an integer
 cokernel, not a failure of scalar extension.
 
 The same distinction appears at the codeword level.  A binary sum vanishes
@@ -328,7 +341,7 @@ the sampled matrix $G$ satisfies, simultaneously for every $s\in[t]$,
 \[
   \rank_{F_s}(G)=k
   \quad\text{and}\quad
-  d_{F_s}(G)\ge(1/2-\varepsilon)n.
+  d(\cC_{F_s}(G))\ge(1/2-\varepsilon)n.
 \]
 \end{theorem}
 
@@ -353,492 +366,108 @@ settles existence but not efficient encoding.
 
 \subsection{Why binary distance is insufficient}
 
-An explicit family gives a minimal warning.  Let $M:=J_4-I_4$.  For $L\ge1$,
+A small explicit family shows the danger.  Let $M:=J_4-I_4$.  For $L\ge1$,
 form a $4$-by-$(4L+1)$ binary matrix $G_L$ by repeating each column of $M$
-$L$ times and appending one all-one column.  Since $\det(M)=-3$,
+$L$ times and appending one all-one column.  Since $\det(M)=-3$, the
+matrix $M$ is invertible over $\F_2$ but not over $\F_3$; over $\F_3$,
+the all-one message annihilates every column of $M$ and leaves only the
+final column.  Hence
 \[
-  d_{\F_2}(G_L)=L+1,
+  d(\cC_{\F_2}(G_L))=L+1,
   \qquad
-  d_{\F_3}(G_L)=1.
+  d(\cC_{\F_3}(G_L))=1.
 \]
 Both reductions have row rank four.  Consequently,
 \[
-  \frac{d_{\F_2}(G_L)}{4L+1}\longrightarrow\frac14,
+  \frac{d(\cC_{\F_2}(G_L))}{4L+1}\longrightarrow\frac14,
   \qquad
-  \frac{d_{\F_3}(G_L)}{4L+1}\longrightarrow0.
+  \frac{d(\cC_{\F_3}(G_L))}{4L+1}\longrightarrow0.
 \]
 The family has vanishing rate, so it does not rule out a theorem with an
 explicit positive-rate hypothesis.  It does rule out an inheritance theorem
 for unrestricted binary matrices based only on their binary relative distance.
 
-The BAA case gives positive-rate finite counterexamples.  For length six, one
-rate-$1/3$ repetition-three encoder has $d_{\F_2}=4$ and $d_{\F_7}=3$.
-Thus even $p>N$ does not guarantee samplewise monotonicity.  These examples
+The BAA case gives positive-rate finite counterexamples.  For code length
+six, one rate-$1/3$ repetition-three encoder has distance 4 over $\F_2$ and
+3 over $\F_7$.  Thus even a prime exceeding the code length does not
+guarantee that every sampled encoder keeps its binary distance.  These examples
 motivate ensemble statements rather than equality for every realized encoder.
 
-\section{BAA as a case study}\label{sec:baa}
-
-Block-accumulate-accumulate codes were introduced as fast linear encoders for
-PCGs and zero-knowledge systems~\cite{baa26}.  This section studies their
-addition-only repetition specialization.
-
-Fix $N=3K$.  Let $B_3:F^K\to F^N$ repeat each message coordinate three
-times, let $A$ be the prefix-sum accumulator, and sample independent uniform
-coordinate permutations $P_1,P_2$.  The encoder is
-\[
-  E_{P_1,P_2}:=A P_2 A P_1 B_3.
-\]
-It has rate $1/3$ over every field and uses only additions and data movement.
-The same permutations define a coupled code over every characteristic.
-For this column-vector map, $d_F(E)$ denotes the minimum weight of a nonzero
-vector in its image.
-
-The question is whether the lifted ensemble retains the binary construction's
-good distance, rather than merely a positive asymptotic distance.  The latter
-property holds over every fixed prime; Appendix~\ref{app:fixed-prime} records
-the baseline theorems.  The ternary lower bound already exceeds the certified
-binary range, but the quinary evidence is substantially ahead of the proof.
-This section explains that evidence and its limitations.
-
-\subsection{The first-moment prediction}
-
-The first-moment analysis tracks full symbol compositions through both
-accumulators.  A separate spacing argument treats sparse messages.  For a
-fixed prime $p$, the stationary type model consists of message, middle, and
-output distributions $\mu,\beta,\zeta$ on $\F_p$, and two transition laws
-$Q_1,Q_2$ on increments and states $(D,S)$.  Under $Q_1$, the increment has
-law $\mu$ and both $S,S+D$ have law $\beta$.  Under $Q_2$, the increment
-has law $\beta$ and both states have law $\zeta$.  Write
-$\tau=(\mu,\beta,\zeta,Q_1,Q_2)$ for such a type.  Its first-moment objective is
-\[
-  \Phi_p(\tau)=H(Q_1)+H(Q_2)-\tfrac23H(\mu)-2H(\beta)-H(\zeta),
-\]
-where $H$ uses natural logarithms.  Its normalized message and output weights
-are $a(\tau)=1-\mu(0)$ and $c(\tau)=1-\zeta(0)$.  Define the
-first-moment threshold of this stationary model by
-\[
-  \delta_{\rm FM}(p):=\inf D_p,
-  \qquad
-  D_p:=\left\{\delta>0:
-  \begin{array}{l}
-  \text{some admissible $\tau$ satisfies $a(\tau)>0$,}\\[-1mm]
-  \text{$c(\tau)\le\delta$, and $\Phi_p(\tau)>0$}
-  \end{array}\right\}.
-\]
-The restriction $a(\tau)>0$ isolates linear-weight messages.  A proof of a
-distance lower bound must also control the sparse range uniformly.
-
-Numerical optimization gives the following sign brackets.  The signs refer
-to the returned local optima, not certified global maxima.  In particular,
-the saved quinary sweep restricts message support to at least $0.002K$.
-\begin{center}
-\begin{tabular}{@{}ccc@{}}
-\toprule
-field & negative exponent & positive exponent \\
-\midrule
-$\F_2$ & $\delta=0.132$ & $\delta=0.133$ \\
-$\F_3$ & $\delta=0.195$ & $\delta=0.197$ \\
-$\F_5$ & $\delta=0.260600$ & $\delta=0.260612$ \\
-\bottomrule
-\end{tabular}
-\end{center}
-The binary bracket reproduces the known numerical transition.  The odd-prime
-brackets suggest an improvement in the ensemble threshold, not equality of
-distances for each coupled encoder.  For $\F_5$, the candidate is near
-$0.2606$; the table does not certify that value or supply a confidence interval.
-
-For $p=5$, the full transition search can be reduced without relaxing its
-objective.  Let $\alpha$ be an increment composition and let $\beta$ be a
-stationary state composition.  For a law $R$ on $(D,S)\in\F_5^2$, require
-
-\[
- D\sim\alpha,\qquad S\sim\beta,\qquad D+S\sim\beta.
-\]
-
-Set $U:=\mathbf 1[D\ne0]$ and $V:=\mathbf 1[S\ne0]$.  Fix the crossing
-$x:=\Pr[U=1,V=0]$, and let $J_x$ be the resulting law of $(U,V)$.  The
-conditional symbol laws are
-
-\[
- \alpha_u(d):=\Pr_{\alpha}[D=d\mid U=u],
- \qquad
- \beta_v(s):=\Pr_{\beta}[S=s\mid V=v].
-\]
-
-On a conditioning event of zero mass, fix any distribution supported on the
-corresponding zero or nonzero symbol class; its contribution below is zero.
-
-The support-preserving product law is
-
-\[
- Q_x(d,s):=J_x(u,v)\alpha_u(d)\beta_v(s),
- \quad u=\mathbf 1[d\ne0],\quad v=\mathbf 1[s\ne0].
-\]
-
-For every feasible $R$ with crossing $x$, the chain rule for relative entropy
-gives
-
-\[
- D_{\rm KL}(R\,\|\,\alpha\otimes\beta)
- =I_{J_x}(U;V)+D_{\rm KL}(R\,\|\,Q_x).
-\]
-
-Thus the exact stationary information payment equals
-
-\[
- I_{\rm stat}(\alpha,\beta)
- =\min_x\left(I_{J_x}(U;V)
-   +\min_R D_{\rm KL}(R\,\|\,Q_x)\right),
-\]
-
-where the inner minimum uses the three displayed marginals and the fixed
-support table.  Its entropy dual has thirteen potentials at interior quinary
-points.  Applying the reduction to both accumulators replaces two $5$-by-$5$
-transition laws with three compositions and two crossings.
-
-As a numerical fidelity check, the reduced objective and the full transition
-objective agree within $1.9\cdot10^{-7}$ at output fractions $0.22$, $0.24$,
-$0.25$, $0.26$, $0.260600$, $0.260612$, and $0.261$.  The discrepancy is
-below $1.2\cdot10^{-13}$ at the last four points.  These calculations explain
-the refined quinary sign bracket in the table.  They do not certify that the
-heuristic searches found the global maximum.  The reduced search starts from
-the full optimizer's output and shares utilities, so their agreement is a
-consistency check rather than independent global optimization.
-
-\subsection{What is established near the candidate threshold}
-
-The sparse-message argument extends beyond the numerical transition.  Over
-$\F_5$, the expected number of words of weight at most $\lfloor0.262N\rfloor$
-arising from messages of support at most $10^{-5}K$ tends to zero.  The
-spacing estimate uses
-\[
-  4\delta(1-\delta)\le\frac{48339}{62500}
-  <\left(\frac{22}{25}\right)^2
-  \qquad(0<\delta\le0.262),
-\]
-with an unchanged geometric summation bound.  This controls a small linear
-message-weight range, not the distance of the whole code.
-
-The interval $10^{-5}<\wt(x)/K<0.002$ lies between that theorem and the saved
-sign sweep.  Three converged local searches in this interval have negative
-exponents at output cutoffs $0.26$ or $0.261$.  A fourth run failed convergence
-and violated the lower support constraint; it is excluded from the evidence.
-These tests found no positive candidate, but do not supply a global upper
-bound.  Above the sweep cutoff, global optimization is likewise unproved.
-
-The stationary payment also admits a useful fixed-dual lower bound directly
-in the two composition laws.  A feasible entropy dual determines constants
-$c,u$ and a positive matrix $K$ such that
-
-\[
- I_{\rm stat}(\alpha,\beta)
- \ge c+\langle u,(\alpha,\beta)\rangle
-       -\log(\alpha^{\mathsf T}K\beta).
-\]
-
-The dual data are fixed before the compositions are optimized.  A finite
-bank of such inequalities can therefore remain active at the same middle
-composition in both accumulator terms.  This avoids the quantifier loss that
-arises if the two payments minimize over the middle composition separately.
-
-Fixed-dual scans at lower output cutoffs found negative local values, including
-a largest returned value of $-5.93\cdot10^{-4}$ over a saved 101-box partition
-at $0.24$.  Directed arithmetic also certifies particular regions at $0.22$.
-In one such region, a rational LP dual gives an upper bound of
-$-8.72\cdot10^{-6}$.  These local certificates check parts of the numerical
-landscape, but neither they nor the floating scans cover the full domain.
-In particular, a certificate for a restricted family at $0.22$ does not
-resolve the message-weight gap near $0.26$.
-
-The global certificate attempt illustrates a substantive limitation of the
-relaxation.  Replacing composition products by separate moment variables
-permits mixtures that need not arise from one composition.  A positive relaxed
-optimum can therefore coexist with negative values at the tested compositions.
-More local arithmetic did not establish a global lower bound.  The lesson is
-not that the predicted distance fails, but that consistency of the numerical
-model and validity of local certificates leave a separate global problem.
-
-\subsection{From an expected count to typical distance}
-
-\begin{conjecture}[First-moment threshold]\label{conj:first-moment}
-For each fixed prime $p$, the minimum distance of the repetition-three BAA
-ensemble satisfies
-\[
-  \frac{d_{\F_p}(E_{P_1,P_2})}{N}
-  \xrightarrow{\;\Pr\;}\delta_{\rm FM}(p)
-  \qquad\text{as }K\to\infty.
-\]
-\end{conjecture}
-
-The first moment addresses only the lower side of
-Conjecture~\ref{conj:first-moment}.  A negative bulk exponent, combined with
-the spacing argument, excludes smaller codewords with probability tending to
-one.  A positive exponent proves only that their expected number is
-exponential.  Rare permutation pairs could dominate that expectation.  The
-reverse inequality therefore requires concentration, a second-moment
-argument, or another typical-existence theorem.  In particular, the numerical
-quinary transition near $0.2606$ is a conjectural threshold, not a claimed
-distance theorem or a partially certified global bound at that value.
-
-There is, however, initial evidence that a second-moment argument may be
-possible.  Count one-dimensional message subspaces rather than nonzero
-messages; this removes the four scalar representatives of each quinary
-codeword support.  A pair of distinct subspaces is described coordinatewise
-over the additive group $\F_5^2$.  Its two accumulator terms are stationary
-information payments over that group.  The following identity identifies the
-product-pair benchmark.
-
-For a finite abelian group $G$, write $I_{\rm stat}^G(\alpha,\beta)$ for the
-minimum of $I(D;S)$ over laws satisfying
-$D\sim\alpha$, $S\sim\beta$, and $D+S\sim\beta$.
-
-\begin{proposition}[Product tensorization]\label{prop:pair-tensor}
-For distributions $\alpha$ and $\beta$ on $G$,
-\[
- I_{\rm stat}^{G^2}(\alpha\otimes\alpha,\beta\otimes\beta)
- =2I_{\rm stat}^G(\alpha,\beta).
-\]
-\end{proposition}
-
-\begin{proof}
-The product of two minimizing one-coordinate laws proves the upper bound.
-For the reverse bound, let $Q$ be any feasible law for the left-hand side
-and group its variables as $X_i=(D_i,S_i)$.  If
-$R_i=\alpha\otimes\beta$, the relative-entropy chain rule gives
-\[
- D_{\rm KL}(Q_{X_1X_2}\,\|\,R_1\otimes R_2)
- =D_{\rm KL}(Q_{X_1}\,\|\,R_1)
-  +D_{\rm KL}(Q_{X_2}\,\|\,R_2)
-  +I_Q(X_1;X_2).
-\]
-Each coordinate projection of $Q$ is feasible for the one-coordinate
-problem.  The first two terms are therefore at least
-$I_{\rm stat}^G(\alpha,\beta)$, and the last term is nonnegative.
-\end{proof}
-
-Proposition~\ref{prop:pair-tensor} shows that product compositions cannot
-reduce an accumulator's information payment below twice the one-replica
-value.  A larger stationary pair exponent must come from nonproduct
-compositions; finite-length second moments require additional control even
-when no such improvement occurs.
-
-At output fraction $0.261$, a local test fixes both replica marginals in
-each of the message, middle, and output compositions.  This leaves $16$
-correlation directions per composition.  The resulting $48$-dimensional
-numerical Hessian is negative definite, with eigenvalues from approximately
-$-1.46\cdot10^{-2}$ to $-2.51\cdot10^{-5}$ in the chosen coordinates.
-An inverse-covariance calculation and directional second differences agree
-on the negative curvature.  They share a numerical transition solver and
-are not directed-arithmetic certificates.
-
-A further search frees both replica marginals and optimizes the two pair
-transition laws jointly.  Seventeen starts include products, mixtures toward
-proportional messages, and invertible linear changes of pair coordinates.
-Nine additional runs require the messages to differ from every scalar
-multiple on at least $0.001K$ coordinates.  No retained candidate beats the
-product exponent beyond rounding.  Seven unrestricted runs approach the
-proportional boundary, however, and many runs stop at their iteration cap.
-
-The three highest-valued unfinished unrestricted runs were continued.  Each
-reaches the numerical small-step criterion with exponent within
-$4.6\cdot10^{-11}$ of the product baseline.  Its two transition laws differ
-from the products of their replica marginals by less than $2.5\cdot10^{-13}$
-in L1 distance.  Their correlations disappear before their exponents finish
-improving: the remaining slow motion lies in the individual marginal laws.
-This supports the product prediction from those starts, not global optimality.
-
-The evidence therefore has a specific scope.  Sparse messages are controlled
-analytically; the full-symbol computations locate a candidate transition;
-and the pair tests find no competing correlated type in the searches made.
-A proof still needs global first-moment control, a treatment of nearly
-proportional pairs and other possible pair maxima, and finite-length estimates
-strong enough to establish concentration.  None of these requirements is
-replaced by a positive expected count.
-
-\subsection{What large characteristic proves}
-
-The cryptographic regime instead has $N\approx2^{20}$ and
-$\log_2p\approx128$.  Here $p$ is much larger than $N$, but its bit length is
-much smaller than $N$.  Two deterministic statements explain why large
-characteristic suppresses the observed local failures.
-
-\begin{proposition}[Absolute distance floor]\label{prop:floor}
-For every realized repetition-three BAA encoder,
-\[
-  d_{\F_p}\ge
-  \min\left\{d_{\F_2},
-    \left\lceil\log_{\sqrt{20}}p\right\rceil\right\}.
-\]
-\end{proposition}
-
-The proof uses a sparse integer parity-check matrix.  Each row has Euclidean
-norm at most $\sqrt{20}$.  If a support of size $d<d_{\F_2}$ becomes dependent
-modulo $p$, an odd nonzero $d$-by-$d$ minor must be divisible by $p$.
-Hadamard's inequality gives $p\le20^{d/2}$.  A prime near $2^{128}$ therefore
-gives an unconditional distance floor of about $60$, not a linear distance.
-
-\begin{proposition}[Cycle-rank barrier]\label{prop:cycles}
-Suppose a connected residual component of the sparse encoder circuit has full
-rank over $\mathbb Q$ but loses rank over $\F_p$.  Its cycle rank is at least
-$\lceil\log_2p\rceil$.
-\end{proposition}
-
-To see the bound, expand a nonzero minor over perfect matchings.  After fixing
-a spanning forest, the nonforest edges identify each matching.  A component
-of cycle rank $\beta$ therefore contributes at most $2^\beta$ signed terms.
-Divisibility by $p$ implies $p\le2^\beta$.
-
-Propositions~\ref{prop:floor} and~\ref{prop:cycles} remove all known
-small-characteristic traps.  They do not control an adversarial support that
-creates a large, nearly square residual core.  The missing theorem is a
-uniform random-saturation statement over every support of size below the
-binary threshold.  Fixed-support experiments show substantial rank surplus,
-but a minimum-distance witness selects its support after seeing both
-interleavers.
-
-\section{The Walsh--Hadamard alternative}\label{sec:wht}
-
-Walsh--Hadamard PCGs take a different route.  They define a quasi-abelian code
-directly over a large prime field and use a transform containing only additions
-and subtractions~\cite{wht26}.  This avoids an unsupported binary-distance
-transfer.  Random spectral multipliers still supply a large family of
-projective types.
-
-Removing those multipliers would make the encoder still cheaper.  The natural
-sign-only variant, however, has a structural obstruction.  Let
-$V=\F_2^r$, $N=2^r$, and let $c\ge2$ be the block count.  At each frequency
-$\xi\in V$, write $\tau(\xi)\in\mathbb P^{c-1}(F)$ for the projective type of
-the multiplier vector.
-
-\begin{proposition}[Affine-flat obstruction]\label{prop:flat}
-If $\tau$ is constant on an affine flat of dimension $s$, then the relative
-minimum distance of the length-$cN$ code is at most $2^{-s}$.
-\end{proposition}
-
-\begin{proof}
-On the flat, write the multiplier vector as a fixed projective vector times a
-nonzero scalar.  Choose the message spectrum to cancel that scalar and equal a
-character on the flat.  Its inverse Walsh transform is supported on one coset
-of the orthogonal subspace.  Each nonzero output block has weight $N/2^s$.
-\end{proof}
-
-Suppose the types are independent and identically distributed, with support
-of size at most $M$.  A
-partition into parallel $s$-flats gives
-\[
-  \Pr[\Delta>2^{-s}]
-  \le
-  \exp\left(-\frac{N}{2^s}M^{1-2^s}\right).
-\]
-Choosing $s\asymp\log_2(\log N/\log M)$ yields
-\[
-  \Delta=O\left(\frac{\log M}{\log N}\right)
-\]
-with probability tending to one for fixed $M\ge2$; a single type is already
-constant on the whole frequency space.  Thus this random finite-alphabet
-model fails asymptotically at fixed block count.  The argument does not assert
-failure for every deterministic assignment of finitely many spectral types.
-
-This obstruction leaves a finite design space.  At $N=2^{20}$ and rate
-$1/4$, an alphabet of $2^{10}$ signed small integers makes the simplest
-dangerous three-flat union bound smaller than $2^{-128}$.  Multiplication by a
-small integer can be replaced by an addition chain.  The calculation excludes
-only one witness family; a global distance theorem for the growing-alphabet
-variant remains open.
-
-\input{small-coefficient-scans}
 \input{width-coefficient-tradeoff}
+\input{distance-proof}
 
-\section{Discussion and research agenda}\label{sec:discussion}
+\section{Discussion}\label{sec:discussion}
 
-The investigation separates three questions: whether good codes exist over
-the desired fields, whether their encoders are fast, and whether a binary
-distance proof justifies the deployed arithmetic.  The dense construction
-answers the existence question without efficient encoding.  BAA offers a fast
-candidate whose quinary first-moment prediction is stronger than its proved
-distance bound.  Walsh--Hadamard codes instead analyze a large-field code
-directly, with spectral multipliers that the fixed-alphabet simplification
-cannot simply discard. The small-coefficient code supplies a finite
-fixed-prime guarantee and a linear addition circuit at rate $1/2$. Its
-proof does not justify arbitrary stagewise lifts or simultaneous distance
-across fields.
+The direct construction gives a practical range of proved distances over
+$\F_p$ and every extension $\F_{p^m}$, for $p=2^{128}-159$: from above
+$11.7\%$ at $12.171$ ms with plain accumulators to above $42.987\%$ at
+$32.342$ ms with width four, all with setup failure below $2^{-40}$ and
+timed over $\F_p$. These are proved lower bounds, not measurements of
+the codes' actual minimum distances.
 
-The direct construction now has a range of finite guarantees. A local
-$[16,8,9]$ block and two width-one scans give distance above $10.7\%$
-with ordinary prefix sums, or
-above $30.5\%$ with coefficients up to 128.
-Wider scans reach above $46\%$ and $47\%$ with larger alphabets and an
-additional unpermuted scan. All of these points exceed 40 bits of setup
-failure margin. The historical $16.909$ ms measurement uses the smaller
-$[8,4,5]$ block and proves above $14.5\%$; it is not a timing for the
-new configurations.
+The design variables have different effects. Moving from plain
+accumulators to native products at $q=2$ raises the time from
+$12.171$ ms to about $17.9$ ms. Beyond that switch, a larger coefficient
+alphabet improves the lower bound at little additional measured cost,
+but the gains shrink across the reported width-one range. Larger width
+costs more arithmetic and metadata,
+but permits stronger distance guarantees. The deterministic ceiling at
+$39.6855\%$ shows that coefficient size alone cannot take two width-one
+scans to the width-four point. It does not explain the entire gap
+between that ceiling and the best width-one lower bound.
 
-Changing the local source supplies a separate tradeoff. An eight-input
-subset-sum block followed by two plain accumulators gives distance above
-$11.4\%$, exceeding the binary GV benchmark, with more than $24.26$ bits
-of setup margin and $3.3125n-2$ additions. Its exact shortening catalog
-improves the dense count despite a smaller local minimum distance. The
-remaining margin loss is concentrated in sparse source supports.
+The local precode supplies another tradeoff. The binary subset-sum block
+followed by two plain accumulators proves distance above $12.56\%$ with
+fewer than half as many additions as the Newton all-one encoder.
+Its failure bound is below $2^{-22.05}$; we did not time it. Despite its
+smaller local minimum distance, its exact catalog of shortened subspaces
+$V_S$ (Section~\ref{sec:distance-proof}) gives a stronger bound for dense
+supports.
+Comparisons between precodes must therefore account for their support
+catalogs and failure probabilities, in addition to arithmetic cost.
 
-A PCG that deploys a binary or signed encoder over another field should make
-one of the following justifications explicit.
+These results give codes in one fixed characteristic, with identical
+distance guarantees over its extension fields. They do not
+prove that binary distance transfers to every prime, or that one sampled
+circuit works simultaneously across characteristics. A PCG using such
+an encoder needs a distance argument for its deployed field and a
+security analysis with the corresponding noise parameters. Scalar
+extension, a field-independent combinatorial certificate, or a direct
+prime-field theorem can supply that argument; a binary theorem alone
+cannot justify a change of characteristic.
 
-\begin{enumerate}
-  \item A scalar-extension argument applies because the target field extends
-  the field used in the distance proof.
-  \item A combinatorial certificate, such as unique-neighbor expansion,
-  proves distance independently of the field.
-  \item A direct analysis proves distance over the deployed field.
-  \item The security statement tolerates a quantified distance loss, and its
-  noise parameters are adjusted accordingly.
-  \item The distance claim is labeled as a heuristic and supported by
-  reproducible experiments rather than presented as a theorem.
-\end{enumerate}
+Several mathematical gaps remain. A sharper upper bound for the all-one
+ensemble would locate its typical distance between the proved lower
+bound and the general width-one ceiling. Width eight has only numerical
+dense-support estimates (Table~\ref{tab:numerical-grid}); a finite
+certificate would also have to control sparse profiles and finite
+prefactors, and we have not timed it. A simultaneous guarantee across a
+prescribed family of prime fields would require a further argument.
 
-The most direct open problem is the following.
-
-\begin{quote}
-Construct a distribution of encoders built from specified binary or signed
-linear stages, with input dimension $k=\Theta(n)$, encoding complexity
-$O(n\log^c n)$, and a constant $\delta>0$.  The same sampled stages should
-give distance at least $\delta n$ over $\F_2$ and every prime field in a
-prescribed family of $\lambda$-bit primes, except with probability
-$\negl(\lambda)$ over the sampled encoder, for a stated relation between
-$n$ and $\lambda$.
-\end{quote}
-
-For BAA over growing primes, a missing step is a uniform bound on rank loss
-in residual cores selected by low-weight supports.  The fixed-quinary
-threshold poses a different problem: global control of the composition
-objective and the dependence between low-weight words.  The prediction near
-$0.2606$ is evidence for a promising ensemble, not the paper's claimed
-distance guarantee.  For Walsh--Hadamard codes, the missing step is an
-inverse theorem that classifies every low-weight spectrum under a growing
-multiplier alphabet. The small-coefficient construction already combines
-short local blocks with sparse mixing for a fixed target prime. A stronger
-simultaneous guarantee across fields would require an additional argument;
-the adaptive rank proof alone does not provide it.
-
-The next practical comparison fixes the local source, output length,
-and setup failure target, then varies width and coefficient alphabet.
-Two- and three-permutation constructions require separate comparisons,
-and any final unpermuted scan contributes to their arithmetic costs.
-The grouped-check bound rules out $44\%$ for two width-one scans even
-with one further accumulator, regardless of coefficient size. Wider
-convolutions avoid that particular obstruction. Filling the achieved
-distance grid and profiling selected configurations will determine which
-improvements justify their arithmetic and memory costs.
+The supporting case studies expose different open questions. For
+repetition-based BAA, the quinary prediction near $0.2606$ still needs
+global first-moment control and an argument relating expected counts to
+typical distance. For growing primes, determinant bounds restrict small
+rank-loss witnesses but leave large residual cores uncontrolled.
+For Walsh--Hadamard codes, the fixed-alphabet obstruction leaves open
+whether a growing multiplier alphabet can guarantee distance at a useful
+addition cost. These questions remain separate from the finite
+certificates for the direct construction.
 
 \bibliographystyle{splncs04}
 \bibliography{references}
 
 \appendix
 \renewcommand{\theHsection}{\Alph{section}}
+\input{baa-case-study}
+\input{walsh-hadamard-case-study}
+\input{small-coefficient-scans}
 \section{Fixed-prime BAA baseline bounds}\label{app:fixed-prime}
 
 The following results establish positive distance for the ensemble defined
-in Section~\ref{sec:baa}.  They provide baselines, not a certificate for the
-quinary threshold predicted by the full-symbol analysis.
+in Appendix~\ref{sec:baa}.  They provide baselines, not a certificate for the
+quinary first-moment prediction $\delta\approx0.2606$ of
+Appendix~\ref{sec:baa}.
 
 \begin{theorem}[Fixed-prime BAA bounds]\label{thm:baa-fixed}
 For the repetition-three BAA ensemble,
@@ -856,12 +485,16 @@ argument covers message supports up to $K/60$.  A sign-orbit relaxation
 covers larger supports, with certified exponent upper bound
 $-1.1386\cdot10^{-6}$.  The verifier encloses logarithms by directed intervals
 and checks rational LP duals.  This is a global positive-distance result,
-unlike the local certificates at larger cutoffs discussed in the main text.
+unlike the region-restricted certificates at larger cutoffs in
+Appendix~\ref{sec:baa}.
 
-The ternary bound exceeds the binary lower bound $0.1323$ reported for
-repetition three and two accumulators~\cite{kliewer08}.  It proves a ternary
-lower bound throughout the certified binary range, not a comparison between
-the actual distances of coupled encoders.
+The ternary bound $0.196$ exceeds the binary value $0.1323$ reported for
+repetition three and two accumulators~\cite{kliewer08}.  This compares
+ensemble bounds, not the distances of one encoder over $\F_2$ and $\F_3$.
+
+\input{baa-baseline-proofs}
+
+\subsection{A bound for every fixed prime}
 
 The spacing argument also gives a bound for every fixed prime.
 
@@ -877,9 +510,32 @@ then
 \]
 \end{theorem}
 
+\begin{proof}
+The inverse accumulator is a difference map, so
+$\wt(u)\le2\wt(Au)$. Repetition and two accumulators therefore give
+$\wt(Ex)\ge3\wt(x)/4$. A word of weight at most $N/m^2$
+can only come from a message of support at most $4K/m^2$.
+Apply Lemma~\ref{lem:baa-sparse} with $\delta=1/m^2$ and
+$\eta=4/m^2$. Then $R_0=3m^2/4>6$ and
+\[
+ L_\delta=\frac{m}{2\sqrt{1-1/m^2}}-1>\frac{m-2}{2},
+ \qquad
+ \frac{3}{(R_0-3)L_\delta}
+ <\frac{8}{(m-2)^2(m+2)}<1.
+\]
+Using $e<3$ gives
+\[
+ g(R_0)<\frac{3(p-1)m^2}{4}
+       \left(\frac{8}{(m-2)^2(m+2)}\right)^{3/2}<1;
+\]
+the last inequality is exactly the theorem's hypothesis after squaring.
+The sparse lemma handles all possible low-weight messages. Markov's
+inequality completes the proof.
+\end{proof}
+
 For every fixed $p$, a sufficiently large $m$ satisfies the inequality.
-Hence the addition-only ensemble is asymptotically good over every fixed
-prime field.  The resulting lower bound is of order $p^{-4/5}$ and does not
+Hence the addition-only ensemble is asymptotically good (positive rate
+and relative distance) over every fixed prime field.  The resulting lower bound is of order $p^{-4/5}$ and does not
 give a useful relative distance when $p$ grows exponentially in the security
 parameter.
 
@@ -887,6 +543,10 @@ parameter.
 \input{all-one-certificate}
 \input{all-one-fresh-pairs}
 \input{all-one-joint-renewal}
+\input{refined-support-bounds}
+\input{all-one-complete-runs}
 \input{all-one-subset-sum}
+\input{wider-rank-mask}
+\input{reproducibility}
 
 \end{document}

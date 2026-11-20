@@ -1,0 +1,210 @@
+\section{Counting complete runs}\label{app:complete-runs}
+
+The complete-run bound counts a whole run at once, coupling free returns
+with returns that add a zero equation. It is uniform over the active
+forms and can be used with the Newton or subset-sum precode.
+
+\paragraph{A bound for all free returns.}
+Let $\mu$ be a distribution on nonzero vectors of a finite-dimensional
+space over $\F_p$, with $p$ odd. Draw independent increments with law
+$\mu$, set $S_0=0$, write $S_j$ for their partial sum, and let $T$ be the first
+positive return time to zero. For $0<\omega<1$, define
+\[
+ G_\mu(\omega)=\sum_{j\ge0}\Pr[S_j=0]\omega^j,
+ \qquad F_\mu(\omega)=\E[\omega^T;T<\infty].
+\]
+The renewal identity gives $F_\mu=1-1/G_\mu$.
+Uniformly over $\mu$, including nonsymmetric distributions,
+\begin{equation}\label{eq:complete-free-return}
+ F_\mu(\omega)\le F_p(\omega):=1-\frac1{G_p(\omega)},\qquad
+ G_p(\omega)=\frac1p\sum_{j=0}^{p-1}\frac1{1-\omega\cos(2\pi j/p)}.
+\end{equation}
+To prove this, average over additive characters $\chi$ of the vector
+space and put $\phi_\chi=\sum_a\mu(a)\chi(a)$. Fourier inversion gives
+\[
+ \begin{aligned}
+ G_\mu(\omega)
+ &=\E_\chi\operatorname{Re}\frac1{1-\omega\phi_\chi}
+ \le\E_\chi\frac1{1-\omega\operatorname{Re}\phi_\chi}\\
+ &\le\sum_a\mu(a)\E_\chi\frac1{1-\omega\operatorname{Re}\chi(a)}
+ =G_p(\omega).
+ \end{aligned}
+\]
+The second inequality is Jensen's inequality for the convex function
+$u\mapsto(1-\omega u)^{-1}$. Every nonzero $a$ has order $p$, so its character
+values are uniform over the $p$th roots of unity. Balanced increments
+$a,-a$ attain the bound. The Poisson-kernel series also gives
+\begin{equation}\label{eq:finite-cycle-green}
+ G_p(\omega)=\frac1{\sqrt{1-\omega^2}}\frac{1+r_\omega^p}{1-r_\omega^p},
+ \qquad r_\omega=\frac{\omega}{1+\sqrt{1-\omega^2}}.
+\end{equation}
+Thus $0\le F_p(\omega)-(1-\sqrt{1-\omega^2})\le2r_\omega^p$. The term
+$1-\sqrt{1-\omega^2}$ is the $p$-independent main term of $F_p(\omega)$.
+
+\paragraph{Returns and rank gains in the same run.}
+Fix a run start, its exposure history, and its quotient by earlier zero
+equations. Let $a_1,\ldots,a_m$ be the forms of the remaining active
+input labels in this quotient. On a retained branch every $a_i$ is
+nonzero. Define
+\[
+ \mu=\frac1m\sum_{i=1}^m\delta_{a_i},\qquad
+ \mathcal U=\bigcup_{i=1}^m
+                 (\operatorname{span}(a_i)\setminus\{0\}).
+\]
+Here $\delta_a$ denotes point mass at $a$. Until the next zero output,
+the quotient remains fixed. All these input forms remain required
+nonzero, including labels consumed during the run. Imposing a zero
+equation on a nonzero sum in $\mathcal U$ would make some required form
+$a_i$ zero, so no such return occurs on a retained branch.
+Outside $\mathcal U$, allow a rank-gaining return with
+weight $t=1/\tau$, where $\tau\ge1$. Ignoring further nonzero requirements
+can only enlarge the count. For independent draws from the fixed
+distribution $\mu$, the complete-run series is
+\[
+ \mathcal R_\mu(\omega,t)=F_\mu(\omega)
+       +t\sum_{j\ge1}\Pr[T>j,\ S_j\notin\mathcal U]\omega^j.
+\]
+The event $T>j$ excludes the zero vector in the second term and every
+earlier free return. This is a bound on a weighted branch count, not
+the probability of one event: a walk may allow rank-gaining endpoints
+at several lengths. Distinct-label sampling is restored below.
+
+Assume $0<\omega<1$ and $\omega\le c\le1$, where $c=t/(1-\omega)$.
+For a one-dimensional subspace $\ell$ with $\mu(\ell)>0$,
+write $a_\ell=\mu(\ell)$, $\theta_\ell=\omega a_\ell$, and let $\nu_\ell$ be
+the conditional increment distribution on that line. Starting from
+$f\in\ell\setminus\{0\}$, let $H_\ell(f)$ be the $\theta_\ell$-discounted
+probability of hitting zero under $\nu_\ell$. A hit needs at least one
+step, so $0\le H_\ell(f)\le\theta_\ell$. Put
+\[
+ b_\ell=\frac{c\omega(1-a_\ell)}{1-\omega a_\ell},\qquad
+ V(f)=\begin{cases}
+ b_\ell+(1-b_\ell)H_\ell(f),&f\in\ell\setminus\{0\}\subset\mathcal U,\\
+ c,&f\ne0,\ f\notin\mathcal U.
+ \end{cases}
+\]
+On an active line,
+$V(f)\le\omega[c+(1-c)a_\ell]\le\omega\le c$.
+Outside $\mathcal U$, no active increment cancels $f$; its immediate
+rank-gaining return and subsequent continuations are bounded by
+$t+\omega c=c$. On a line, off-line increments have continuation at most $c$,
+and on-line transitions satisfy the hitting-probability recurrence.
+Substitution gives exactly $V(f)$ as their upper bound. Induction over
+finite truncations, followed by monotone convergence, proves
+\[
+ \mathcal R_\mu(\omega,t)
+ \le\sum_\ell\left[\theta_\ell b_\ell+(1-b_\ell)F_p(\theta_\ell)\right].
+\]
+Here $F_{\nu_\ell}(\theta_\ell)=\theta_\ell\E_{a\gets\nu_\ell}H_\ell(a)$,
+and~\eqref{eq:complete-free-return} bounds each line term.
+
+Since $\sum_\ell\theta_\ell=\omega$, bound each $F_p(\theta_\ell)$ by its
+main term $1-\sqrt{1-\theta_\ell^2}$ plus $2r_{\theta_\ell}^p$.
+Substituting $\theta_\ell=2r/(1+r^2)$ into the main terms gives
+\begin{equation}\label{eq:complete-line-envelope}
+ \mathcal R_\mu(\omega,t)\le\omega\max_{0\le r\le r_\omega}\varphi(r)
+       +2r_\omega^p,
+ \quad
+ \varphi(r)=(1-c\omega)r+c(2-\omega)-\frac{2t}{1-r}.
+\end{equation}
+The finite-field error follows from $r_{\theta_\ell}/r_\omega\le\theta_\ell/\omega$
+and $\sum_\ell(\theta_\ell/\omega)^p\le1$. This bound retains the dependence
+between free returns and rank gains; it does not maximize their
+probabilities separately.
+
+\paragraph{Distinct labels and terminal words.}
+Choose $x>0$, $0<y\le1$, $\lambda>1$, and set
+\[
+ A=\frac{xy}{\lambda-1},\qquad B=\frac{x}{\lambda-y},\qquad \omega=By<1.
+\]
+After summing zero-input gaps, a complete run with $j$ active
+inputs has factor $AB^{j-1}y^{j-2}=(A/(By^2))\,\omega^j$. The
+run-series multiplier $A/(By^2)$ therefore converts the complete-run
+series, whose $j$-input terms carry $\omega^j$, into these run factors.
+Use cutoff $J=16$ and budget $\beta(\kappa)=\max(1,\kappa^J)$. Write
+$(\kappa)_j=\kappa(\kappa-1)\cdots(\kappa-j+1)$ for the falling factorial.
+For $\kappa>J$ and $j\le J$, conditioning independent labels to be distinct
+is absorbed by
+\[
+ \frac{\kappa^j}{(\kappa)_j}\beta(\kappa-j)\le\beta(\kappa).
+\]
+Indeed, after dividing by $\kappa^J$ the left side is
+$((\kappa-j)^j/(\kappa)_j)((\kappa-j)/\kappa)^{J-j}\le1$.
+For $j>J$, work directly without replacement. Free and rank-gaining
+endpoints are disjoint and have total rank-weighted probability at most
+one. Their geometric tail is at most $\omega^{J+1}/(1-\omega)$.
+
+The finite certificate requires $\omega\le1/2$ and $p\ge256$, so the
+finite-field term in~\eqref{eq:complete-line-envelope} is at most $2^{-255}$.
+With slack $\epsilon=10^{-6}$, it suffices to check
+\begin{equation}\label{eq:complete-run-witness}
+ \frac{A}{By^2}\left[\omega\max_{0\le r\le r_\omega}\varphi(r)
+             +2^{-255}+\frac{\omega^{17}}{1-\omega}\right]\le1-\epsilon.
+\end{equation}
+The extra tail deliberately overcounts long runs already present in the
+independent-draw envelope. Terminal words and pools of at most sixteen
+active labels are bounded by
+\begin{align*}
+ R_{\rm terminal}&=\frac\lambda{\lambda-1}
+                 +\frac{A\lambda}{(\lambda-y)(1-\omega)},\\
+ R_{\rm small}&=\frac\lambda{\lambda-1}
+       \sum_{j=0}^{16}\left(\frac{x(1+y)}{\lambda-1}\right)^j,
+ \qquad C=\frac{\max(R_{\rm terminal},R_{\rm small})}\epsilon.
+\end{align*}
+To make the induction explicit, discount a word of length $N$
+by $\lambda^{-N}$. Its marker weight is $x^\kappa y^h$, where $\kappa,h$ are
+the input and output weights, and each new zero equation contributes
+$\tau^{-1}$. Average over the uniform order of the active labels and
+sum over support branches and placements, as in
+Lemma~\ref{lem:scan-composition}.
+
+For $\kappa\le16$, $R_{\rm small}\le\epsilon C$ bounds the entire residual
+word, after summing its possible lengths. For $\kappa>16$, split
+at the first completed run. The distinct-label inequalities
+and~\eqref{eq:complete-run-witness} bound the completed-run contribution
+by $(1-\epsilon)C\beta(\kappa)$, assuming the bound for smaller pools.
+The terminal contribution is at most $R_{\rm terminal}\le\epsilon C$.
+Since $\beta(\kappa)\ge1$, their sum is at most $C\beta(\kappa)$.
+The bound is uniform over the new quotient after the return, which
+justifies its use in the induction.
+
+Extracting length $n$ gives
+$K(\kappa)=C\beta(\kappa)\lambda^n$, including either final feedback state.
+For positive $s,h$, Lemma~\ref{lem:scan-composition} therefore gives
+the factor $(sh)^{16}$ multiplying~\eqref{eq:width-one-profile}.
+The source factor remains $F_s(\tau)/\tau$; it is charged only once.
+
+\paragraph{Rational checks and the Newton instantiation.}
+The certificate specifies, for each use of~\eqref{eq:complete-run-witness},
+rational $\tau,x,y,\lambda$ and $0<\rho<1$ satisfying
+$\omega(1+\rho^2)\le2\rho$. This implies $\rho\ge r_\omega$.
+After subtracting the explicit error and tail terms,
+inequality~\eqref{eq:complete-run-witness} reduces to $\varphi(r)\le H$ on
+$[0,\rho]$, for a computed rational $H$. Multiplying by $1-r$ gives
+\[
+ (c\omega-H)+(1-2c+H)r+(c\omega-1)r^2\le0.
+\]
+Its leading coefficient is negative. Exact evaluation at both endpoints
+and at its vertex, when inside the interval, proves the required
+uniform bound. All checks are exact rational comparisons.
+
+For the Newton precode, retain $Q_8(z,\tau)$
+from~\eqref{eq:newton-source-polynomial}. At forbidden weight
+$e=245366$ (so the distance is at least $e+1$), the hypergeometric
+bound~\eqref{eq:hyper-sparse} covers all $s<32$. This sparse
+contribution has base-two logarithm at most $-49.647382836382$.
+The dense domain is partitioned recursively into rectangles; each cell
+is a leaf. There are 180 nonempty leaves: 44 use the projective-pair
+bound, three use the joint-renewal bound, and 133 use the complete-run
+bound. Every integer profile with $32\le s\le\min(n,4e)$ and
+$\lceil s/2\rceil\le h\le\min(n,2e)$ is covered. The total failure
+probability has base-two logarithm at most $-49.647365460353$. Thus the
+unchanged addition-only Newton encoder has distance at least $245367$
+($>11.7\%$ of $n$) with failure probability below $2^{-49.64}$.
+The certificate and its verifier are listed in
+Appendix~\ref{app:reproduction}.
+
+The argument is uniform in the source forms. Substituting the catalog
+of Appendix~\ref{app:subset-sum-gv} gives the stronger distance of
+Theorem~\ref{thm:subset-sum-gv}, with a smaller failure margin and
+fewer additions.

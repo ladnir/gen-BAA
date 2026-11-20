@@ -1,16 +1,21 @@
-\section{A joint bound across run boundaries}\label{app:joint-renewal}
+\section{A joint-renewal bound across run boundaries}\label{app:joint-renewal}
 
-The preceding pair bound can be strengthened by retaining the input pool
-across a return and the next run start. For the same $B_8$ encoder at
-$n=2^{21}$ and $p=2^{128}-159$, the resulting finite calculation proves
-minimum distance at least $224396$ ($>10.7\%$), except with probability
-less than $2^{-46.39}$ over the two independent uniform permutations.
-The arithmetic remains $6.8125n-2$ field additions.
+The projective-pair bound of Appendix~\ref{app:fresh-pairs} can be
+strengthened by retaining the pool of remaining active input labels
+across a return and the next run start. We call the result the
+joint-renewal bound. For the same $B_8$ encoder at $n=2^{21}$ and
+$p=2^{128}-159$, it proves minimum distance at least $224396$
+($>10.7\%$), except with probability less than $2^{-46.39}$ over the
+two independent uniform permutations. The arithmetic remains
+$6.8125n-2$ field additions. This is an intermediate result: the
+complete-run bound of Appendix~\ref{app:complete-runs} refines it to
+distance at least $245367$ ($>11.7\%$).
 
-\paragraph{A common pool for neighboring cancellations.}
-Fix the current quotient and a required nonzero feedback form $f$.
-Let $\mu$ be the empirical distribution of the remaining active forms.
-Every such form is nonzero on a surviving branch. Write
+\paragraph{A common pool for neighboring returns.}
+Fix the quotient by the zero equations imposed so far and a required
+nonzero feedback form $f$. Let $\mu$ be the empirical distribution of
+the remaining active forms. Every such form is nonzero on a surviving
+branch. Write
 \[
  u=\mu(-f),\qquad
  v=\mu(\operatorname{span}(f)\setminus\{-f\}),\qquad w=1-u-v.
@@ -39,27 +44,27 @@ gains one rank in the third. The independent case admits the uniform
 bound $t\Psi(U,Z)$ after the quotient update. The nonzero continuation
 has contribution at most $(1-u)Y$.
 
-In the free case the quotient is unchanged. If $L,O$ are the following
-pair's proportional and opposite probabilities, its contribution is at
-most $U+tZ+O(Z-U)-LtZ$. On $\operatorname{span}(f)$, the proportional
+After a free return the quotient is unchanged. If $P_\parallel,P_-$ are
+the following pair's proportional and opposite probabilities, its
+contribution is at most $U+tZ+P_-(Z-U)-P_\parallel tZ$. On $\operatorname{span}(f)$, the proportional
 mass is $(u+v)^2$ and the opposite mass is at most $\max(2uv,v^2/2)$.
 Indeed, if mass $z\le v$ is at $f$, the opposite mass is at most
 $2uz+(v-z)^2/2$, a convex quadratic maximized at an endpoint. Off the
-line, $O_{\rm out}\le L_{\rm out}/2$ and $L_{\rm out}\le w^2$.
+line, $P_{-,\rm out}\le P_{\parallel,\rm out}/2$ and $P_{\parallel,\rm out}\le w^2$.
 Dropping negative terms yields $\mathcal P$.
 
 \paragraph{Distinct labels.}
 The nonzero continuation exposes only one label, with no correction.
 For a free return followed by the pair, condition the iid triple on
-distinct labels, costing $m^2/((m-1)(m-2))$. For an independent return,
-expose its label first; the pair on the remaining $m-1$ labels costs only
-$(m-1)/(m-2)$. The original fresh pair costs $m/(m-1)$.
-The budget $B(m)=\max(1,m^2)$ absorbs all three exposure lengths:
+distinct labels, costing $\kappa^2/((\kappa-1)(\kappa-2))$. For an independent return,
+expose its label first; the pair on the remaining $\kappa-1$ labels costs only
+$(\kappa-1)/(\kappa-2)$. The pair exposure from zero feedback costs $\kappa/(\kappa-1)$.
+The budget $\beta(\kappa)=\max(1,\kappa^2)$ absorbs all three exposure lengths:
 \[
  \begin{gathered}
- B(m-1)\le B(m),\qquad
- \frac m{m-1}B(m-2)\le B(m),\\
- \frac{m^2}{(m-1)(m-2)}B(m-3)\le B(m).
+ \beta(\kappa-1)\le\beta(\kappa),\qquad
+ \frac \kappa{\kappa-1}\beta(\kappa-2)\le\beta(\kappa),\\
+ \frac{\kappa^2}{(\kappa-1)(\kappa-2)}\beta(\kappa-3)\le\beta(\kappa).
  \end{gathered}
 \]
 Use each inequality only when enough labels remain. Thus a scan with
@@ -67,7 +72,7 @@ $s$ inputs has total correction at most $s^2$, even with adaptive quotient
 updates. The one-label branch does not consume the two labels used by
 its alternative. Prefixes that terminate earlier are covered below.
 
-\paragraph{Complete runs and terminal terms.}
+\paragraph{Gap sums and terminal terms.}
 Let $x,y>0$ mark active inputs and outputs. Choose
 $\lambda>\max(1,y)$ and give each position a factor $1/\lambda$.
 Summing zero-input gaps gives
@@ -76,40 +81,44 @@ Summing zero-input gaps gives
 \]
 The factor $A$ includes the nonzero output on leaving zero feedback;
 $B$ reaches an active input from nonzero feedback before marking its
-output. Normalize the zero-feedback potential to 1, and use $V>0$
-for nonzero feedback. The homogeneous bounds are
+output. As in Section~\ref{sec:distance-proof}, state $0$ is zero
+feedback and state $1$ is nonzero feedback. Normalize the zero-feedback
+potential to 1, and use $V>0$ for nonzero feedback. The homogeneous
+bounds are
 \[
  T_0=AB\Psi(yV,1),\qquad
- T_N(u,v,w)=\mathcal H(ByV,AB^2yV,AB^2;u,v,w).
+ T_1(u,v,w)=\mathcal H(ByV,AB^2yV,AB^2;u,v,w).
 \]
 For a rational $0<\epsilon<1$, require
 \begin{equation}\label{eq:renewal-witness}
  T_0\le1-\epsilon,\qquad
- T_N(u,v,w)\le(1-\epsilon)V
+ T_1(u,v,w)\le(1-\epsilon)V
  \quad(u,v,w\ge0,\ u+v+w=1).
 \end{equation}
 
 From zero feedback, a terminal prefix has zero or one active input before
-the fresh pair completes. Its generating function is
+the pair exposure completes. Its generating function is
 \[
  R_0=\frac\lambda{\lambda-1}
        \left(1+\frac{xy}{\lambda-y}\right).
 \]
 From nonzero feedback, termination precedes the next active input or
 follows a return before the next pair completes. Its contribution is at
-most $R_N=\lambda/(\lambda-y)+BR_0$. Put
+most $R_1=\lambda/(\lambda-y)+BR_0$. Put
 \[
- C=\frac{\max(R_0,R_N/V)}\epsilon.
+ C=\frac{\max(R_0,R_1/V)}\epsilon.
 \]
 Monotonicity, positive homogeneity, and~\eqref{eq:renewal-witness} make
 $C(1,V)$ a super-solution for every finite truncation of the trajectory
-tree. Monotone extension of the gap sums bounds all terminal lengths.
-Extracting length $n$ contributes $\lambda^n$; fixed input weight $s$
-adds the correction $s^2$. Both possible final feedback states are included.
+tree: one further exposure step, together with its terminal terms,
+does not exceed it. Monotone extension of the gap sums bounds all
+terminal lengths. Extracting length $n$ contributes $\lambda^n$; fixed
+input weight $s$ adds the correction $s^2$. Both possible final feedback
+states are included.
 
 Keep the same equation span and rank potential across both scans.
 For source weight $s$, intermediate weight $h$, and forbidden final
-weight $e$, permutation averaging gives
+weight $e$ (so the distance is at least $e+1$), permutation averaging gives
 \[
  \frac{F_s(\tau)}\tau
  \frac{(sh)^2 C_1\lambda_1^n C_2\lambda_2^n}
@@ -119,22 +128,27 @@ weight $e$, permutation averaging gives
 The source moment $F_s$ is unchanged. The uniform continuation bounds
 permit the second scan to start in the quotient left by the first.
 
-\paragraph{Uniform rational replay.}
-Numerical optimization proposes witnesses using a finite grid of pools.
-This grid is not a proof of~\eqref{eq:renewal-witness}. For rational
+\paragraph{Rational verification.}
+Witnesses are found numerically on a finite grid of pools; the grid
+plays no role in the proof of~\eqref{eq:renewal-witness}. For rational
 witnesses, the verifier splits $\max(2uv,v^2/2)$ into two cubic polynomials
-and homogenizes using $u+v+w=1$. On any subtriangle, the largest
-degree-three Bernstein coefficient upper-bounds the polynomial. The
-verifier subdivides a triangle into its four midpoint children until
+and homogenizes using $u+v+w=1$. On any triangle of the simplex, the
+largest degree-three Bernstein coefficient upper-bounds the polynomial.
+The verifier subdivides a triangle into its four midpoint children until
 both polynomials satisfy the required bound throughout every child.
 It checks only rational inequalities and complete subdivisions.
 
-At $e=224395$, the sparse logarithmic bound is $-46.396269051235$.
-The full dense domain has 154 leaves: 47 use the
-preceding projective-pair bound and 107 use the joint bound above.
-Each leaf covers all trajectories on its weight rectangle, so selecting
-either bound per leaf is valid. The same rational binomial, convex vertex,
-and upward-rounded summation checks apply. The resulting total logarithmic
-upper bound is $-46.396269051207$. The saved witnesses and independent
-replay accompany the paper. This is a finite all-message guarantee; it
-does not yet exceed the binary GV benchmark at rate $1/2$.
+At forbidden weight $e=224395$, the sparse contribution has base-two
+logarithm at most $-46.396269051235$. The dense domain of weight
+profiles is partitioned recursively into rectangles; each cell of the
+partition is a leaf. There are 154 leaves: 47 use the projective-pair
+bound of Appendix~\ref{app:fresh-pairs} and 107 use the joint-renewal
+bound above. Each leaf covers all trajectories on its weight rectangle,
+so selecting either bound per leaf is valid. The rational binomial,
+convex vertex, and upward-rounded summation checks of
+Appendix~\ref{app:all-one} apply unchanged. The total failure probability
+has base-two logarithm at most $-46.396269051207$. The certificate and
+its verifier are listed in Appendix~\ref{app:reproduction}. This finite
+all-message guarantee does not exceed the binary rate-$1/2$
+Gilbert--Varshamov benchmark $H_2^{-1}(1/2)\approx0.110028$; the
+complete-run bound of Appendix~\ref{app:complete-runs} does.

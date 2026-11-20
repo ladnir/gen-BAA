@@ -1,0 +1,95 @@
+\section{Finite bounds for widths two and four}\label{app:wide-mask}
+
+The measured wider encoders use the same Newton precode $B_8$ and two
+permutations, without a final unpermuted scan. We extend the local rank
+bound by recording the support mask and rank of the preceding $w$ outputs.
+Fix the shortened source space $V_S$ and quotient by the zero equations
+imposed so far. Let $M\subseteq\{1,\ldots,w\}$ record the positions of the
+required nonzero feedback forms, and let $R$ be their span dimension in
+this quotient. The states are $(\varnothing,0)$ and
+$(M,R)$ with $1\le R\le|M|$. There are $1+w2^{w-1}$ possible states.
+Choose positive continuation values ordered by rank:
+$v_{M,R+1}\ge v_{M,R}$. This is a condition on the witness, not a claim
+that the exact continuation count increases with rank.
+
+Drop the oldest state and shift the remaining mask to obtain $D$, with
+its new-coordinate bit zero. Let $m=|D|$. With zero input, the output
+form lies in the span of the state forms. A \emph{contraction} is a
+zero output whose form is a nonzero element of this span: the new zero
+equation lowers the rank of the state span by one. The following
+successor envelopes bound arbitrary linear dependencies:
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Event & Successor mask & Rank bound\\
+\midrule
+Zero output form ($Z$) & $D$ & $\min(R,m)$\\
+Nonzero output in state span ($I$) & $D\cup\{\mathrm{new}\}$ & $\min(R,m+1)$\\
+Output outside state span ($O$) & $D\cup\{\mathrm{new}\}$ & $\min(R,m)+1$\\
+Contract a state-span form ($C$) & $D$ & $\min(R-1,m)$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The last event is allowed only for $R\ge2$ and a surviving contraction,
+one after which every required form remains nonzero. If the new zero
+equation makes a required form zero, that branch is discarded. A zero
+output whose form lies outside the state span preserves the old state
+rank and is bounded by the $Z$ envelope. Rank ordering lets each
+envelope use its displayed upper rank. Write $v_Z,v_I,v_O,v_C$ for the
+continuation values at the successor states of the four events.
+
+At $R>0$, fresh independent coefficients in $\{1,\ldots,q\}$ make
+the output form zero with probability at most $\pi=q^{-R}$.
+Condition on all but $R$ pivot coefficients: at most one pivot assignment
+cancels the form. With zero input and $R=|M|$, cancellation is impossible
+because the state forms are independent and every coefficient is nonzero.
+Define
+\[
+ \Theta_0=yv_I+\mathbf1_{R\ge2}\tau^{-1}v_C,\qquad
+ \Theta_{\rm ind}=yv_O+\tau^{-1}v_Z,\qquad
+ \Theta_{\rm dep}=(1-\pi)\Theta_0+\pi v_Z.
+\]
+At rank one, the state span is spanned by a single required form, so a
+contraction would make that form zero; this is why $\Theta_0$ has no
+zero branch when $R=1$. The $O$ and $I$ successors share a mask and $O$
+has at least the rank of $I$, so rank ordering gives $v_O\ge v_I$;
+likewise $v_Z\ge v_C$. Hence $\Theta_{\rm ind}\ge\Theta_0$.
+Maximizing over the unknown cancellation probability in $[0,\pi]$ gives,
+in analogy with~\eqref{eq:width-one-quotient},
+\[
+ T_{M,R}(v)=\begin{cases}
+ \Theta_0+x\max(\Theta_{\rm ind},\Theta_{\rm dep}),&R=|M|,\\
+ \max(\Theta_0,\Theta_{\rm dep})+x\max(\Theta_{\rm ind},\Theta_{\rm dep}),&R<|M|,
+ \end{cases}
+\]
+and $T_0(v)=v_0+xyv_{\{\mathrm{new}\},1}$.
+After each step, take the maximum over smaller ranks at a fixed mask.
+This closure preserves the ordering. If $T(v)\le\lambda v$, its
+closure satisfies the same inequality. With $v_0=1$, put
+$\Gamma(a)=\max_i[T^a(\mathbf1)]_i/v_i$. Positive homogeneity gives
+$[T^n(\mathbf1)]_0\le\Gamma(a)\lambda^{n-a}$, as
+in~\eqref{eq:scan-terminal-sixteen} for $a=16$.
+
+All successor bounds hold for arbitrary incoming forms and earlier
+nonzero requirements. Lemma~\ref{lem:scan-composition} therefore applies
+with these scan bounds and the same $F_s(\tau)/\tau$ source factor.
+The inverse scan gives
+$h\le(w+1)e$ and $s\le(w+1)h$, capped by $n$.
+For $s<32$, compute the source coefficients exactly, use $a=16$, and
+cover all feasible intermediate weights by consecutive integer intervals.
+For $s\ge32$, use $F_s(\tau)\le Q_8(z,\tau)^{n/16}/z^s$ and $a=0$.
+The rational binomial prefactors and convex vertex bounds of
+Appendix~\ref{app:all-one} then apply with the wider support constraint.
+The dense domain is partitioned recursively into rectangles; each cell
+is a leaf, and each leaf is charged its full number of integer profiles.
+The leaves cover the entire feasible domain; summing the interval and
+leaf bounds with upward rounding gives the complete failure bound.
+
+For $w=2$ and $q=2048$, at forbidden weight $e=829633$ the sparse range
+uses 185 intervals and the dense cover has 216 leaves; the total failure
+probability has base-two logarithm at most $-57.875553147005$. For $w=4$
+and $q=65536$, at $e=901502$ the sparse range uses 180 intervals and
+the dense cover has 229 leaves; the total has base-two logarithm at most
+$-61.763321686333$. These certificates yield the two rows of
+Table~\ref{tab:wide-measured}. Failure exponents there are truncated
+toward zero, so the stated bounds are conservative.

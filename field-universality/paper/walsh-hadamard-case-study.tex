@@ -1,0 +1,87 @@
+\section{The Walsh--Hadamard alternative}\label{sec:wht}
+
+Walsh--Hadamard PCGs take a different route.  They define a quasi-abelian code
+directly over a large prime field and use a transform containing only additions
+and subtractions~\cite{wht26}.  This avoids an unsupported binary-distance
+transfer.  Random spectral multipliers still supply a large family of
+projective types.
+
+Drawing the multipliers from a fixed finite alphabet, such as signs, would
+make the encoder still cheaper.  Such fixed-alphabet variants, however, have a
+structural obstruction. Fix a field $F$ of odd characteristic, put
+$V=\F_2^r$ and $k=2^r$, and fix $c\ge2$.
+The Walsh matrix is $W_{u,\xi}=(-1)^{\langle u,\xi\rangle}$ for
+$u,\xi\in V$, with $W^{-1}=k^{-1}W$. For each frequency choose
+$a(\xi)=(a_0(\xi),\ldots,a_{c-1}(\xi))\in F^c\setminus\{0\}$.
+Define the encoder and its image by
+\[
+ E_a(x):=\bigl(W^{-1}(a_j\odot Wx)\bigr)_{j=0}^{c-1},
+ \qquad C_a:=\operatorname{im}_F E_a,
+\]
+where $\odot$ denotes coordinatewise multiplication.
+Each frequency has a nonzero multiplier in some block, so $E_a$ is
+injective. Thus $C_a$ has length $ck$, dimension $k$, and rate $1/c$.
+Write $\sigma(\xi):=[a(\xi)]\in\mathbb P^{c-1}(F)$ for the projective type
+of $\xi$, and $\Delta:=d(C_a)/(ck)$.
+
+\begin{proposition}[Affine-flat obstruction]\label{prop:flat}
+If $\sigma$ is constant on an affine flat of dimension $s$, then the relative
+minimum distance of the length-$ck$ code is at most $2^{-s}$.
+\end{proposition}
+
+\begin{proof}
+On the flat, write the multiplier vector as a fixed projective vector times a
+nonzero scalar.  Choose the message spectrum to cancel that scalar and equal a
+character on the flat.  Its inverse Walsh transform is supported on one coset
+of the orthogonal subspace.  Each nonzero output block has weight $k/2^s$.
+\end{proof}
+
+Suppose the types $\sigma(\xi)$ are independent and identically distributed,
+with support of size at most $M$.  A
+partition into parallel $s$-flats gives
+\[
+  \Pr[\Delta>2^{-s}]
+  \le
+  \exp\left(-\frac{k}{2^s}M^{1-2^s}\right).
+\]
+Choosing $s\asymp\log_2(\log k/\log M)$ yields
+\[
+  \Delta=O\left(\frac{\log M}{\log k}\right)
+\]
+with probability tending to one for fixed $M\ge2$.  If $M=1$, the type is
+constant on all of $V$, and Proposition~\ref{prop:flat} with $s=r$ applies
+directly.  Thus this random fixed-alphabet model fails asymptotically at
+fixed block count.  The argument does not assert failure for every
+deterministic assignment of finitely many spectral types.
+
+The obstruction is asymptotic.  At the practical dimension $2^{20}$, the
+following computation shows that an alphabet of $1024$ small integers already
+makes the three-flat witnesses of this kind unlikely.  Let $r=20$, $c=4$, and
+$\operatorname{char}F>1024$. Set $a_0(\xi)=1$ and sample every
+$a_j(\xi)$, for $j=1,2,3$ and $\xi\in V$, independently and uniformly from
+$\mathcal A:=\{\pm1,\ldots,\pm512\}\subset F^\times$.
+The characteristic condition makes these $|\mathcal A|=1024$ elements
+distinct.  Multiplication by these small integers can use addition chains.
+
+Call an affine three-flat $L=\xi_0+U$ dangerous if, for each $j=1,2,3$,
+there are $b_j\in\mathcal A$ and a character
+$\chi_j:U\to\{1,-1\}$ with
+$a_j(\xi_0+u)=b_j\chi_j(u)$ for every $u\in U$.
+The message spectrum $1_L$ then gives a word of relative weight $1/8$:
+each output block is supported on one coset of $U^\perp$.
+For a fixed flat and block, exactly $8|\mathcal A|$ of the $|\mathcal A|^8$
+assignments have this form. Independence and a union bound therefore give
+\begin{equation}\label{eq:wht-three-flat}
+ \Pr[\text{some dangerous three-flat}]
+ \le 2^{17}\genfrac{[}{]}{0pt}{}{20}{3}_2(8|\mathcal A|^{-7})^3
+ <2^{-131.39}<2^{-128}.
+\end{equation}
+Here the number of linear three-dimensional subspaces is
+\[
+ \genfrac{[}{]}{0pt}{}{20}{3}_2:=\prod_{i=0}^{2}\frac{2^{20}-2^i}{2^3-2^i}.
+\]
+The strict $2^{-128}$ comparison is an integer inequality after multiplying
+by $|\mathcal A|^{21}$; its arithmetic check is listed in
+Appendix~\ref{app:reproduction}.
+Equation~\eqref{eq:wht-three-flat} excludes only this witness family; it does
+not establish a global distance lower bound.

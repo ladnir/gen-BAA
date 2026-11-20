@@ -1,18 +1,19 @@
 \section{Finite evaluation for two plain accumulators}\label{app:all-one}
 
-This appendix first evaluates the earlier two-state $q=1$ bound.
-Appendices~\ref{app:fresh-pairs} and~\ref{app:joint-renewal} strengthen it
-to the $q=1$ row of
-Table~\ref{tab:width-one-small}. Fix $n=2^{21}$, the local source
-$B_8$ from~\eqref{eq:extended-newton-eight}, and forbidden weight
-$e=138412$. Only the two independent uniform permutations are random.
-Every scan coefficient equals one.
+This appendix evaluates the basic two-state bound of
+Section~\ref{sec:distance-proof} for $q=1$ and proves relative distance
+above $6.6\%$. Appendices~\ref{app:fresh-pairs}, \ref{app:joint-renewal},
+and~\ref{app:complete-runs} refine it to $11.7\%$; the last supplies the
+$q=1$ row of Table~\ref{tab:width-one-small}. Fix $p=2^{128}-159$,
+$n=2^{21}$, the Newton precode $B_8$ from~\eqref{eq:extended-newton-eight},
+and forbidden weight $e=138412$. Only the two independent uniform
+permutations are random. Every scan coefficient equals one.
 
 \paragraph{Small source supports.}
 Put $\rho=e/(n-e)$ and choose a rational $t$ satisfying
 $\rho<t<1$ and $(t-\rho)^2\ge4\rho$. Let $A(s,h)$ denote the
-ordinary accumulator's admissible support count, as in
-\eqref{eq:small-transfer} with $g=1$. Its normalized tail obeys
+plain accumulator's admissible support count, as
+in~\eqref{eq:small-transfer} with $g=1$. Its normalized tail obeys
 \[
  \frac{\sum_{j=1}^e A(h,j)}{\binom nh}
  \le 2(\rho+2\sqrt\rho)^h\le2t^h.
@@ -26,19 +27,21 @@ lengths to geometric series also bounds $\sum_h A(s,h)t^h$ by
  \left(\frac{t}{1-t}\right)^{s-j}\\
  &+\sum_{j=1}^{\lceil s/2\rceil}
  \binom n{j-1}\binom{s-j}{j-1}
- \left(\frac{t}{1-t}\right)^{s-j+1}.
+ \left(\frac{t}{1-t}\right)^{s-j+1},
 \end{align*}
-The two terms allow a closed or open terminal run. Binomial coefficients
-outside their usual range are zero.
+which is $M_s(t;1)$ in~\eqref{eq:small-sparse-moment}. The two sums
+allow a closed or open final run. Binomial coefficients outside their
+usual range are zero.
 
 Let $U(z)=Q_8(z,1)$ and $u_s=[z^s]U(z)^{n/16}$. These coefficients
 upper-bound the number of possible source supports. Permutation
-averaging therefore bounds the whole range $1\le s\le31$ by
+averaging therefore bounds the whole range $1\le s\le31$ by the
+\emph{sparse bound}
 \begin{equation}\label{eq:all-one-sparse}
  \epsilon_{\rm small}
  :=2\sum_{s=1}^{31}\frac{u_s}{\binom ns}M_s(t).
 \end{equation}
-This includes every intermediate weight. The coefficients $u_s$ are
+This covers every intermediate weight $h$. The coefficients $u_s$ are
 computed exactly by differentiating $U(z)^{n/16}$; absent source weights
 contribute zero. Rational evaluation of~\eqref{eq:all-one-sparse} gives
 $\log_2\epsilon_{\rm small}<-53.961375350693$.
@@ -48,39 +51,44 @@ The inverse scans imply $s\le2h\le4e$. Thus it remains to cover
 \[
  32\le s\le553648,\qquad 16\le h\le276824,\qquad s\le2h.
 \]
-Use~\eqref{eq:width-one-profile}, with the operator
-\eqref{eq:width-one-quotient} specialized to $q=1$, and replace
-$F_s(\tau)$ by $Q_8(z,\tau)^{n/16}/z^s$.
+Apply Lemma~\ref{lem:scan-composition} with $K_j=C_j\lambda_j^n$ from
+the operator~\eqref{eq:width-one-quotient} at $q=1$, as
+in~\eqref{eq:width-one-profile}, and replace $F_s(\tau)$ by
+$Q_8(z,\tau)^{n/16}/z^s$.
 
 For an integer weight $h$, the binomial distribution with parameters
-$(n,h/n)$ has mode $h$ and variance $h(n-h)/n$. If an integer $U\ge1$
-upper-bounds its standard deviation, Chebyshev's inequality places at
-least $3/4$ of its mass in at most $4U+1$ positions. Hence
+$(n,h/n)$ has mode $h$ and variance $h(n-h)/n$. If an integer
+$\sigma\ge1$ upper-bounds its standard deviation, Chebyshev's inequality
+places at least $3/4$ of its mass in at most $4\sigma+1$ positions. Hence
 \[
- \binom nh\ge\frac{3}{16U+4}\,2^{nH_2(h/n)}.
+ \binom nh\ge\frac{3}{16\sigma+4}\,2^{nH_2(h/n)}.
 \]
 On an interval $a\le h\le b$, the choice
-$U=\lceil\sqrt{\min(b,n-a)}\rceil$ suffices. Apply this inequality
+$\sigma=\lceil\sqrt{\min(b,n-a)}\rceil$ suffices. Apply this inequality
 to both support-binomial denominators.
 
 For fixed rational witnesses, the logarithm of the resulting upper
-bound is a convex function of $(s,h)$. Its maximum over a rectangle
-intersected with $s\le2h$ is attained at a vertex. Multiplying by
-the rectangle's number of integer profiles upper-bounds its total
-contribution, including any excess count outside the intersection.
-The stored certificate partitions the domain into 137 nonempty leaves.
-Its verifier checks the root domain, each split, each rational witness,
-and every vertex inequality using directed logarithm bounds.
+bound is a convex function of $(s,h)$. Over a rectangle, its maximum on
+the polygon cut out by the half-plane $s\le2h$ is attained at a vertex
+of that polygon. Multiplying by the rectangle's number of integer
+profiles upper-bounds its total contribution, including any excess
+count outside the polygon.
+The certificate partitions the domain recursively into rectangles, each
+with its own rational witnesses; the cells of the final partition are
+called \emph{leaves}. Here there are 137 nonempty leaves. The verifier
+checks the root domain, each split, each rational witness, and every
+vertex inequality using directed logarithm bounds.
 
-If $\ell_R$ is the verified upper logarithm for a leaf, its contribution
-is rounded upward to $2^{\max(-160,\lceil\ell_R\rceil)}$. Adding these
-rationals to~\eqref{eq:all-one-sparse} gives
+If $\ell_R$ is the verified upper logarithm for a leaf $R$, its
+contribution is rounded upward to $2^{\max(-160,\lceil\ell_R\rceil)}$.
+Adding these rationals to~\eqref{eq:all-one-sparse} gives
 \[
  \log_2\left(\epsilon_{\rm small}
        +\sum_R2^{\max(-160,\lceil\ell_R\rceil)}\right)
  \le-\frac{13490343832277}{250000000000}
  <-53.96.
 \]
-Consequently the complete code has distance at least 138413 except
-with probability less than $2^{-53.96}$. The companion certificate and
-its independent replay contain the witnesses and exact rational sums.
+Consequently the complete code has distance at least 138413, that is,
+relative distance above $6.6\%$, except with probability less than
+$2^{-53.96}$. The certificate, with its witnesses and exact rational
+sums, and its verifier are listed in Appendix~\ref{app:reproduction}.

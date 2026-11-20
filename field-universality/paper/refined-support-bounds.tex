@@ -1,0 +1,175 @@
+\section{A hypergeometric support bound}\label{app:hyper-support}
+
+We first sharpen the sparse-source bound of Appendix~\ref{app:all-one}
+without using coefficient randomness. Consider a width-one scan with
+nonzero coefficients over any field, zero initial state, and unrestricted
+final state. At every position of a realized pair of input and output
+supports, the triple of previous-output, input, and current-output
+indicators lies in $\{000,011,101,110,111\}$. Let $A_n(h,u)$ count pairs
+of input and output supports of weights $h,u$ that satisfy this rule at
+every position. Some counted pairs may not be realizable; this only
+weakens the upper bound.
+
+\begin{lemma}\label{lem:hyper-support}
+Let $0\le e<n$, $\delta=e/n$, and $1\le h\le n$. For every $L>1$
+such that $L(L-1)\ge1$, put $t=\delta L+(1-\delta)/(L-1)$. Then
+\[
+ B_n(h,e):=\frac{1}{\binom nh}\sum_{u=0}^e A_n(h,u)\le t^h.
+\]
+In particular, for $0<\delta<1/5$ one may take
+$t=\delta+2\sqrt{\delta(1-\delta)}<1$.
+\end{lemma}
+
+\begin{proof}
+Decomposing the output support into $r$ nonzero runs gives
+\[
+ A_n(h,u)=\sum_r\binom{u-1}{r-1}
+ \left[\binom{n-u}{r}\binom{u-r}{h-2r}
+       +\binom{n-u}{r-1}\binom{u-r}{h-2r+1}\right].
+\]
+The terms distinguish final zero and nonzero states. Invalid binomial
+coefficients are zero. Let $J$ count elements at most $e$ in a uniform
+$h$-subset of $\{1,\ldots,n\}$. Counting its $(a+1)$st smallest element yields
+\[
+ \sum_{u=1}^e\binom{u-1}{a}\binom{n-u}{h-a-1}
+       =\binom nh\Pr[J\ge a+1].
+\]
+Using this identity in the run count gives the exact formula
+\begin{align*}
+ B_n(h,e)={}&\sum_{r=1}^{\lfloor h/2\rfloor}
+      \binom{h-r-1}{r-1}\Pr[J\ge h-r]\\
+ &+\sum_{r=1}^{\lceil h/2\rceil}
+      \binom{h-r}{r-1}\Pr[J\ge h-r+1].
+\end{align*}
+For $\zeta\ge1$, the hypergeometric moment satisfies
+$\E[\zeta^J]\le(1-\delta+\delta\zeta)^h$. Indeed, it is the average product
+of $h$ distinct entries of a list containing $e$ copies of $\zeta$ and
+$n-e$ copies of one. Pairwise averaging entries with their sum fixed
+cannot decrease their elementary symmetric polynomial: its dependence
+on the pair's product has a nonnegative coefficient. Iterating this
+averaging bounds the moment by the product for the constant list.
+Markov's inequality now gives
+$\Pr[J\ge j]\le(1-\delta+\delta\zeta)^h\zeta^{-j}$.
+
+Set $\zeta=L(L-1)$. The remaining polynomial after substituting these
+tails is
+\[
+ \kappa_h(\zeta)=\sum_{r=1}^{\lfloor h/2\rfloor}\binom{h-r-1}{r-1}\zeta^r
+       +\sum_{r=1}^{\lceil h/2\rceil}\binom{h-r}{r-1}\zeta^{r-1}.
+\]
+Pascal's identity gives $\kappa_h=\kappa_{h-1}+\zeta\kappa_{h-2}$, with
+$\kappa_0=\kappa_1=1$ as recurrence initial values. Since
+$L^2=L+\zeta$, induction gives $\kappa_h\le L^h$. Consequently
+\[
+ B_n(h,e)\le\left(\frac{(1-\delta+\delta\zeta)L}{\zeta}\right)^h=t^h.
+\]
+Minimizing over $L$ gives $L=1+\sqrt{(1-\delta)/\delta}$ and the
+stated special case.
+\end{proof}
+
+For a fixed source support of size $s$, the first permutation gives
+each incoming support probability $1/\binom ns$. Union over its
+compatible intermediate supports, then apply the lemma to the independent
+second permutation. The result is
+\[
+ \Pr[\text{a compatible final support has weight at most }e]
+ \le\frac{\sum_h A_n(s,h)t^h}{\binom ns}.
+\]
+This union counts support patterns and already covers every field-valued
+message realizing them. It assumes no independence of those messages.
+With $u_s=[z^s]Q_8(z,1)^{n/16}$ and the moment $M_s(t)$ from
+Appendix~\ref{app:all-one}, the sparse-source contribution is at most
+\begin{equation}\label{eq:hyper-sparse}
+ \sum_{s=1}^{31}\frac{u_s M_s(t)}{\binom ns}.
+\end{equation}
+The sparse bound~\eqref{eq:all-one-sparse} carries a leading factor two;
+\eqref{eq:hyper-sparse} does not. The verifier uses rational $L$,
+checks $L(L-1)\ge1$, computes $t$ exactly, and checks $t<1$.
+The local support rule holds for arbitrary fixed nonzero scan
+coefficients, so this bound also applies to the sampled coefficients.
+
+\section{Projective pairs with small coefficients}\label{app:small-q-pairs}
+
+Fix the quotient by the zero equations already imposed. Required active
+forms must remain nonzero in this quotient. At zero feedback, expose
+the next two active input labels jointly. If $g$ zero inputs separate
+them, their forms $u,v$ cancel identically exactly when $v=-Cau$.
+Here $C$ is the product of the intervening coefficients, and $a$ is the
+fresh coefficient at the second active input. Both labels are exposed
+after fixing the gap and its coefficients.
+
+Call a gap $g$ short if $q^{3(g+1)}+1<p$. For a short gap, the integer
+representing $Ca$ lies between one and $D=q^{g+1}$. In each
+one-dimensional subspace, form a graph on the nonzero forms, joining
+$u$ and $v$, not necessarily distinct, when $v=-cu$ or $u=-cv$ for
+some integer $1\le c\le D$. The graph has no loops: $u=-cu$ would
+require $c+1\equiv0$ modulo $p$, but $2\le c+1\le D+1<p$. It has no
+triangles: multiplying the oriented ratios around a triangle requires a
+sum of two positive integer products to vanish modulo $p$, while its
+value is at most $D^3+1<p$.
+
+Give the vertices nonnegative masses of total $\sigma$. The edge-product
+sum of a triangle-free graph without loops is at most $\sigma^2/4$.
+To prove this, maximize the sum and take a maximizer with minimal
+support. Nonadjacent positive-mass vertices can be merged without
+decreasing the objective, since it is linear in their mass split.
+Minimal support is therefore a clique of size at most two, where the
+claim follows from the arithmetic--geometric mean inequality.
+
+Each ordered pair has at most one cancelling choice of $a$. If $P_\parallel$
+is the proportional-pair probability under independent draws from the
+remaining label pool, the identical-cancellation probability is therefore
+at most $P_\parallel/(2q)$ for short gaps. For arbitrary gaps, each
+coefficient value has probability $1/q$, which instead gives
+$P_\parallel/q$.
+For continuation bounds $Y,Z\ge0$ and rank marker $\tau\ge1$, put
+\[
+ \Psi_c(Y,Z)=\max\{Y+Z/\tau,(1-c)Y+cZ\}.
+\]
+The pair contribution is bounded by $\Psi_{1/(2q)}$ for short gaps and
+$\Psi_{1/q}$ otherwise. Independent forms can add one rank on a zero
+branch; proportional forms contribute only one of the two continuations.
+This establishes the bound before either label is revealed.
+
+For $q>1$, let $G$ be the largest short gap, that is, the largest
+integer $g\ge0$ satisfying $q^{3(g+1)}+1<p$, or $G=-1$ if none does.
+Choose positive $x,y,V$, $\lambda>\max(1,y)$, and slack
+$0<\epsilon<1$. Define
+\begin{gather*}
+ A=\frac{xy}{\lambda-1},\qquad B=\frac{x}{\lambda-y},\qquad
+ T=(y/\lambda)^{G+1},\\
+ P_s=\Psi_{1/(2q)}(yV,1),\qquad P_l=\Psi_{1/q}(yV,1).
+\end{gather*}
+Summing the geometric zero-input gaps yields sufficient inequalities
+\[
+ AB((1-T)P_s+TP_l)\le1-\epsilon,\qquad
+ BP_l\le(1-\epsilon)V.
+\]
+The first inequality bounds a pair from zero feedback; the second
+bounds the next active input from nonzero feedback. For $q=1$, set
+$T=0$. Long gaps use only the bound $P_\parallel/q$, so no estimate
+assumes that a product of coefficients over a long gap is less than $p$
+as an integer.
+
+Conditioning independent labels to be distinct costs $m/(m-1)$ for
+a pool of $m$ labels. The induction budget $\max(1,m)$ absorbs each
+pair exposure, so a scan with $s$ active inputs costs at most $s$.
+Its terminal terms are
+\[
+ R_0=\frac\lambda{\lambda-1}\left(1+\frac{xy}{\lambda-y}\right),
+ \qquad R_1=\frac\lambda{\lambda-y},\qquad
+ C=\frac{\max(R_0,R_1/V)}\epsilon.
+\]
+Induction on the remaining labels bounds the scan by $sC\lambda^n$.
+The two-scan profile bound is therefore~\eqref{eq:width-one-profile}
+with an additional factor $sh$. All inequalities are rational.
+
+For $q=2$, use~\eqref{eq:hyper-sparse} for $s<32$. For $q\ge4$, use
+the coefficient-sensitive direct bound with exact $F_s(\tau)$ and the
+sixteen-step terminal factor in~\eqref{eq:scan-terminal-sixteen}.
+For $s\ge32$, the dense domain is partitioned recursively into
+rectangles, and each leaf uses either the direct or the projective-pair
+bound, uniformly over its profiles. The verifier checks complete coverage
+of $s\le2h$, $h\le2e$, and sums all contributions. Using different
+valid bounds on different leaves requires no independence assumption.
+These calculations give the $q\ge2$ rows of Table~\ref{tab:width-one-small}.

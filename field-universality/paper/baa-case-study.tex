@@ -1,0 +1,401 @@
+\section{BAA as a case study}\label{sec:baa}
+
+Block-and-accumulate (BAA) codes were introduced as fast linear encoders for
+PCGs and zero-knowledge systems~\cite{baa26}.  This appendix studies their
+addition-only specialization with repetition three.
+
+Fix $N=3K$.  Let $B_3:F^K\to F^N$ repeat each message coordinate three
+times, let $A$ be the prefix-sum accumulator, and sample independent uniform
+coordinate permutations $P_1,P_2$.  The encoder is
+\[
+  E_{P_1,P_2}:=A P_2 A P_1 B_3.
+\]
+It has rate $1/3$ over every field and uses only additions and data movement.
+Its matrices have integer entries, so one pair $(P_1,P_2)$ defines an encoder
+over every field.  We call the resulting random family the repetition-three
+BAA ensemble.
+
+The question is whether this ensemble, taken over an odd prime field, retains
+the good distance of the binary construction, rather than merely a positive
+asymptotic distance.  Positive distance holds over every fixed prime;
+Appendix~\ref{app:fixed-prime} records these baseline theorems.  The ternary
+lower bound $0.196$ of Theorem~\ref{thm:baa-fixed} already exceeds the binary
+value $0.1323$ reported in~\cite{kliewer08}, but the quinary evidence is
+substantially ahead of the proof.  This appendix explains that evidence and
+its limitations.
+
+\subsection{The first-moment prediction}
+
+The first-moment analysis tracks the compositions of symbol values in $\F_p$,
+not only supports, through both accumulators.  A separate spacing argument
+treats sparse messages.  For a
+fixed prime $p$, the stationary type model consists of message, middle, and
+output distributions $\mu,\beta,\zeta$ on $\F_p$, and two transition laws
+$Q_1,Q_2$ on increments and states $(D,S)$.  Under $Q_1$, the increment has
+law $\mu$ and both $S,S+D$ have law $\beta$.  Under $Q_2$, the increment
+has law $\beta$ and both states have law $\zeta$.  Write
+$\tau=(\mu,\beta,\zeta,Q_1,Q_2)$ for such a type.  Its first-moment objective is
+\[
+  \Phi_p(\tau)=H(Q_1)+H(Q_2)-\tfrac23H(\mu)-2H(\beta)-H(\zeta),
+\]
+where $H$ is entropy with natural logarithms.  Its normalized message and
+output weights are $a(\tau)=1-\mu(0)$ and $c(\tau)=1-\zeta(0)$.  Define the
+first-moment threshold of this stationary model by
+\[
+  \delta_{\rm FM}(p):=\inf \mathcal D_p,
+  \qquad
+  \mathcal D_p:=\left\{\delta>0:
+  \begin{array}{l}
+  \text{some admissible $\tau$ satisfies $a(\tau)>0$,}\\[-1mm]
+  \text{$c(\tau)\le\delta$, and $\Phi_p(\tau)>0$}
+  \end{array}\right\}.
+\]
+The restriction $a(\tau)>0$ isolates linear-weight messages.  A proof of a
+distance lower bound must also control the sparse range uniformly.
+
+Numerical optimization gives the following sign brackets.  The negative side
+of the $\F_3$ row is certified by Theorem~\ref{thm:baa-fixed}, which excludes
+codewords of relative weight up to $0.196$.  The other signs refer to returned
+local optima, not certified global maxima; the quinary evaluation restricts
+message support to at least $0.002K$.
+\begin{center}
+\begin{tabular}{@{}ccc@{}}
+\toprule
+field & negative exponent & positive exponent \\
+\midrule
+$\F_2$ & $\delta=0.132$ & $\delta=0.133$ \\
+$\F_3$ & $\delta=0.195$ & $\delta=0.197$ \\
+$\F_5$ & $\delta=0.260600$ & $\delta=0.260612$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The binary bracket reproduces the binary value $0.1323$ reported
+in~\cite{kliewer08}.  The odd-prime brackets suggest an improvement in the
+ensemble threshold, not equality of distances for each encoder across fields.
+For $\F_5$, the candidate is near $0.2606$, without a confidence interval.
+
+For a finite abelian group $G$ and distributions $\alpha,\beta$ on $G$,
+let $R$ range over laws on $(D,S)\in G^2$ and define
+\begin{align*}
+ \Gamma_G(\alpha,\beta):=\{R:\ D\sim\alpha,\ S\sim\beta,
+                                      \ D+S\sim\beta\},\\
+ I_{\rm stat}^G(\alpha,\beta):=
+       \inf_{R\in\Gamma_G(\alpha,\beta)}I_R(D;S).
+\end{align*}
+The infimum of the empty set is $+\infty$. Otherwise compactness and
+continuity give a minimum. We omit the superscript when $G=\F_5$, and call
+$I_{\rm stat}^G(\alpha,\beta)$ the stationary information cost of
+$(\alpha,\beta)$.  Since $H(Q_1)=H(\mu)+H(\beta)-I_{Q_1}(D;S)$, and
+similarly for $Q_2$, the objective is
+$\Phi_p(\tau)=\tfrac13H(\mu)-I_{Q_1}(D;S)-I_{Q_2}(D;S)$.  Each accumulator
+therefore lowers the exponent by at least the stationary information cost of
+its increment and state compositions.
+
+For $p=5$, the minimization defining $I_{\rm stat}$ can be reduced without
+relaxing its objective.  Let $\alpha$ be an increment composition, let
+$\beta$ be a stationary state composition, and let
+$R\in\Gamma_{\F_5}(\alpha,\beta)$.
+Set $U:=\mathbf 1[D\ne0]$ and $V:=\mathbf 1[S\ne0]$. The admissible
+crossings are
+\[
+ X(\alpha,\beta):=\{\Pr_R[U=1,V=0]:R\in\Gamma_{\F_5}(\alpha,\beta)\}.
+\]
+Fix $x\in X(\alpha,\beta)$, and let $J_x$ be the law of $(U,V)$
+determined by $x$ and the support marginals. The
+conditional symbol laws are
+\[
+ \alpha_u(d):=\Pr_{\alpha}[D=d\mid U=u],
+ \qquad
+ \beta_v(s):=\Pr_{\beta}[S=s\mid V=v].
+\]
+On a conditioning event of zero mass, fix any distribution supported on the
+corresponding zero or nonzero symbol class; its contribution below is zero.
+The support-preserving product law is
+\[
+ Q_x(d,s):=J_x(u,v)\alpha_u(d)\beta_v(s),
+ \quad u=\mathbf 1[d\ne0],\quad v=\mathbf 1[s\ne0].
+\]
+For every feasible $R$ with crossing $x$, the chain rule for relative entropy
+gives
+\[
+ D_{\rm KL}(R\,\|\,\alpha\otimes\beta)
+ =I_{J_x}(U;V)+D_{\rm KL}(R\,\|\,Q_x).
+\]
+Since $R$ has marginals $\alpha$ and $\beta$, the left-hand side equals
+$I_R(D;S)$.  Minimizing over feasible $R$ therefore gives
+\[
+ I_{\rm stat}(\alpha,\beta)
+ =\inf_{x\in X(\alpha,\beta)}\left(I_{J_x}(U;V)
+   +\min_R D_{\rm KL}(R\,\|\,Q_x)\right),
+\]
+where the inner minimum ranges over $R\in\Gamma_{\F_5}(\alpha,\beta)$ whose
+support indicators $(U,V)$ have law $J_x$.  In the first-moment
+optimization, applying the reduction to both accumulators replaces the two
+$5$-by-$5$ transition laws with the three compositions $\mu,\beta,\zeta$ and
+two crossings.
+
+As a numerical consistency check, the reduced objective and the full
+transition objective agree within $1.9\cdot10^{-7}$ at output fractions
+$0.22$, $0.24$, $0.25$, $0.26$, $0.260600$, $0.260612$, and $0.261$.  The
+discrepancy is below $1.2\cdot10^{-13}$ at the last four points.  These
+calculations produce the refined quinary sign bracket in the table.  The
+reduced optimization starts from the full optimizer's output and shares its
+numerical routines, so their agreement is not an independent global
+optimization.
+
+\subsection{What is established near the candidate threshold}
+
+Sparse messages are controlled beyond the candidate threshold.  For
+$1\le s\le K$, let $Z_s(d)$ count messages $x\in\F_5^K$ with $\wt(x)=s$ and
+$\wt(E_{P_1,P_2}x)\le d$.
+
+\begin{proposition}[Sparse quinary messages]\label{prop:sparse-quinary}
+Over $\F_5$,
+\[
+ \sum_{s=1}^{\lfloor10^{-5}K\rfloor}
+   \mathbb E_{P_1,P_2}Z_s(\lfloor0.262N\rfloor)\longrightarrow0
+ \qquad\text{as }K\to\infty.
+\]
+\end{proposition}
+
+Since $E_{P_1,P_2}$ is injective, the sum is the expected number of nonzero
+codewords of weight at most $\lfloor0.262N\rfloor$ whose messages have
+weight at most $10^{-5}K$.  The proof, at the end of
+Appendix~\ref{app:fixed-prime}, applies Lemma~\ref{lem:baa-sparse} with
+$\eta=10^{-5}$ and $\delta=131/500=0.262$, using
+\[
+  4\delta(1-\delta)\le\frac{48339}{62500}
+  <\left(\frac{22}{25}\right)^2
+  \qquad(0<\delta\le0.262)
+\]
+and the geometric summation in that lemma.
+Proposition~\ref{prop:sparse-quinary} controls a small linear
+message-weight range, not the distance of the whole code.
+
+The message weights $10^{-5}<\wt(x)/K<0.002$ lie between
+Proposition~\ref{prop:sparse-quinary} and the support restriction of the
+quinary evaluation.  The converged local optimizations performed in this
+interval return negative exponents at output cutoff $0.26$ or $0.261$.
+Neither this interval nor the range above $0.002K$ has a global upper bound.
+
+The stationary information cost also admits a fixed-dual lower bound directly
+in the two compositions.  A feasible solution of the entropy dual of the
+minimization defining $I_{\rm stat}$ determines a constant $\lambda_0$, a
+vector $\lambda$, and a positive matrix $M$ such that
+\[
+ I_{\rm stat}(\alpha,\beta)
+ \ge \lambda_0+\langle \lambda,(\alpha,\beta)\rangle
+       -\log(\alpha^{\mathsf T}M\beta).
+\]
+The dual data do not depend on the compositions.  A finite family of such
+inequalities, fixed in advance, therefore bounds both accumulator terms at
+one common middle composition.  Bounding the two terms by separate
+minimizations over the middle composition would allow a different middle
+composition in each term and weaken the bound.
+
+At output cutoff $0.24$, fixed-dual evaluation over a partition into $101$
+boxes returns only negative local values, the largest being
+$-5.93\cdot10^{-4}$.  At $0.22$, directed arithmetic certifies particular
+boxes; in one, a rational LP dual gives the upper bound
+$-8.72\cdot10^{-6}$.  Neither these certificates nor the floating-point
+evaluations cover the full domain, and a certificate for a restricted family
+at $0.22$ does not resolve the message-weight gap near $0.26$.
+
+A global certificate by this method faces a structural limitation.
+Replacing products of composition entries by separate moment variables
+permits mixtures that need not arise from one composition.  A positive
+relaxed optimum can therefore coexist with negative values at the tested
+compositions.  Consistency of the numerical model and validity of local
+certificates leave a separate global problem.
+
+\subsection{From an expected count to typical distance}
+
+\begin{conjecture}[First-moment threshold]\label{conj:first-moment}
+For each fixed prime $p$, the minimum distance of the repetition-three BAA
+ensemble satisfies
+\[
+  \frac{d_{\F_p}(E_{P_1,P_2})}{N}
+  \xrightarrow{\;\Pr\;}\delta_{\rm FM}(p)
+  \qquad\text{as }K\to\infty.
+\]
+\end{conjecture}
+
+The first moment addresses only the lower side of
+Conjecture~\ref{conj:first-moment}.  A negative bulk exponent, combined with
+the spacing argument, excludes smaller codewords with probability tending to
+one.  A positive exponent proves only that their expected number is
+exponential.  Rare permutation pairs could dominate that expectation.  The
+reverse inequality therefore requires concentration, a second-moment
+argument, or another typical-existence theorem.  In particular, the numerical
+quinary transition near $0.2606$ is a conjectural threshold, not a claimed
+distance theorem or a partially certified global bound at that value.
+
+There is, however, initial evidence that a second-moment argument may be
+possible.  Count one-dimensional message subspaces rather than nonzero
+messages. Each quinary message line has four nonzero representatives.
+Injectivity identifies message lines with projective codewords; distinct
+lines remain distinct even if their codeword supports agree.
+A pair of distinct lines is described coordinatewise
+over the additive group $\F_5^2$.  We call the two coordinates of this
+group the replicas; the replica marginals of a pair composition are its
+two coordinate projections.  The two accumulator terms of a pair are
+stationary information costs over $\F_5^2$.  The following identity
+identifies the product-pair benchmark.
+
+\begin{proposition}[Product tensorization]\label{prop:pair-tensor}
+For distributions $\alpha$ and $\beta$ on $G$,
+\[
+ I_{\rm stat}^{G^2}(\alpha\otimes\alpha,\beta\otimes\beta)
+ =2I_{\rm stat}^G(\alpha,\beta).
+\]
+\end{proposition}
+
+\begin{proof}
+If $\Gamma_G(\alpha,\beta)$ is empty, a feasible law on $G^2$ would
+project to a feasible law on $G$, a contradiction. Both sides are then
+$+\infty$. Otherwise a minimizing law exists by compactness.
+The product of two minimizing one-coordinate laws proves the upper bound.
+For the reverse bound, let $Q$ be any feasible law for the left-hand side
+and group its variables as $X_i=(D_i,S_i)$.  If
+$R_i=\alpha\otimes\beta$, the relative-entropy chain rule gives
+\[
+ D_{\rm KL}(Q_{X_1X_2}\,\|\,R_1\otimes R_2)
+ =D_{\rm KL}(Q_{X_1}\,\|\,R_1)
+  +D_{\rm KL}(Q_{X_2}\,\|\,R_2)
+  +I_Q(X_1;X_2).
+\]
+Each coordinate projection of $Q$ is feasible for the one-coordinate
+problem.  The first two terms are therefore at least
+$I_{\rm stat}^G(\alpha,\beta)$, and the last term is nonnegative.
+\end{proof}
+
+Proposition~\ref{prop:pair-tensor} shows that product compositions cannot
+reduce an accumulator's stationary information cost below twice the
+single-message value.  A larger stationary pair exponent must come from
+nonproduct compositions; finite-length second moments require additional
+control even when no such improvement occurs.
+
+At output fraction $0.261$, a local test fixes both replica marginals in
+each of the message, middle, and output compositions.  This leaves $16$
+correlation directions per composition.  The resulting $48$-dimensional
+numerical Hessian is negative definite, with eigenvalues from approximately
+$-1.46\cdot10^{-2}$ to $-2.51\cdot10^{-5}$ in the chosen coordinates.
+An inverse-covariance calculation and directional second differences agree
+on the negative curvature; both use one numerical transition solver and
+neither is a directed-arithmetic certificate.
+
+A further numerical optimization frees both replica marginals and optimizes
+the two pair transition laws jointly.  Its starting points include products,
+mixtures toward proportional messages, and invertible linear changes of pair
+coordinates; some optimizations also require the messages to differ from
+every scalar multiple on at least $0.001K$ coordinates.  No returned
+candidate beats the product exponent beyond rounding.  Some unrestricted
+optimizations approach the proportional boundary.  Continued to the
+numerical small-step criterion, the highest-valued of these end within
+$4.6\cdot10^{-11}$ of the product exponent, and their two transition laws
+differ from the products of their replica marginals by less than
+$2.5\cdot10^{-13}$ in L1 distance.  Their correlations disappear before their
+exponents finish improving; the remaining slow motion lies in the individual
+marginal laws.  This supports the product prediction from those starting
+points, without establishing global optimality.
+
+The evidence therefore has a specific scope.  Sparse messages are controlled
+analytically; the symbol-composition computations locate a candidate
+transition; and the pair tests find no competing correlated type in the
+optimizations performed.  A proof still needs global first-moment control, a
+treatment of nearly proportional pairs and other possible pair maxima, and
+finite-length estimates strong enough to establish concentration.  None of
+these requirements is replaced by a positive expected count.
+
+\subsection{What large characteristic proves}
+
+The cryptographic regime instead has message length $K\approx2^{20}$ and
+$\log_2p\approx128$.  Here $p$ is much larger than $N$, but its bit length is
+much smaller than $N$.  Two deterministic statements explain why large
+characteristic limits small witnesses of rank loss.
+
+Write $L:=AP_2AP_1$ over the integers, so $E=LB_3$ in the
+column convention. Let $\mathcal H_0\in\mathbb Z^{2K\times N}$ have rows
+$(1,-1,0)$ and $(0,1,-1)$ on each repetition block, and put
+$\mathcal H:=\mathcal H_0L^{-1}$. The matrices $A$ and $P_i$ are unimodular,
+so $\ker_F \mathcal H=\operatorname{im}_F E$ over every field $F$.
+Write $d_p:=d_{\F_p}(E)$ for this fixed setup.
+
+\begin{proposition}[Absolute distance floor]\label{prop:floor}
+For every realized repetition-three BAA encoder,
+\[
+  d_p\ge
+  \min\left\{d_2,
+    \left\lceil\log_{\sqrt{20}}p\right\rceil\right\}.
+\]
+\end{proposition}
+
+\begin{proof}
+Right multiplication of a row by $A^{-1}$ takes adjacent differences.
+After the first difference, a row of $\mathcal H_0$ has either four unit
+entries, or entries of magnitudes $(1,2,1)$, or a truncated version at the
+boundary.
+Permutations preserve these magnitudes. A second difference has squared
+norm at most 20: its squared norm is at most twice the original squared
+norm minus twice the sum of adjacent products. Four unit entries give
+at most $8+6=14$; magnitudes $(1,2,1)$ give at most $12+8=20$.
+Thus each row of $\mathcal H$ has norm at most $\sqrt{20}$.
+
+Suppose $d_p=d<d_2$ and let $W$ be the support of a minimum word over $\F_p$.
+The columns $\mathcal H_W$ are independent over $\F_2$ but dependent over
+$\F_p$.
+Some $d$-by-$d$ minor is therefore an odd nonzero integer divisible by $p$.
+Hadamard's inequality gives $p\le20^{d/2}$, proving the claim.
+\end{proof}
+A prime near $2^{128}$ gives a distance floor of about 60 whenever the
+binary distance is at least 60. This floor is not linear in $N$.
+
+For the second bound, retain the circuit's internal variables rather than
+forming $\mathcal H$. Choose permutation indices so that
+$(P_1z)_i=z_{\pi_1(i)}$ and $(P_2v)_i=v_{\pi_2(i)}$. The homogeneous circuit
+equations are
+\[
+ z_i-x_{\lceil i/3\rceil}=0,\qquad
+ v_i-v_{i-1}-z_{\pi_1(i)}=0,\qquad
+ y_i-y_{i-1}-v_{\pi_2(i)}=0,
+ \quad 1\le i\le N,
+\]
+where $v_0=y_0=0$. To test an output support $W$, set $y_i=0$ for
+$i\notin W$. Repeatedly delete a variable forced to zero by a one-variable
+equation, and discard zero equations. These operations preserve the
+solution space on the remaining variables over every field.
+They do not take linear combinations of equations. Consequently, the
+residual integer matrix still has entries in $\{0,1,-1\}$ and at most
+three nonzeros in each row.
+
+Its support graph has a vertex for each remaining equation and variable,
+and an edge for each nonzero entry. For a connected component, define its
+cycle rank $\kappa:=\#\text{edges}-\#\text{vertices}+1$.
+
+\begin{proposition}[Cycle-rank barrier]\label{prop:cycles}
+Suppose the matrix $R$ of a connected residual component has
+$\rank_{\F_p}R<\rank_{\mathbb Q}R$. Its cycle rank is at least
+$\lceil\log_2p\rceil$.
+\end{proposition}
+
+\begin{proof}
+Put $r=\rank_{\mathbb Q}R$. Some $r$-by-$r$ minor has nonzero integer
+determinant, and every such determinant vanishes modulo $p$.
+Expand one nonzero determinant over perfect matchings of its support graph.
+Fix a spanning forest of that graph. Two matchings with the same nonforest
+edges would have a symmetric difference consisting of cycles inside a
+forest, so they must coincide. The graph has at most $2^\kappa$ matchings:
+deleting vertices or edges cannot increase its cycle rank.
+Each determinant term is $+1$ or $-1$, because all nonzero entries are units.
+Hence $p\le|\det|\le2^\kappa$.
+\end{proof}
+This argument concerns the unweighted circuit above. Arbitrary integer
+coefficients or elimination that creates larger entries need not satisfy it.
+
+Propositions~\ref{prop:floor} and~\ref{prop:cycles} exclude rank-loss
+witnesses below their respective size bounds. They do not control a support that
+creates a large, nearly square residual core.  The missing theorem is a
+uniform random-saturation statement over every support of size below the
+binary threshold.  Fixed-support experiments show substantial rank surplus,
+but a minimum-distance witness selects its support after seeing both
+permutations.

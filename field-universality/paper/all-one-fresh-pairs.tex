@@ -1,39 +1,46 @@
-\section{Projective pairs for plain accumulators}\label{app:fresh-pairs}
+\section{The projective-pair bound for plain accumulators}\label{app:fresh-pairs}
 
-The ordinary prefix sum has no random coefficients, but its permutation
-still charges for some dependent cancellations. We use the source $B_8$
-and fixed prime from Appendix~\ref{app:all-one}. For the same encoder,
-the following refinement proves minimum distance at least $209716$
-($>10\%$), except with probability less than $2^{-47.91}$ over the two
-independent uniform permutations.
-The bound holds simultaneously for all nonzero messages, including a
-message chosen after the permutations are revealed. No encoder operation
-or coefficient changes.
+Plain accumulators have no random coefficients, but through the random
+permutations the bound below still charges for some dependent
+cancellations. We use the Newton precode $B_8$ and the
+prime $p=2^{128}-159$ of Appendix~\ref{app:all-one}. For the same
+encoder, the following refinement proves minimum distance at least
+$209716$ ($>10\%$), except with probability less than $2^{-47.91}$ over
+the two independent uniform permutations. The bound holds simultaneously
+for all nonzero messages, including a message chosen after the
+permutations are revealed. Appendix~\ref{app:complete-runs} later
+refines it to $11.7\%$.
 
-Fix a shortened source space $V$ and let $W\subseteq V^*$ be the span
-of zero equations imposed so far. Consider the remaining coordinate forms
-in $V^*/W$. At the start of a run, expose its first two active input
-labels jointly. Before either label is revealed, they form a uniform
-ordered pair from the $m\ge2$ remaining active labels.
-If any required active form vanishes in this quotient, the branch has no
+As in Section~\ref{sec:distance-proof}, fix a source support $S$ with
+shortened source space $V_S$, and let $W\subseteq V_S^*$ be the span
+of zero equations imposed so far. The \emph{active labels} of a scan
+are the coordinates of its incoming vector that are required to be
+nonzero; the permutation places them in uniformly random order on the
+nonzero input positions. Each active label carries a
+linear form on $V_S$, its \emph{required active form}, which must
+remain nonzero in $V_S^*/W$. At the start of a run, expose its first two
+active input labels jointly. Before either label is revealed, they form
+a uniform ordered pair from the $m\ge2$ remaining active labels.
+If any required active form vanishes in $V_S^*/W$, the branch has no
 surviving message and can be discarded. Otherwise every remaining active
 form is nonzero. For the moment, draw two labels independently with
-replacement. Let $L$ be the probability that their forms are proportional,
-and let $O$ be the probability that they are exact opposites. For each
-projective line $\ell$, let $q_\ell$ be its total probability mass, and
-write $p_v$ for the mass of each form $v$. Partition
-its nonzero forms into pairs $\{v,-v\}$. Odd characteristic makes these
-pairs disjoint, and their masses satisfy
+replacement. Let $P_\parallel$ be the probability that their forms are proportional,
+and let $P_-$ be the probability that they are exact opposites. For each
+one-dimensional subspace $\ell$, let $\mu_\ell$ be its total probability
+mass, and write $\mu_v$ for the mass of each form $v$. Partition
+the nonzero forms of $\ell$ into pairs $\{v,-v\}$. Odd characteristic
+makes these pairs disjoint, and their masses satisfy
 \[
- 2\sum_{\{v,-v\}\subset\ell}p_vp_{-v}\le q_\ell^2/2.
+ 2\sum_{\{v,-v\}\subset\ell}\mu_v\mu_{-v}\le \mu_\ell^2/2.
 \]
 Indeed, orient each opposite pair and bound the sum of products by the
-product of the two total oriented masses, whose sum is $q_\ell$.
-Summing over lines gives $O\le L/2$ and $O\le1/2$.
+product of the two total oriented masses, whose sum is $\mu_\ell$.
+Summing over lines gives $P_-\le P_\parallel/2$ and $P_-\le1/2$.
 
 Let $Y,Z>0$ bound the continuations with nonzero and zero sum,
-respectively, uniformly over forms and previous constraints. An independent
-pair contributes at most $Y+Z/\tau$ to the rank potential, for $\tau\ge1$: its zero
+respectively, uniformly over forms, previous zero equations, and
+nonzero requirements. For $\tau\ge1$, an independent pair contributes
+at most $Y+Z/\tau$ to the rank potential $\tau^{-\rank W}$: its zero
 branch gains one rank. A dependent opposite pair contributes only $Z$;
 a dependent nonopposite pair contributes only $Y$. In the latter case,
 imposing zero sum would force both required nonzero inputs to vanish.
@@ -42,13 +49,13 @@ The with-replacement average is bounded by
 \nopagebreak
 \[
 \begin{aligned}
- &(1-L)(Y+Z/\tau)+OZ+(L-O)Y\\
- &\quad=Y+Z/\tau+O(Z-Y)-LZ/\tau\\
- &\quad\le Y+Z/\tau+O\bigl((1-2/\tau)Z-Y\bigr)\\
+ &(1-P_\parallel)(Y+Z/\tau)+P_- Z+(P_\parallel-P_-)Y\\
+ &\quad=Y+Z/\tau+P_-(Z-Y)-P_\parallel Z/\tau\\
+ &\quad\le Y+Z/\tau+P_-\bigl((1-2/\tau)Z-Y\bigr)\\
  &\quad\le\max\{Y+Z/\tau,(Y+Z)/2\}.
 \end{aligned}
 \]
-The last step maximizes an affine function on $0\le O\le1/2$.
+The last step maximizes an affine function on $0\le P_-\le1/2$.
 The labels are distinct with probability $(m-1)/m$. Since all branch
 contributions are nonnegative, conditioning on this event gives
 \begin{equation}\label{eq:fresh-pair-lemma}
@@ -66,30 +73,34 @@ them a rank increment. Further nonzero requirements can only remove branches.
 
 For positive input and output markers $x,y$, define
 \begin{align*}
- T_0(v)&=v_0+xyv_1,\\
- T_1(v)&=yv_1+x\Psi(yv_2,v_0),\\
- T_2(v)&=yv_2+x\max\{yv_2+v_0/\tau,v_0\}.
+ T_0(v)&=v_0+xyv_2,\\
+ T_1(v)&=yv_1+x\max\{yv_1+v_0/\tau,v_0\},\\
+ T_2(v)&=yv_2+x\Psi(yv_1,v_0).
 \end{align*}
-State 0 has zero feedback. State 2 has nonzero feedback after at least
-two active inputs in the current run. State 1 is a macro placeholder;
-it does not describe a bound conditional on a revealed first label.
+State 0 has zero feedback. State 1 has nonzero feedback after at least
+two active inputs in the current run; $T_1$ is the nonzero-feedback
+operator~\eqref{eq:width-one-quotient} at $q=1$.
+State 2 is a \emph{macro state}: it stands for nonzero feedback after
+exactly one active input in the current run, but $T_2$ bounds that input
+together with the next active input through~\eqref{eq:fresh-pair-lemma}.
+It does not describe a bound conditional on a revealed first label.
 This distinction is essential: after revealing one label, every remaining
 form might be its opposite.
 
-To justify the macro, write $U_t=(T^t\mathbf1)_0$ and
-$V_t=(T^t\mathbf1)_2$. Expanding the state-1 recurrence gives
+To justify the macro state, write $A_t=(T^t\mathbf1)_0$ and
+$B_t=(T^t\mathbf1)_1$. Expanding the state-2 recurrence gives
 \[
- U_t=U_{t-1}+xy^t+
- \sum_{g=0}^{t-2}x^2y^{g+1}
- \Psi(yV_{t-g-2},U_{t-g-2}).
+ A_t=A_{t-1}+xy^t+
+ \sum_{\gamma=0}^{t-2}x^2y^{\gamma+1}
+ \Psi(yB_{t-\gamma-2},A_{t-\gamma-2}).
 \]
-The first term has zero input. The second is a terminal run with one
-active input. In each summand, choose the gap $g$ of zero inputs before
-exposing either of the first two active labels. Apply
-\eqref{eq:fresh-pair-lemma}, then the uniform continuation bound.
-State 2 uses the preceding two-state rank bound until the feedback
-returns to zero. This proves the macro interpretation without conditioning
-on the first label alone.
+The first term has zero input. The second is a final run with one
+active input. In each summand, choose the gap $\gamma$ of zero inputs
+before exposing either of the first two active labels.
+Apply~\eqref{eq:fresh-pair-lemma}, then the uniform continuation bound.
+State 1 uses the two-state bound of Section~\ref{sec:distance-proof}
+until the feedback returns to zero. This proves the macro interpretation
+without conditioning on the first label alone.
 
 Each completed pair consumes two labels. The values $m$ at pair starts
 are distinct and decrease along a trajectory, even if single exposures
@@ -97,31 +108,35 @@ intervene. Their sampling corrections therefore multiply to at most
 $\prod_{m=2}^s m/(m-1)=s$ for a scan with input weight $s$.
 More formally, the induction budget $f(m)=\max(1,m)$ satisfies both
 $f(m-1)\le f(m)$ and $mf(m-2)/(m-1)\le f(m)$.
-Terminal single-input runs require no pair correction.
+Final single-input runs require no pair correction.
 
 Normalize $v_0=1$, choose $\lambda\ge\max_iT_i(v)/v_i$, and put
 $C=\max_i1/v_i$. Monotonicity and homogeneity imply
-$(T^n\mathbf1)_0\le C\lambda^n$. For source weight $s$ and intermediate
-weight $h$, the two-scan profile bound becomes
+$(T^n\mathbf1)_0\le C\lambda^n$. With the pair corrections, a scan with
+$m$ active inputs therefore has the uniform bound $K(m)=mC\lambda^n$
+required by Lemma~\ref{lem:scan-composition}. For source weight $s$ and
+intermediate weight $h$, the lemma gives
 \[
  \frac{F_s(\tau)}{\tau}
  \frac{sh\,C_1\lambda_1^nC_2\lambda_2^n}
  {\binom ns\binom nh\,x_1^s(y_1x_2)^h y_2^e},
  \qquad 0<y_2\le1.
 \]
-Keep the same zero-equation span and rank potential across both scans.
-Conditioning on the first trajectory leaves the second permutation
-independent and uniform. The uniformity of the continuation bounds
-justifies applying the macro to its intermediate forms.
+The lemma keeps the same zero-equation span and rank potential across
+both scans. Conditioning on the first trajectory leaves the second
+permutation independent and uniform, and the uniformity of the
+continuation bounds justifies applying the macro state to its
+intermediate forms.
 
-For $e=209715$, the exact support moment of
+For $e=209715$, the sparse bound~\eqref{eq:all-one-sparse} of
 Appendix~\ref{app:all-one} bounds source weights 1 through 31 by a
 probability whose base-two logarithm is at most $-47.919090471278$.
-The dense ledger covers $32\le s\le4e$ and
-$\lceil s/2\rceil\le h\le2e$ in 121 leaves. It bounds $sh$ by each
-rectangle's upper endpoints and uses the preceding rational binomial
-and convex vertex bounds. Exact replay, including all finite prefactors
-and upward-rounded leaf sums, gives total logarithmic upper bound
-$-47.919090461115$. The full ledger and its verifier accompany the paper.
-This strengthens the proof without changing the encoder's
-$6.8125n-2$ field additions.
+The dense range $32\le s\le4e$, $\lceil s/2\rceil\le h\le2e$ is
+partitioned into 121 leaves, as in Appendix~\ref{app:all-one}. Each
+leaf bounds $sh$ by the product of its rectangle's upper endpoints and
+uses the rational binomial and convex vertex bounds of that appendix.
+Exact rational evaluation, including all finite prefactors and
+upward-rounded leaf sums, gives total logarithmic upper bound
+$-47.919090461115$. The certificate and its verifier are listed in
+Appendix~\ref{app:reproduction}. This strengthens the proof without
+changing the encoder's $6.8125n-2$ field additions.

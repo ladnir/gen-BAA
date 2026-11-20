@@ -1,15 +1,21 @@
-\section{An initial construction and its implementation}\label{sec:small-scans}
+\section{The four-input precode and its implementation}\label{sec:small-scans}
 
-A small coefficient alphabet gives a direct prime-field construction with
-both a finite distance guarantee and a linear-size addition circuit. The
-encoder retains the local-block and two-accumulator architecture of
-BAA~\cite{baa26}. Its random multipliers act on the running states. The
-analysis counts support patterns and ranks of their zero constraints,
-without taking a union over field-valued messages.
-This section records the initial measured family and its distance
-analysis: above $14.5\%$, at rate $1/2$, with setup failure below
-$2^{-56.90}$. Section~\ref{sec:width-coefficient} gives stronger
-guarantees using a larger local block and refined analysis.
+This appendix analyzes the two-scan construction with the four-input
+precode, an $[8,4,5]$ MDS code, in place of the Newton precode. With
+coefficients from $\{1,\ldots,2048\}$ it proves relative distance above
+$14.5\%$ at rate $1/2$, with setup failure below $2^{-56.90}$. The
+Newton precode $B_8$ of Section~\ref{sec:width-coefficient} supersedes
+this family: with $q=4$ it already proves $18.625\%$
+(Table~\ref{tab:width-one-small}), and at each common alphabet size
+$q\in\{32,64,128,256\}$ its proved distance is more than twice as large.
+For $q\in\{64,128,256\}$, separate timing runs on the same machine
+measured the Newton encoder about one millisecond slower
+(Tables~\ref{tab:width-one-small} and~\ref{tab:small-timing}).
+
+The encoder retains the two-scan architecture of BAA~\cite{baa26}.
+Its random coefficients multiply the running scan states. The analysis
+counts support patterns and the ranks of their zero equations, without
+taking a union over field-valued messages.
 
 \subsection{Construction and finite guarantee}
 
@@ -23,8 +29,8 @@ define
 Finite differences evaluate this map with 15 additions. Any four output
 coordinates determine the input: four evaluations determine a cubic;
 three evaluations together with $d$ determine its remaining coefficients.
-Thus $B$ is an $[8,4,5]$ MDS code. Apply $B$ independently to all blocks,
-obtaining a vector of length $n$.
+Thus the four-input precode $B$ is an $[8,4,5]$ MDS code. Apply $B$
+independently to all blocks, obtaining a vector of length $n$.
 
 At setup, sample two independent uniform permutations $\pi_1,\pi_2$ of
 $\{0,\ldots,n-1\}$. Independently sample each $a_{j,i}$ uniformly from
@@ -45,7 +51,7 @@ following bounds over its setup randomness:
 \begin{array}{c@{\qquad}r@{\qquad}c}
  q & d_{\min}\text{ at least}
    & \Pr[\text{failure}]\text{ less than}\\ \hline
- 32 & 209716 & 2^{-24.8599}\\
+ 32 & 209716 & 2^{-24.85}\\
  40 & 230897 & 2^{-44.11}\\
  64 & 251659 & 2^{-45.65}\\
  128 & 277873 & 2^{-47.87}\\
@@ -57,18 +63,25 @@ following bounds over its setup randomness:
 \]
 Failure means that the minimum distance is below the listed threshold.
 On a successful setup the distance bound holds for every nonzero message,
-including messages selected after the setup is revealed.
+including messages selected after the setup is revealed. Failure
+exponents are truncated toward zero, so the stated bounds are
+conservative.
 \end{theorem}
 
-The second relative distance is greater than $11.01\%$, exceeding the
-binary Gilbert--Varshamov numerical distance at rate $1/2$. This comparison
-does not assert a binary-code guarantee or attain the much larger
+The $q=32$ row uses the sparse bound with $\tau=1$, which ignores
+coefficient randomness for source weights at most 128
+(Appendix~\ref{app:small-certificate}); this alphabet was not implemented
+or timed. Every other row retains coefficient randomness in the
+sparse-support calculation.
+
+For $q=40$ the relative distance exceeds $11.01\%$, above the binary
+rate-$1/2$ Gilbert--Varshamov (GV) benchmark $H_2^{-1}(1/2)\approx0.110028$.
+This comparison is not a binary-code guarantee, and it is far below the
 prime-field GV distance. The theorem fixes the prime before setup; it
 does not claim that one sampled circuit works simultaneously over primes.
-The larger alphabets retain the same local map, two scans, and vector
-lengths. Sizes 128, 512, and 2048 certify relative distances above
-$13.25\%$, $14.25\%$, and $14.5\%$, respectively. Their bounds retain
-coefficient randomness in the sparse-support calculation. All rows from
+The larger alphabets retain the same precode, two scans, and vector
+lengths. Sizes 128, 512, and 2048 give relative distances above
+$13.25\%$, $14.25\%$, and $14.5\%$, respectively. All rows from
 $q=40$ through $q=2048$ use the same measured scan kernel and memory
 footprint. A separate certificate for $q=2048$ gives minimum distance
 at least 230897 with failure below $2^{-58.45}$. These are achieved
@@ -89,35 +102,35 @@ count is $(351/8)n-42$. These circuit counts grow with the alphabet.
 The native small-integer multiply/add implementation below uses the same
 arithmetic instruction sequence for all measured alphabets.
 
-\subsection{Rank constraints instead of a message union}
+\subsection{Equation ranks instead of a message union}
 
-Fix a source support and support patterns for both rounds, and condition
-on permutations that map these supports as prescribed. The space $V$ of
-inputs satisfying the source zero coordinates has some dimension $D$.
-Expose coefficients in round order. Let $W\subseteq V^*$ be the span of
-all zero constraints exposed so far. A branch remains alive only if
-$\ker W$ contains a message satisfying every required nonzero constraint
-whose form is already known.
+Fix a source support $S$ and support patterns for both rounds, and condition
+on permutations that map these supports as prescribed. The shortened
+source space $V_S$ of inputs satisfying the source zero coordinates has
+dimension $D_S$. Expose coefficients in round order. Let
+$W\subseteq V_S^*$ be the span of all zero equations exposed so far.
+A branch remains alive only if $\ker W$ contains a message satisfying
+every required nonzero condition whose form is already known.
 
-A \emph{closed return} is a transition from a nonzero output state to a
-zero output state. Its current input must be nonzero. The new zero
-equation has the form $\ell+a r=0$, where $\ell$ is the current input
-form and $r$ the preceding state form. Both are known before exposing
-$a$. On an alive branch, $\ell\notin W$. At most one coefficient can
-make $\ell+a r\in W$: two distinct such coefficients would imply
+A \emph{return} is a zero output that ends a run of nonzero outputs.
+Its input must be nonzero. The new zero equation has the form
+$\ell+a r=0$, where $\ell$ is the current input form and $r$ the
+preceding state form. Both are known before exposing $a$. On an alive
+branch, $\ell\notin W$. At most one coefficient can make
+$\ell+a r\in W$: two distinct such coefficients would imply
 $r\in W$ and then $\ell\in W$.
 
-For $\tau\ge1$, put $g=1/q+(1-1/q)/\tau$. Each closed return multiplies
-the conditional expected potential $\tau^{-\rank W}$ by at most $g$;
-dead branches have zero potential. Other steps cannot increase it.
-After $c$ returns, a realizable nonzero path has $\rank W\le D-1$.
-Consequently,
+For $\tau\ge1$, put $g=1/q+(1-1/q)/\tau$. Give an alive branch the
+\emph{rank potential} $\tau^{-\rank W}$ and a dead branch potential
+zero. Each return multiplies the conditional expected potential by at
+most $g$; other steps cannot increase it. A realizable nonzero path
+has $\rank W\le D_S-1$. Consequently, for a path with $c$ returns,
 \begin{equation}\label{eq:small-rank}
  \Pr[\text{prescribed support path is realizable}]
- \le \min\{1,\tau^{D-1}g^c\}.
+ \le \min\{1,\tau^{D_S-1}g^c\}.
 \end{equation}
 This argument is adaptive across both rounds. It requires no independence
-among the zero equations and incurs no factor $p^D$.
+among the zero equations and incurs no factor $p^{D_S}$.
 
 For a local output support of size $s\in\{5,6,7,8\}$, the source
 dimension is $s-4$. The dimension-weighted support polynomial is therefore
@@ -125,19 +138,22 @@ dimension is $s-4$. The dimension-weighted support polynomial is therefore
  Q(z,\tau)=1+56z^5\tau+28z^6\tau^2+8z^7\tau^3+z^8\tau^4.
 \end{equation}
 Let $A_g(s,h)$ count admissible input/output support pairs of one scan,
-with weights $s,h$, assigning a factor $g$ per closed return. It is the
+with weights $s,h$, assigning a factor $g$ per return. It is the
 coefficient of $x^s y^h$ in
 \begin{equation}\label{eq:small-transfer}
  [1,0]\begin{bmatrix}1&xy\\gx&(1+x)y\end{bmatrix}^{n}
  \begin{bmatrix}1\\1\end{bmatrix}.
 \end{equation}
 The initial state is zero and either final state is allowed. This count
-retains support patterns whose value constraints may be impossible.
+retains support patterns that no field values realize.
 
 For a forbidden output weight $e$, write
 $H_g(h,e)=\sum_{j=1}^e A_g(h,j)$ and $L=n/8$.
-Each permutation contributes the inverse number of supports of its input
-weight. Combining this normalization with~\eqref{eq:small-rank} gives
+A uniform permutation maps a fixed support of size $s$ to a uniform
+$s$-subset, so each prescribed placement of the source support has
+probability $1/\binom ns$, and each placement of the intermediate support
+has probability $1/\binom nh$. Combining these normalizations
+with~\eqref{eq:small-rank} gives
 \begin{equation}\label{eq:small-union}
  \Pr[d\le e]\le\frac1\tau\sum_{s=1}^{4e}
  \frac{[z^s]Q(z,\tau)^L}{\binom ns}
@@ -150,23 +166,23 @@ gives the finite evaluation of this bound, including the sparse range.
 \subsection{Implementation cost}
 
 We implemented alphabets $q\in\{40,64,128,256,512,1024,2048\}$ over
-$p=2^{128}-159$. The optimized local
+$p=2^{128}-159$. The optimized precode
 kernel evaluates eight blocks together with AVX-512, postpones reduction
 in 43-bit limbs, and uses contiguous loads and stores. Each scan packs
 its 21-bit permutation index and eleven-bit coefficient-minus-one into
 one 32-bit word. Thus $q=2048$ is the largest alphabet in this layout.
-The fastest
-tested loop gathers 16 entries together and prefetches 256 entries ahead.
-Two length-$n$ field buffers suffice; one holds the final output.
+The scan loop gathers 16 entries at a time and prefetches 256 entries
+ahead. Two length-$n$ field buffers suffice; one holds the final output.
 
 \begin{table}[t]
 \centering
 \caption{Complete encoding at $k=2^{20}$, $n=2^{21}$ and
-$p=2^{128}-159$. Times are in milliseconds on one Peach CPU core.}
+$p=2^{128}-159$. Times are in milliseconds on one core of an
+AMD Ryzen 9 7950X.}
 \label{tab:small-timing}
 \begin{tabular}{lrrrr}
 \toprule
-$q$ & Local $B$ & Scan 1 & Scan 2 & Total\\
+$q$ & Precode $B$ & Scan 1 & Scan 2 & Total\\
 \midrule
 40 & 1.919 & 7.307 & 7.730 & 16.947\\
 64 & 1.924 & 7.317 & 7.741 & 16.989\\
@@ -179,30 +195,18 @@ $q$ & Local $B$ & Scan 1 & Scan 2 & Total\\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:small-timing} reports the median of six process medians,
-each from 31 timed encodes after two warmups. We used GCC 15.2 with
-\texttt{-O3 -march=native} on an AMD Ryzen 9 7950X, pinned to CPU 2.
-Runs were serial, with candidate order reversed on alternate seeds.
-The campaign contains 42 processes and 1302 timed encodes.
-Setup, allocation, and reference validation were outside timing; pages
-were resident and caches were not flushed. Process medians ranged from
-16.855 to 17.075 ms for $q=40$, and from 16.866 to 17.056 ms for
-$q=2048$. All seven table totals lie within $0.5\%$ of the matched
-$q=40$ time. The overlapping ranges support no meaningful runtime
-penalty for the larger alphabets in this campaign. Stage medians need
-not sum to the median total. The earlier $16.828$ ms result for $q=40$
-came from a separate campaign.
+Table~\ref{tab:small-timing} reports, for each alphabet, the median of
+six process medians, each over 31 timed encodes after two warm-up
+encodes, with GCC 15.2 at \texttt{-O3 -march=native}; setup is not timed.
+Stage medians need not sum to the median total. All seven totals lie
+within $0.5\%$ of the $q=40$ total, and process medians range from
+16.855 to 17.075 ms for $q=40$ and from 16.866 to 17.056 ms for
+$q=2048$. The larger alphabets therefore show no measurable runtime
+penalty.
 
 The optimized implementation uses native small-integer multiplication;
 it evaluates exactly the same field map as the addition circuit. The
-fastest measured code is therefore distinct from a strict addition-only
+measured code is therefore distinct from a strict addition-only
 implementation, although both have the same distance theorem. Retained
 input, work buffers, and metadata occupy
 96.008 MiB, excluding validation temporaries and stack scratch.
-
-All final measured outputs matched a dense-local/generic-field reference.
-Boundary and tail tests, multiprecision arithmetic checks through
-coefficient 2048, and address
-and undefined-behavior sanitizers passed. SplitMix64 generated the
-reproducible benchmark fixtures; these fixtures are not a cryptographic
-setup implementation or distance certificates for individual encoders.

@@ -1,41 +1,52 @@
-\section{Finite certificate for the small-coefficient code}
+\section{Finite certificate for the four-input precode}
 \label{app:small-certificate}
 
 We evaluate~\eqref{eq:small-union} using rational inequalities. All
-notation refers to Section~\ref{sec:small-scans}, and binomial coefficients
-outside their usual range are zero.
+notation refers to Appendix~\ref{sec:small-scans}, and binomial coefficients
+outside their usual range are zero. Throughout, $\rho=e/(n-e)$.
 
 \paragraph{Last-round tail.}
-Decompose an output support into runs of nonzero states. For $s,h>0$,
-the contribution with exactly $c$ closed returns is
+Decompose an output support into runs of nonzero outputs. A run is
+\emph{closed} if a return ends it and \emph{open} if it reaches the last
+position. For $h,j>0$, the number of support pairs with input weight $h$,
+output weight $j$, and exactly $c$ returns is
 \[
- \binom{n-h}{c}\left[
- \binom{h-1}{c-1}\binom{h-c}{s-2c}
- +\binom{h-1}{c}\binom{h-c-1}{s-2c-1}\right].
+ \binom{n-j}{c}\left[
+ \binom{j-1}{c-1}\binom{j-c}{h-2c}
+ +\binom{j-1}{c}\binom{j-c-1}{h-2c-1}\right],
 \]
-The two terms correspond to a closed and an open final state. In the
-second term $c=0$ is allowed. Summing over $h\le e$, extending the number
-of available zero positions, and writing $r=e/(n-e)$ gives
+and $A_g(h,j)$ weights this number by $g^c$. The two terms correspond to
+a closed and an open final run; in the second term $c=0$ is allowed.
+Summing over $j\le e$ and extending the number of available zero
+positions gives
 \begin{equation}\label{eq:small-tail}
- \frac{H_g(s,e)}{\binom ns}
- \le 2\sum_{c=0}^{\lfloor s/2\rfloor}
-       \binom sc\binom{s-c}{c}g^c r^{s-c}
- \le 2(r+2\sqrt{gr})^s,\qquad s\le2e.
+ \frac{H_g(h,e)}{\binom nh}
+ \le 2\sum_{c=0}^{\lfloor h/2\rfloor}
+       \binom hc\binom{h-c}{c}g^c \rho^{h-c}
+ \le 2(\rho+2\sqrt{g\rho})^h,\qquad h\le2e.
 \end{equation}
 For the first inequality, the closed-run binomial comparison is
 \[
- \frac{\binom nc\binom e{s-c}}{\binom ns}
- =\binom sc\frac{\binom e{s-c}}{\binom{n-c}{s-c}}
- \le\binom sc r^{s-c},
+ \frac{\binom nc\binom e{h-c}}{\binom nh}
+ =\binom hc\frac{\binom e{h-c}}{\binom{n-c}{h-c}}
+ \le\binom hc \rho^{h-c},
 \]
 and the open case has the same bound with $c$ closed runs. The remaining
-coefficient in each case is at most $\binom{s-c}{c}$. The second
-inequality evaluates at one a Laurent polynomial with nonnegative
-coefficients whose constant coefficient equals the sum.
+coefficient in each case is at most $\binom{h-c}{c}$. For the second
+inequality, $h!/(c!^2(h-2c)!)=\binom hc\binom{h-c}{c}$, so the sum is
+the constant coefficient in $u$ of the Laurent polynomial
+$\bigl(\rho+\sqrt{g\rho}\,(u+u^{-1})\bigr)^h$. All its coefficients are
+nonnegative, so this constant coefficient is at most its value at $u=1$,
+namely $(\rho+2\sqrt{g\rho})^h$.
+
+Fix a rational $t<1$ with $t>\rho$ and $(t-\rho)^2\ge4g\rho$, that is,
+$\rho+2\sqrt{g\rho}\le t$. Then~\eqref{eq:small-tail} gives
+$H_g(h,e)/\binom nh\le2t^h$ for $h\le2e$. Since $g$ depends on $\tau$,
+so does the admissible range of $t$.
 
 \paragraph{Bulk source weights.}
-Choose positive rational $x,v,z,t$, rational $\tau\ge1$, and
-$0<y\le t<1$, with $(t-r)^2\ge4gr$ and $t>r$. Set
+Choose positive rational $x,v,z$, rational $\tau\ge1$, $t$ as above, and
+$0<y\le t$. Set
 \[
  \lambda=\max\{1+xyv,\;gx/v+(1+x)y\},\qquad C=\max\{1,1/v\}.
 \]
@@ -48,39 +59,44 @@ $s$ to~\eqref{eq:small-union} is at most
  \frac{2(n+1)C}{\tau} Q(z,\tau)^L\lambda^n
  (t/y)^{2e}(xz)^{-s}(s/n)^s(1-s/n)^{n-s}.
 \end{equation}
-Here $\binom ns\ge2^{nH_2(s/n)}/(n+1)$. With witnesses fixed, the
+The factor $(n+1)(s/n)^s(1-s/n)^{n-s}$ bounds $1/\binom ns$, by the
+estimate $\binom ns\ge2^{nH_2(s/n)}/(n+1)$. With witnesses fixed, the
 logarithm of~\eqref{eq:small-endpoint} is convex in $s$. Its values at
-an interval's two endpoints therefore bound every interior integer.
-Multiplication by the number of integers bounds the interval's total.
+an interval's two endpoints therefore bound its value at every interior
+integer. Multiplying by the number of integers in the interval bounds
+the interval's total.
 
 \paragraph{Sparse source weights.}
-For $1\le s\le128$, retain the closed-return weight in the sparse
-calculation. With $\tau\ge1$ and $g=1/q+(1-1/q)/\tau$, choose rational
-$r+2\sqrt{gr}\le t<1$ and put $b_g=t/(1-t)$. Define
-\begin{align*}
- M_g(n,s;t)={}&\sum_{j=1}^{\lfloor s/2\rfloor}
+For $1\le s\le128$, retain the return weight in the sparse
+calculation. With $\tau\ge1$, $g=1/q+(1-1/q)/\tau$, and $t$ as above,
+put $b_g=t/(1-t)$ and define
+\begin{equation}\label{eq:small-sparse-moment}
+\begin{aligned}
+ M_s(t;g)={}&\sum_{j=1}^{\lfloor s/2\rfloor}
  \binom nj\binom{s-j-1}{j-1}g^j b_g^{s-j}\\
- &+\sum_{j=1}^{\lfloor(s+1)/2\rfloor}
+ &+\sum_{j=1}^{\lceil s/2\rceil}
  \binom n{j-1}\binom{s-j}{j-1}g^{j-1}b_g^{s-j+1}.
-\end{align*}
-The open final run contributes no return, which explains $g^{j-1}$ in
-the second sum. To obtain the bound, extend each nonzero run to any
-positive length. For $j$ closed runs the generating function is
-$g^j x^{2j}[t/(1-t(1+x))]^j$. An open last run has one fewer input
-boundary and one fewer return. Thus $M_g(n,s;t)$ bounds
+\end{aligned}
+\end{equation}
+An open final run ends with no return, which explains the factor
+$g^{j-1}$ in the second sum. To obtain the bound, extend each nonzero
+run to any positive length. For $j$ closed runs the generating function
+is $g^j x^{2j}[t/(1-t(1+x))]^j$. An open final run has one fewer input
+boundary and one fewer return. Thus $M_s(t;g)$ bounds
 $\sum_h A_g(s,h)t^h$. The entire sparse contribution is at most
 \begin{equation}\label{eq:small-sparse-weighted}
  P_{\rm sparse}:=\frac2\tau\sum_{s=1}^{128}
- \frac{[z^s]Q(z,\tau)^L}{\binom ns}M_g(n,s;t).
+ \frac{[z^s]Q(z,\tau)^L}{\binom ns}M_s(t;g).
 \end{equation}
-At $\tau=1$, this recovers the unweighted sparse bound. The value of
-$\tau$ is a proof parameter and does not change the encoder coefficients.
+At $\tau=1$, $g=1$ and this is the unweighted sparse bound, which
+ignores coefficient randomness. The value of $\tau$ is a proof parameter
+and does not change the encoder coefficients.
 
-\paragraph{Replay and coverage.}
-For the legacy $(q,e)=(32,209715)$ row, the unweighted sparse bound and
-114 bulk intervals give failure below $2^{-24.8599}$. For the current
-measured configurations, the weighted sparse expression gives the
-following complete certificates. Bulk intervals use their own witnesses
+\paragraph{Certified values.}
+For the row $(q,e)=(32,209715)$, the unweighted sparse bound and
+114 bulk intervals give failure below $2^{-24.85}$. For the implemented
+alphabets, the weighted sparse bound with $\tau=\tau_{\rm sparse}$ gives
+the following values. Bulk intervals use their own witnesses
 in~\eqref{eq:small-endpoint}.
 \[
 \begin{array}{r@{\quad}r@{\quad}r@{\quad}r@{\quad}r}
@@ -94,11 +110,12 @@ q&e&\tau_{\rm sparse}&\text{intervals}&\log_2\Pr[d\le e]\text{ bound}\\\hline
 2048&304087&8192&119&-56.90
 \end{array}
 \]
-Each bulk interval contributes less than $2^{-80}$ and their union covers
-every integer from 129 through $4e$. These certificates complete
-Theorem~\ref{thm:small-scans}. In particular, the current best configuration
-uses $e=304087$, so its bulk cover ends at 1216348. Exact sparse
-evaluation and outward logarithm bounds give
+Each bulk interval contributes less than $2^{-80}$, and the intervals
+together cover every integer from 129 through $4e$. These certificates
+prove Theorem~\ref{thm:small-scans}. The configuration with the largest
+certified distance in this four-input family uses $e=304087$, so its
+bulk cover ends at 1216348. Exact sparse evaluation and outward
+logarithm bounds give
 \[
  \log_2(P_{\rm sparse}+119\cdot2^{-80})
  \le -56.907879669916.
@@ -107,41 +124,9 @@ At $q=2048$ and $e=230896$, a separate cover of 115 intervals gives
 the upper logarithm $-58.451178036656$. Rational entropy bounds also
 verify
 \[
- H_2(230897/2097152)>1/2.
+ H_2(230897/2097152)>1/2,
 \]
-
-The reproducibility directory is
-\begin{quote}\small
-\path{field-universality/expander-lift/}.
-\end{quote}
-The current certificate ledger is
-\begin{quote}\small
-\path{results/scalar-frontier/summary.json}.
-\end{quote}
-It records 17 complete certificates and eight failed searches. The
-current best distance and lower-distance margin certificates are
-\begin{quote}\small
-\path{results/scalar-frontier/distance-q2048-e304087.json}\\
-\path{results/scalar-frontier/margin-q2048-e230896.json}.
-\end{quote}
-The generator is \path{scalar_frontier.py}; \path{distance_ladder.py}
-replays the rational side conditions, interval endpoints, coverage,
-sparse sum, and total failure bound. The driver additionally checks a
-$2^{-40}$ budget. Numerical optimization only proposes witnesses; no
-sampled-code distances enter the proof. The tests in
-\path{test_scalar_frontier.py} replay every successful ledger entry.
-The legacy $q=32$ row is retained in
-\path{results/signed-scan-certificate.json}, with verifier
-\path{signed_scan_certificate.py}.
-
-The benchmark archive is \path{results/scalar-alphabet-benchmark/}.
-It includes the measured sources, raw timing samples, host and compiler
-details, hashes, and validation outputs. The runner and archive checker are
-\begin{quote}\small
-\path{bench/run_scalar_alphabet.sh}\\
-\path{bench/summarize_scalar_alphabet.py}.
-\end{quote}
-The tests
-cover every coefficient through 2048, scan lengths through 513, and
-complete outputs at the target dimension. All seven alphabets pass
-multiprecision reference checks and address/undefined-behavior sanitizers.
+so the $q=40$ distance bound exceeds the binary rate-$1/2$
+Gilbert--Varshamov benchmark, as stated after Theorem~\ref{thm:small-scans}.
+The certificates and their verifiers are listed in
+Appendix~\ref{app:reproduction}.
